@@ -1,0 +1,72 @@
+/// \mainpage The Bullet Physics Block Toy
+/// 
+/// A simple 3D toy using 
+/// [Bullet Physics](https://pybullet.org/wordpress/) consisting of various
+/// things that you can knock over by throwing soccer
+/// balls at them. With enough patience and perseverance you can
+/// push everything off the edge of the world. Shapes and models
+/// are rendered using `GeometricPrimitive` and `Model` from
+/// DirectXTK12. The models are input using the built-in 
+/// function `Model::CreateFromSDKMESH` which requires that the
+/// models be in SDKMESH format. The 3D models are from
+/// [free3d.com](https://free3d.com/) and were converted
+/// from OBJ format using `DirectXMesh`. The logo on the small
+/// crate has been changed to the logo for the Laboratory for
+/// Recreational Computing.
+///
+/// \image html screenshot.png width=800
+///
+///
+/// Controls
+/// --------
+///
+/// This toy can be played with either the keypad or an 
+/// XBOX controller. 
+/// <center>
+/// <table>
+/// <tr>
+/// <td><center><b>Keyboard</b></center></td>
+/// <td><center><b>Controller</b></center></td>
+/// <td><center><b>Action</b></center></td>
+/// <tr>
+/// <td>F1</td>
+/// <td></td>
+/// <td>Help (this document)</td>
+/// <tr>
+/// <td>Space</td>
+/// <td>Right button</td>
+/// <td>Throw a ball along the view vector.</td>
+/// <tr>
+/// <td>Arrow keys</td>
+/// <td>Right stick</td>
+/// <td>Camera orientation.</td>
+/// <tr>
+/// <td>WASD</td>
+/// <td>Dpad</td>
+/// <td>Camera motion (relative to the view vector).
+/// <tr>
+/// <td>Backspace</td>
+/// <td>A</td>
+/// <td>Reset to initial conditions.</td>
+/// <tr>
+/// <td>PrtScr (hold down)</td>
+/// <td></td>
+/// <td>Save screenshot to a PNG file</td>
+/// </table>
+/// </center>
+///
+/// The LARC Engine
+/// ---------------
+///
+/// This code uses the [LARC Engine](https://larc.unt.edu/code/engine/) and is
+/// part of the [LARC Code Base](https://larc.unt.edu/code/).
+///
+/// To-Do List
+/// ----------
+/// + The polygonal shapes are not placed correctly. In particular, the dodecahedron needs to be rotated.
+/// + Add the ability to use a convex hull for collisions on the models. I've gotten it working on the geometric primitives, but that's only because I save a local copy of the vertices. I've tried to access the vertices in a `Model`, but there seems to be no local copy. I can either override the DirectXTK12 function that loads from an `sdkmesh` or bite the bullet and write an `obj` file loader (saving a local copy of the vertex buffer in either). 
+/// + An `obj` file reader might be a good idea anyway. While you might prefer to shop a game with models in `sdkmesh` format, it might be better if we could use `obj`s in class.
+/// + Add in the rest of the geometric primitives that DirectXTK12 provides, including cylinders and cones.
+/// + Use Bullet joints to make a table out of 4 cylinders and a block with bounding boxes around each part. Have the table come apart after enough hits.
+/// + Currently the camera can pass through objects, which is why back-face culling is currently turned off. Use Bullet Physics to prevent this from happening, then turn on back-face culling for a 2x increase in rendering speed.
+/// + A lot of the parameters for meshes and models are hard-coded. It would be better to read them from `gamesettings.xml` along with the other settings instead. Derive a class from `CSettings` and write the code for this.
