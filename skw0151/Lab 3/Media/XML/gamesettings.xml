@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<!-- Game settings -->
+
+<settings>
+	<game name="Breakout Clone" />
+   <renderer width="1024" height="768"/>
+
+   <!-- sprites -->
+   
+   <sprites path="Media\Images">
+     <sprite name="background" file="background.tif"/>
+     <sprite name="brick" file="brick.tif"/>
+     <sprite name="ball" file="ball.tif"/>
+     <sprite name="paddle" file="paddle.tif"/>
+   </sprites>
+
+   <!-- sound -->
+  
+   <sounds path="Media\Sounds">
+     <sound file="tone.wav" instances="2"/>
+     <sound file="tone2.wav" instances="2"/>
+     <sound file="crunch.wav" instances="4"/>
+     <sound file="buzz.wav" instances="1"/>
+     <sound file="blaster.wav" instances="1"/>
+   </sounds>
+</settings>

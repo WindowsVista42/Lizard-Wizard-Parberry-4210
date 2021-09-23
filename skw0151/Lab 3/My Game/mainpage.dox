@@ -1,0 +1,35 @@
+/// \mainpage A Breakout clone.
+/// 
+/// A clone of the classic game <em>Breakout</em>.
+/// The aim is to break as many bricks as possible by
+/// hitting them with the ball, which bounces off the
+/// the sides of the screen and the paddle. If the ball
+/// goes off the bottom of the screen then you lose it.
+/// The paddle is the black rectangle near the bottom
+/// of the window in the following screenshot.
+/// You can only move it left and right.
+///
+/// @image html screenshot.png
+/// 
+/// Keyboard commands are summarized below.
+///
+/// <center>
+/// <table>
+/// <tr>
+/// <td><center><b>Key</b></center></td>
+/// <td><center><b>Action</b></center></td>
+/// <tr>
+/// <td>Left arrow</td>
+/// <td>Paddle moves left while pressed</td>
+/// <tr>
+/// <td>Right arrow</td>
+/// <td>Paddle moves right while pressed</td>
+/// <tr>
+/// <td>Space</td>
+/// <td>Launch new ball</td>
+/// <tr>
+/// <td>Enter</td>
+/// <td>Restart game</td>
+/// </table>
+/// </center>
+
