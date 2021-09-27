@@ -13,10 +13,7 @@ StagedBuffer::~StagedBuffer(){
     m_Length = 0;
 }
 
-/// <summary>
-/// SAFETY: requested_reset must be a valid number between 0 and m_Capacity
-/// </summary>
-/// <param name="requested_reset"></param>
+/// SAFETY(sean): requested_reset must be a valid number between 0 and m_Capacity
 void StagedBuffer::Reset(usize requested_reset) {
     if (requested_reset <= m_Capacity) {
         m_Length = requested_reset;
@@ -25,12 +22,8 @@ void StagedBuffer::Reset(usize requested_reset) {
     }
 }
 
-/// <summary>
 /// Allocates contiguous memory for some type T
-/// </summary>
-/// <typeparam name="T"></typeparam>
-/// <param name="requested_size"></param>
-/// <returns></returns>
+/// SAFETY(sean): requrested allocation must be within buffer bounds
 u8* StagedBuffer::Alloc(usize requested_size) {
     usize would_be_offset = m_Length + requested_size;
 
