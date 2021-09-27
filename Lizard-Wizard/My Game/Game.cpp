@@ -28,7 +28,7 @@ CGame::~CGame(){
 
 // Custom User Input
 // (Ethan) We actually only need this function since the keybind and mouse functionality you gave me are identical, should be correctly adjusted for the new input system.
-void CGame::UpdateCustomBindState(customBind* customBind) {
+void CGame::UpdateCustomBindState(CustomBind* customBind) {
     if (GetKeyState(customBind->bind) < 0) {
         if (!customBind->held) {
             customBind->pressed = true;
@@ -144,9 +144,9 @@ void CGame::Initialize(){
     }
 
     // Lets bind this action to to the user's mouse. For key values : https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
-    m_pLeftClick = new customBind;
+    m_pLeftClick = new CustomBind;
     m_pLeftClick->bind = 1;
-    m_pRightClick = new customBind; //&rightClick;
+    m_pRightClick = new CustomBind; //&rightClick;
     m_pRightClick->bind = 2;
     BeginGame();
 }
