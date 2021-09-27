@@ -25,14 +25,14 @@
 /// any destructors are run.
 
 // Bind Struct
-typedef struct customBind {
+struct CustomBind {
     i32 bind;
     b8 held, pressed, _pad0, _pad1;
-} customBind;
+};
 
-typedef struct projectile {
+struct Projectile {
     i32 projectile;
-} projectile;
+};
 
 class CGame:
 	public LComponent, 
