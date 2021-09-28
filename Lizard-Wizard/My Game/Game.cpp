@@ -28,7 +28,7 @@ CGame::~CGame(){
 
 // Custom User Input
 // (Ethan) We actually only need this function since the keybind and mouse functionality you gave me are identical, should be correctly adjusted for the new input system.
-void CGame::UpdateCustomBindState(customBind* customBind) {
+void CGame::UpdateCustomBindState(CustomBind* customBind) {
     if (GetKeyState(customBind->bind) < 0) {
         if (!customBind->held) {
             customBind->pressed = true;
@@ -79,7 +79,7 @@ void CGame::FireRaycast() {
     Vector3 Position = Vector3(m_pRenderer->m_pCamera->GetPos().x, m_pRenderer->m_pCamera->GetPos().y, m_pRenderer->m_pCamera->GetPos().z);
     Vector3 Direction = Vector3(m_pRenderer->m_pCamera->GetViewVector().x, m_pRenderer->m_pCamera->GetViewVector().y, m_pRenderer->m_pCamera->GetViewVector().z);
     f32 X = m_pRenderer->m_pCamera->GetPos().x;
-    rayProjectile* newRay = new rayProjectile();
+    RayProjectile* newRay = new RayProjectile();
     newRay->Pos1 = Position;
     newRay->Pos2 = Direction;
     newRay->Color = Colors::IndianRed;
@@ -112,7 +112,7 @@ void CGame::Initialize(){
         m_pDynamicsWorld = new btDiscreteDynamicsWorld(m_pDispatcher, m_pBroadphaseChache, m_pSolver, m_pCollisionConfiguration);
         m_pDynamicsWorld->setGravity(btVector3(0.0, -5000.0, 0.0));
         m_pCollisionShapes = btAlignedObjectArray<btCollisionShape*>();
-        m_currentRayProjectiles = std::vector<rayProjectile*>();
+        m_currentRayProjectiles = std::vector<RayProjectile*>();
         //m_physicsScratch = StagedBuffer(16 * 1024);   
 
         // Ground Collider
@@ -182,9 +182,9 @@ void CGame::Initialize(){
     }
 
     // Lets bind this action to to the user's mouse. For key values : https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
-    m_pLeftClick = new customBind;
+    m_pLeftClick = new CustomBind;
     m_pLeftClick->bind = 1;
-    m_pRightClick = new customBind; //&rightClick;
+    m_pRightClick = new CustomBind; //&rightClick;
     m_pRightClick->bind = 2;
     BeginGame();
 }

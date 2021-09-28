@@ -25,20 +25,20 @@
 /// any destructors are run.
 
 // Bind Struct
-typedef struct customBind {
+typedef struct CustomBind {
     i32 bind;
     b8 held, pressed, _pad0, _pad1;
-} customBind;
+} CustomBind;
 
-typedef struct projectile {
+typedef struct Projectile {
     char projectile;
-} projectile;
+} Projectile;
 
-typedef struct rayProjectile {
+typedef struct RayProjectile {
     Vector3 Pos1;
     Vector3 Pos2;
     XMVECTORF32 Color;
-} rayProjectile;
+} RayProjectile;
 
 class CGame:
 	public LComponent, 
@@ -55,18 +55,18 @@ class CGame:
     btAlignedObjectArray<btCollisionShape*> m_pCollisionShapes;
     enum ColliderType { BOX, SPHERE, PLANE };
     std::vector<ColliderType> m_colliderTypes;
-    customBind* m_pLeftClick;
-    customBind* m_pRightClick;
+    CustomBind* m_pLeftClick;
+    CustomBind* m_pRightClick;
 
     //StagedBuffer m_physicsScratch;
     
 
     // UserInput Vector
-    customBind m_currentBinds;
+    CustomBind m_currentBinds;
     
     // Projectile Vector
-    std::vector<projectile*> m_currentProjectiles;
-    std::vector<rayProjectile*> m_currentRayProjectiles;
+    std::vector<Projectile*> m_currentProjectiles;
+    std::vector<RayProjectile*> m_currentRayProjectiles;
 
 
     bool m_bDrawFrameRate = false; ///< Draw the frame rate.
@@ -85,7 +85,7 @@ class CGame:
 
   public:
     ~CGame(); ///< Destructor.
-    void UpdateCustomBindState(customBind*);
+    void UpdateCustomBindState(CustomBind*);
     void Initialize(); ///< Initialize the game.
     void ProcessFrame(); ///< Process an animation frame.
     void Release(); ///< Release the renderer.
