@@ -47,21 +47,21 @@ public:
     void BeginDebugDrawing();
     void EndDebugDrawing();
 
-    //TODO(sean): look into converting these into XMMVECTOR?
-    void DrawDebugLine(const Vector3 A, const Vector3 B, const XMVECTORF32 color);
-    void DrawDebugTriangle(const Vector3 A, const Vector3 B, const Vector3 C, const XMVECTORF32 color);
-    void DrawDebugQuad(const Vector3 A, const Vector3 B, const Vector3 C, const Vector3 D, const XMVECTORF32 color);
-    void DrawDebugRay(const Vector3 origin, const Vector3 direction, const f32 length, const XMVECTORF32 color);
-    void DrawDebugRing(const Vector3 origin, const Vector3 orientation, const f32 radius, const u32 segments, const XMVECTORF32 color);
-    void DrawDebugRing2(const FXMVECTOR origin, const FXMVECTOR major, const FXMVECTOR minor, const u32 segments, const XMVECTORF32 color);
-    void DrawDebugAABB(const BoundingBox box, const XMVECTORF32 color);
-    void DrawDebugOBB(const BoundingOrientedBox obb, const XMVECTORF32 color);
-    void DrawDebugSphere(const BoundingSphere sphere, const u32 segments, const XMVECTORF32 color);
-    //void DrawDebugCylinder(const BoundingSphere sphere, const XMVECTORF32 color);
-    //void DrawDebugCapsule(const BoundingSphere sphere, const XMVECTORF32 color);
-    //void DrawDebugGrid(const Vector3 center, const Vector3 orientation, const f32 length, const f32 width, const u32 length_segments, const u32 width_segments, const XMVECTORF32 color);
-    void DrawDebugCapsule(const Vector3 origin, const u32 radius, const u32 height, const u32 segments, const XMVECTORF32 color);
-    void DrawDebugGrid(const Vector3 x_axis, const Vector3 y_axis, const Vector3 origin, const u32 length_segments, const u32 width_segments, const XMVECTORF32 color);
+    //TODO(sean): look into converting these into XMMVECTOR for simd performance?
+    void DrawDebugLine(const Vector3& A, const Vector3& B, const XMVECTORF32 color);
+    void DrawDebugTriangle(const Vector3& A, const Vector3& B, const Vector3& C, const XMVECTORF32 color);
+    void DrawDebugQuad(const Vector3& A, const Vector3& B, const Vector3& C, const Vector3& D, const XMVECTORF32 color);
+    void DrawDebugRay(const Vector3& origin, const Vector3& direction, const f32 length, const XMVECTORF32 color);
+    void DrawDebugRing(const Vector3& origin, const Vector3& orientation, const f32 radius, const u32 segments, const XMVECTORF32 color);
+    void DrawDebugRing2(FXMVECTOR origin, FXMVECTOR major, FXMVECTOR minor, const u32 segments, const XMVECTORF32 color);
+    void DrawDebugAABB(const BoundingBox& box, const XMVECTORF32 color);
+    void DrawDebugOBB(const BoundingOrientedBox& obb, const XMVECTORF32 color);
+    void DrawDebugSphere(const BoundingSphere& sphere, const u32 segments, const XMVECTORF32 color);
+    //void DrawDebugCylinder(const BoundingSphere& sphere, const XMVECTORF32 color);
+    //void DrawDebugCapsule(const BoundingSphere& sphere, const XMVECTORF32 color);
+    //void DrawDebugGrid(const Vector3& center, const Vector3& orientation, const f32 length, const f32 width, const u32 length_segments, const u32 width_segments, const XMVECTORF32 color);
+    void DrawDebugCapsule(const Vector3& origin, const u32 radius, const u32 height, const u32 segments, const XMVECTORF32 color);
+    void DrawDebugGrid(const Vector3& x_axis, const Vector3& y_axis, const Vector3& origin, const u32 length_segments, const u32 width_segments, const XMVECTORF32 color);
 
     void DrawDebugCubeInternal(const CXMMATRIX world, const XMVECTORF32 color);
 
@@ -70,7 +70,7 @@ public:
     u32 GetResolutionHeight();
 
     //TODO(sean): Implement this
-    //NOTE(sean): Frustum Culling -- Don't render things behind the cameras near clip plane or beyond the cameras far-clip plane
+    //NOTE(sean): Frustum Culling -- Don't render things behind the cameras near clip plane
     //const bool BoxInFrustum(const BoundingBox&) const;
 };
 #endif

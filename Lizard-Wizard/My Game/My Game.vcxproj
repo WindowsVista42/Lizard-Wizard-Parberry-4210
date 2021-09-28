@@ -166,6 +166,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Common.cpp" />
+    <ClCompile Include="Raycast.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -175,6 +176,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h" />
+    <ClInclude Include="Raycast.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Defines.h" />
     <ClInclude Include="Game.h" />

@@ -189,17 +189,17 @@ void CRenderer::EndDebugDrawing() {
 }
 
 void CRenderer::DrawDebugLine(
-    const Vector3 A,
-    const Vector3 B,
+    const Vector3& A,
+    const Vector3& B,
     const XMVECTORF32 color
 ) {
     m_pPrimitiveBatch->DrawLine(VertexPC(A, color), VertexPC(B, color));
 }
 
 void CRenderer::DrawDebugTriangle(
-    const Vector3 A,
-    const Vector3 B,
-    const Vector3 C,
+    const Vector3& A,
+    const Vector3& B,
+    const Vector3& C,
     const XMVECTORF32 color
 ) {
     VertexPC vertices[4] = { VertexPC(A, color), VertexPC(B, color), VertexPC(C, color), VertexPC(A, color) };
@@ -207,10 +207,10 @@ void CRenderer::DrawDebugTriangle(
 }
 
 void CRenderer::DrawDebugQuad(
-    const Vector3 A,
-    const Vector3 B,
-    const Vector3 C,
-    const Vector3 D,
+    const Vector3& A,
+    const Vector3& B,
+    const Vector3& C,
+    const Vector3& D,
     const XMVECTORF32 color
 ) {
     VertexPC vertices[5] = { VertexPC(A, color), VertexPC(B, color), VertexPC(C, color), VertexPC(D, color), VertexPC(A, color) };
@@ -218,8 +218,8 @@ void CRenderer::DrawDebugQuad(
 }
 
 void CRenderer::DrawDebugRay(
-    const Vector3 origin,
-    const Vector3 direction,
+    const Vector3& origin,
+    const Vector3& direction,
     const f32 length,
     const XMVECTORF32 color
 ) {
@@ -228,8 +228,8 @@ void CRenderer::DrawDebugRay(
 }
 
 void CRenderer::DrawDebugRing(
-    const Vector3 origin,
-    const Vector3 orientation,
+    const Vector3& origin,
+    const Vector3& orientation,
     const f32 radius,
     const u32 segments,
     const XMVECTORF32 color
@@ -288,7 +288,7 @@ void CRenderer::DrawDebugRing2(
 }
 
 void CRenderer::DrawDebugSphere(
-    const BoundingSphere sphere,
+    const BoundingSphere& sphere,
     const u32 segments,
     const XMVECTORF32 color
 ) {
@@ -304,7 +304,7 @@ void CRenderer::DrawDebugSphere(
 
 //NOTE(sean): https://github.com/Microsoft/DirectXTK/wiki/DebugDraw
 void CRenderer::DrawDebugAABB(
-    const BoundingBox box,
+    const BoundingBox& box,
     const XMVECTORF32 color
 ) {
     XMMATRIX world = XMMatrixScaling(box.Extents.x, box.Extents.y, box.Extents.z); // scale the world matrix
@@ -316,7 +316,7 @@ void CRenderer::DrawDebugAABB(
 
 //NOTE(sean): https://github.com/Microsoft/DirectXTK/wiki/DebugDraw
 void CRenderer::DrawDebugOBB(
-    const BoundingOrientedBox obb,
+    const BoundingOrientedBox& obb,
     const XMVECTORF32 color
 ) {
     XMMATRIX world = XMMatrixRotationQuaternion(XMLoadFloat4(&obb.Orientation)); // get rotated matrix
@@ -329,7 +329,7 @@ void CRenderer::DrawDebugOBB(
 }
 
 void CRenderer::DrawDebugCapsule(
-   const Vector3 origin, 
+   const Vector3& origin, 
    const u32 radius, 
    const u32 height, 
    const u32 segments,
@@ -360,9 +360,9 @@ void CRenderer::DrawDebugCapsule(
 // The only way I could feasibly make this faster would be by mapping the internal buffer myself.
 // This would get rid of the deep copy the DrawXYZ() functions perform
 void CRenderer::DrawDebugGrid(
-    const Vector3 x_axis,
-    const Vector3 y_axis,
-    const Vector3 origin,
+    const Vector3& x_axis,
+    const Vector3& y_axis,
+    const Vector3& origin,
     const u32 x_segments,
     const u32 y_segments,
     const XMVECTORF32 color

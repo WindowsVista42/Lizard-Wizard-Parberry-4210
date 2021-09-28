@@ -28,7 +28,7 @@ CGame::~CGame(){
 
 // Custom User Input
 // (Ethan) We actually only need this function since the keybind and mouse functionality you gave me are identical, should be correctly adjusted for the new input system.
-void CGame::UpdateCustomBindState(CustomBind* customBind) {
+void CGame::UpdateCustomBindState(customBind* customBind) {
     if (GetKeyState(customBind->bind) < 0) {
         if (!customBind->held) {
             customBind->pressed = true;
@@ -42,6 +42,48 @@ void CGame::UpdateCustomBindState(CustomBind* customBind) {
         customBind->held = false;
         customBind->pressed = false;
     }
+}
+
+// Projectile Creation
+void CGame::FireProjectile() {
+    btCollisionShape* projectile = new btSphereShape(btScalar(50.));
+    m_pCollisionShapes.push_back(projectile);
+
+    // Implicating playerShape as a dynamic object.
+    btTransform startTransform;
+    startTransform.setIdentity();
+    i32 projectileSpeed = 100;
+    btScalar mass(2.);
+    btScalar friction(0.5);
+    bool isDynamic = (mass != 0.f);
+    Vector3 lookdir = m_pRenderer->m_pCamera->GetViewVector();
+    btVector3 localInertia(lookdir.x * 500., lookdir.y * 500., lookdir.z * 500.);
+    if (isDynamic)
+        projectile->calculateLocalInertia(mass, localInertia);
+    startTransform.setOrigin(*(btVector3*)&m_pRenderer->m_pCamera->GetPos() + btVector3(lookdir.x * 250., lookdir.y * 250., lookdir.z * 250.));
+
+    // std::cout << "{"  << lookdir.x << ", " << lookdir.y << ", " << lookdir.z << "}" << std::endl;
+    // Motionstate again.
+    btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
+    btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, projectile, localInertia);
+    rbInfo.m_friction = friction;
+    btRigidBody* body = new btRigidBody(rbInfo);
+    body->setAngularFactor(btVector3(0., 0., 0.));
+    m_pDynamicsWorld->addRigidBody(body);
+    body->applyForce(btVector3((projectileSpeed * 25000.) * lookdir.x, (projectileSpeed * 25000.) * lookdir.y, (projectileSpeed * 25000.) * lookdir.z), *(btVector3*)&m_pRenderer->m_pCamera->GetPos());
+}
+
+void CGame::FireRaycast() {
+    Vector3 lookdir = m_pRenderer->m_pCamera->GetViewVector();
+    btScalar param(0.5);
+    Vector3 Position = Vector3(m_pRenderer->m_pCamera->GetPos().x, m_pRenderer->m_pCamera->GetPos().y, m_pRenderer->m_pCamera->GetPos().z);
+    Vector3 Direction = Vector3(m_pRenderer->m_pCamera->GetViewVector().x, m_pRenderer->m_pCamera->GetViewVector().y, m_pRenderer->m_pCamera->GetViewVector().z);
+    f32 X = m_pRenderer->m_pCamera->GetPos().x;
+    rayProjectile* newRay = new rayProjectile();
+    newRay->Pos1 = Position;
+    newRay->Pos2 = Direction;
+    newRay->Color = Colors::IndianRed;
+    m_currentRayProjectiles.push_back(newRay);
 }
 
 
@@ -70,6 +112,7 @@ void CGame::Initialize(){
         m_pDynamicsWorld = new btDiscreteDynamicsWorld(m_pDispatcher, m_pBroadphaseChache, m_pSolver, m_pCollisionConfiguration);
         m_pDynamicsWorld->setGravity(btVector3(0.0, -5000.0, 0.0));
         m_pCollisionShapes = btAlignedObjectArray<btCollisionShape*>();
+        m_currentRayProjectiles = std::vector<rayProjectile*>();
         //m_physicsScratch = StagedBuffer(16 * 1024);   
 
         // Ground Collider
@@ -79,27 +122,22 @@ void CGame::Initialize(){
             btCollisionShape* collisionShape = new btBoxShape(btVector3(1500., 50., 1500.));
             m_pCollisionShapes.push_back(collisionShape);
 
-
             // Transforms
             btTransform collisionTransform;
             collisionTransform.setIdentity();
             collisionTransform.setOrigin(btVector3(0, -200, 0));
-
 
             // Mass
             btScalar mass(0.);
             btScalar restitution(0.f);
             btScalar friction(1.5);
 
-
             // Rigidbody is dynamic if and only if mass is non zero, otherwise static
             bool isDynamic = (mass != 0.f);
-
 
             btVector3 localInertia(0, 0, 0);
             if (isDynamic)
                 collisionShape->calculateLocalInertia(mass, localInertia);
-
 
             // Motion state, is optional.
             btDefaultMotionState* myMotionState = new btDefaultMotionState(collisionTransform);
@@ -144,9 +182,9 @@ void CGame::Initialize(){
     }
 
     // Lets bind this action to to the user's mouse. For key values : https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
-    m_pLeftClick = new CustomBind;
+    m_pLeftClick = new customBind;
     m_pLeftClick->bind = 1;
-    m_pRightClick = new CustomBind; //&rightClick;
+    m_pRightClick = new customBind; //&rightClick;
     m_pRightClick->bind = 2;
     BeginGame();
 }
@@ -230,28 +268,16 @@ void CGame::InputHandler() {
     if (m_pKeyboard->TriggerDown(VK_BACK)) //restart game
         BeginGame(); //restart game
 
+
       //TODO(sean): make this framerate dependant
     if (m_pKeyboard->Down(VK_RIGHT))
         yaw += sensitivity;
-
     if (m_pKeyboard->Down(VK_LEFT))
         yaw -= sensitivity;
-
     if (m_pKeyboard->Down(VK_UP))
         pitch -= sensitivity;
-
     if (m_pKeyboard->Down(VK_DOWN))
         pitch += sensitivity;
-   
-    // Mouse Click Testing
-    UpdateMouseBindState(m_pLeftClick);
-    UpdateMouseBindState(m_pRightClick);
-    
-    if (m_pLeftClick->pressed)
-        std::cout << "Left Click" << std::endl;
-
-    if (m_pRightClick->pressed)
-        std::cout << "Right Click" << std::endl;
 
     {
         Vector3 delta_movement = Vector3::Zero;
@@ -302,6 +328,8 @@ void CGame::InputHandler() {
         // I see you looking at 
         //    _____this
         //     . .
+        //
+        // i came, i saw, i praised, the lord, then break the law.
 
         RECT rect;
         GetWindowRect(m_pRenderer->GetHwnd(), &rect);
@@ -311,6 +339,16 @@ void CGame::InputHandler() {
         POINT cursor_pos;
         GetCursorPos(&cursor_pos);
         SetCursorPos(center.x, center.y);
+
+        // Mouse Click Testing
+        UpdateCustomBindState(m_pLeftClick);
+        UpdateCustomBindState(m_pRightClick);
+
+        if (m_pLeftClick->pressed)
+            FireProjectile();
+
+        if (m_pRightClick->pressed)
+            FireRaycast();
 
         Vector2 delta = { (f32)(cursor_pos.x - center.x), (f32)(cursor_pos.y - center.y) };
         delta *= mouse_sensitivity;
@@ -374,56 +412,10 @@ void CGame::RenderFrame() {
     static f32 time = 0.0;
     time += m_pTimer->GetFrameTime();
 
-    f32 offset = 100.0f * sinf(time);
-    f32 offset2 = 100.0f * cosf(time);
-
-    Vector3 A(200.0, 100.0, offset + 10.0f);
-    Vector3 B(200.0, offset + 10.0f, 100.0);
-
-    Vector3 C(offset, 200.0, 200.0);
-    Vector3 D(100.0, offset, 200.0);
-    Vector3 E(-100.0, offset, 200.0);
-
-    Vector3 F(50.0, offset, 50.0);
-    Vector3 G(-50.0, offset, 50.0);
-    Vector3 H(-50.0, offset, -50.0);
-    Vector3 I(50.0, offset, -50.0);
-
-    Vector3 ray_origin(50.0, 0.0, 50.0);
-    Vector3 dir(sinf(time), cosf(time), 0.0);
-    f32 length = 50.0;
-
-    Vector3 position_box = { offset + 100.0f, 0.0f, offset2 + 100.0f };
-    Vector3 extents_box = { 100.0, 100.0, 100.0 };
-    BoundingBox box = BoundingBox(position_box, extents_box);
-
-    Vector3 position_obb = { 100.0, 0.0, -200.0 };
-    Vector3 extents_obb = { 100.0, 100.0, 100.0 };
-    Quaternion rotation_obb = Quaternion::CreateFromYawPitchRoll(sinf(time), -cosf(time), cos(time));
-    BoundingOrientedBox obb = BoundingOrientedBox(position_obb, extents_obb, rotation_obb);
-
-    Vector3 x_axis(100.0, 0.0, 0.0);//x_axis(offset + 110.0, 0.0, 0.0);
-    Vector3 y_axis(0.0, 0.0, 100.0);//y_axis(0.0, 0.0, offset + 110.0);
-    Vector3 grid_origin(-50.0, -100.0, -50.0);
-
-    Vector3 ring_origin(-80.0, -20.0, 0.0);
-    Vector3 ring_major_axis(100.0, 0.0, 0.0);
-    Vector3 ring_minor_axis(0.0, 100.0, 0.0);
-    u32 ring_segments = 8;
-
-    BoundingSphere sphere(Vector3(0.0, -20.0, 0.0), 100.0);
-    u32 sphere_segments = (u32)((sinf(time) + 1.0) * 16.0) + 4;
-
     m_pRenderer->BeginFrame();
     {
-
         m_pRenderer->BeginDebugDrawing();
-        {   // DrawDebugXYZ()
-            {
-
-            }
-
-
+        {
             for every(j, m_pDynamicsWorld->getNumCollisionObjects()) {
                 btCollisionObject* obj = m_pDynamicsWorld->getCollisionObjectArray()[j];
                 btCollisionShape* shape = obj->getCollisionShape();
@@ -453,26 +445,19 @@ void CGame::RenderFrame() {
                     BoundingSphere sphere(*(Vector3*)&trans.getOrigin(), castratedObject->getRadius());
                     m_pRenderer->DrawDebugSphere(sphere, 32, Colors::Aqua);
                     */
-                    //std::cout << "Capsule Type : " << shape->getShapeType() << std::endl;
                     btCapsuleShape* castratedObject = reinterpret_cast<btCapsuleShape*>(shape);
                     m_pRenderer->DrawDebugCapsule(*(Vector3*)&trans.getOrigin(), castratedObject->getRadius(), castratedObject->getHalfHeight() , 32, Colors::Purple);
-                }
-                else { // Anything else, temporarily.
-
+                } else { // Anything else, temporarily.
+                    btSphereShape* castratedObject = reinterpret_cast<btSphereShape*>(shape);
+                    BoundingSphere sphere = BoundingSphere(*(Vector3*)&trans.getOrigin(), castratedObject->getRadius());
+                    m_pRenderer->DrawDebugSphere(sphere, 32, Colors::CadetBlue);
                 }
             }
 
-            /*
-            m_pRenderer->DrawDebugLine(A, B, Colors::Blue);
-            m_pRenderer->DrawDebugTriangle(C, D, E, Colors::Green);
-            m_pRenderer->DrawDebugQuad(F, G, H, I, Colors::Orange);
-            m_pRenderer->DrawDebugRay(ray_origin, dir, length, Colors::Purple);
-            m_pRenderer->DrawDebugAABB(box, Colors::Red);
-            m_pRenderer->DrawDebugOBB(obb, Colors::Yellow);
-            m_pRenderer->DrawDebugGrid(x_axis, y_axis, grid_origin, 4, 4, Colors::GreenYellow);
-            m_pRenderer->DrawDebugRing2(ring_origin, ring_major_axis, ring_minor_axis, ring_segments, Colors::LightPink);
-            m_pRenderer->DrawDebugSphere(sphere, sphere_segments, Colors::Aqua);
-            */
+            for every(j, m_currentRayProjectiles.size()) {
+                //std::cout << m_currentRayProjectiles.size() << " Rays have been casted, Position : (" << m_currentRayProjectiles[j]->Pos1.x << ", " << m_currentRayProjectiles[j]->Pos1.y << ", " << m_currentRayProjectiles[j]->Pos1.z << ")" << std::endl;
+                m_pRenderer->DrawDebugRay(m_currentRayProjectiles[j]->Pos1, m_currentRayProjectiles[j]->Pos2, 50000, m_currentRayProjectiles[j]->Color);
+            }
         }
         m_pRenderer->EndDebugDrawing();
 
@@ -493,9 +478,6 @@ void CGame::ProcessFrame(){
     m_pTimer->Tick([&]() { //all time-dependent function calls should go here
         m_pObjectManager->move(); //move all objects
         m_pDynamicsWorld->stepSimulation(m_pTimer->GetFrameTime(), 10); // Step Physics
-
-
     });
-
     RenderFrame(); //render a frame of animation
 }
