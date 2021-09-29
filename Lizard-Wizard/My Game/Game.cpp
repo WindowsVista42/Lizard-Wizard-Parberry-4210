@@ -418,7 +418,7 @@ void CGame::RenderFrame() {
     m_pRenderer->m_pCamera->SetYaw(yaw);
     m_pRenderer->m_pCamera->SetPitch(pitch);
 
-    { //NOTE(sean): update camera position i really love how bullet makes this easy :)
+    { //NOTE(sean): update camera position :/
         btCollisionObject* obj = m_pDynamicsWorld->getCollisionObjectArray()[1];
         btCollisionShape* shape = obj->getCollisionShape();
         btRigidBody* body = btRigidBody::upcast(obj);
@@ -501,34 +501,34 @@ void CGame::RenderFrame() {
                     trans = obj->getWorldTransform();
                 }
 
-                if (shape->getShapeType() == 0) { // Box
+                switch(shape->getShapeType()) {
+                case(BT_SHAPE_TYPE_BOX): {
                     btBoxShape* castratedObject = reinterpret_cast<btBoxShape*>(shape);
                     BoundingBox box = BoundingBox(*(Vector3*)&trans.getOrigin(), *(Vector3*)&(castratedObject->getHalfExtentsWithMargin()));
                     m_pRenderer->DrawDebugAABB(box, Colors::Red);
                     Vector3 ext = *(Vector3*)&castratedObject->getHalfExtentsWithMargin();
-                    Vector3 x_axis(ext.x, 0, 0); //x_axis(offset + 110.0, 0.0, 0.0);
-                    Vector3 y_axis(0.0, 0.0, ext.z); //y_axis(0.0, 0.0, offset + 110.0);
+                    Vector3 x_axis(ext.x, 0, 0);
+                    Vector3 y_axis(0.0, 0.0, ext.z);
                     Vector3 origin = *(Vector3*)&trans.getOrigin();
                     origin.y += ext.y;
 
                     m_pRenderer->DrawDebugGrid(x_axis, y_axis, origin, 4, 4, Colors::GreenYellow);
-                } else if (shape->getShapeType() == 10) { // Capsule
-                    /*
-                    btSphereShape* castratedObject = reinterpret_cast<btSphereShape*>(shape);
-                    BoundingSphere sphere(*(Vector3*)&trans.getOrigin(), castratedObject->getRadius());
-                    m_pRenderer->DrawDebugSphere(sphere, 32, Colors::Aqua);
-                    */
+                } break;
+
+                case(BT_SHAPE_TYPE_CAPSULE): {
                     btCapsuleShape* castratedObject = reinterpret_cast<btCapsuleShape*>(shape);
                     m_pRenderer->DrawDebugCapsule(*(Vector3*)&trans.getOrigin(), castratedObject->getRadius(), castratedObject->getHalfHeight() , 32, Colors::Purple);
-                } else { // Anything else, temporarily.
+                } break;
+
+                default: {
                     btSphereShape* castratedObject = reinterpret_cast<btSphereShape*>(shape);
                     BoundingSphere sphere = BoundingSphere(*(Vector3*)&trans.getOrigin(), castratedObject->getRadius());
                     m_pRenderer->DrawDebugSphere(sphere, 32, Colors::CadetBlue);
+                } break;
                 }
             }
 
             for every(j, m_currentRayProjectiles.size()) {
-                //std::cout << m_currentRayProjectiles.size() << " Rays have been casted, Position : (" << m_currentRayProjectiles[j]->Pos1.x << ", " << m_currentRayProjectiles[j]->Pos1.y << ", " << m_currentRayProjectiles[j]->Pos1.z << ")" << std::endl;
                 m_pRenderer->DrawDebugRay(m_currentRayProjectiles[j]->Pos1, m_currentRayProjectiles[j]->Pos2, 50000, m_currentRayProjectiles[j]->Color);
             }
         }
