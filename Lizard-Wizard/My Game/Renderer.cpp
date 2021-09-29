@@ -1,4 +1,5 @@
 #include "Renderer.h"
+#include "Math.h"
 
 const u32 g_cubeVertexCount = 8;
 const Vector3 g_cubeVertices[g_cubeVertexCount] = {
@@ -307,10 +308,7 @@ void CRenderer::DrawDebugAABB(
     const BoundingBox box,
     const XMVECTORF32 color
 ) {
-    XMMATRIX world = XMMatrixScaling(box.Extents.x, box.Extents.y, box.Extents.z); // scale the world matrix
-    XMVECTOR position = XMLoadFloat3(&box.Center);
-    world.r[3] = XMVectorSelect(world.r[3], position, g_XMSelect1110); // position the world matrix
-
+    XMMATRIX world = MoveScaleMatrix(box.Center, box.Extents);
     DrawDebugCubeInternal(world, color);
 }
 
@@ -319,12 +317,7 @@ void CRenderer::DrawDebugOBB(
     const BoundingOrientedBox obb,
     const XMVECTORF32 color
 ) {
-    XMMATRIX world = XMMatrixRotationQuaternion(XMLoadFloat4(&obb.Orientation)); // get rotated matrix
-    XMMATRIX scale = XMMatrixScaling(obb.Extents.x, obb.Extents.y, obb.Extents.z); // get scaled matrix
-    world = XMMatrixMultiply(scale, world); // scale based on rotation
-    XMVECTOR position = XMLoadFloat3(&obb.Center);
-    world.r[3] = XMVectorSelect(world.r[3], position, g_XMSelect1110); // position the world matrix
-
+    XMMATRIX world = MoveRotateScaleMatrix(obb.Center, obb.Orientation, obb.Extents);
     DrawDebugCubeInternal(world, color);
 }
 
@@ -444,9 +437,7 @@ void CRenderer::DrawDebugModelInstance(SModelInstance* instance) {
 
     //NOTE(sean): we might want to look into not making this happen on every draw call
     {
-        const XMVECTORF32 scale = { 1.0f, 1.0f, 1.0f };
-        const XMVECTORF32 translate = { 0.0, 0.0, 0.0 };
-        XMMATRIX world = XMMatrixTransformation(g_XMZero, Quaternion::Identity, scale, g_XMZero, Quaternion::Identity, g_XMZero);
+        const XMMATRIX world = XMMatrixTransformation(g_XMZero, Quaternion::Identity, g_XMOne, g_XMZero, Quaternion::Identity, g_XMZero);
         m_pDebugEffect->SetWorld(world);
     }
 }

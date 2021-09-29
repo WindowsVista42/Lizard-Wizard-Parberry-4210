@@ -21,9 +21,6 @@ struct SModelInstance {
     XMMATRIX m_worldMatrix; // i dont know if this should be called model or world matrix
 
     SModelInstance(u32 instance);
-    void MoveTo(Vector3 position);
-    void RotateTo(Quaternion rotation);
-    void ScaleTo(Vector3 scale);
 };
 
 #endif

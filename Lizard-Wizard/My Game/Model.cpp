@@ -1,4 +1,5 @@
 #include "Model.h"
+#include "Math.h"
 
 SDebugModel::SDebugModel(const VertexPC* triangles, const u32 count) {
     // we want to grab every 2 and slap them into a line if that makes sense
@@ -18,13 +19,8 @@ SDebugModel::SDebugModel(const VertexPC* triangles, const u32 count) {
 
 SModelInstance::SModelInstance(u32 instance) {
     m_modelIndex = instance;
+
+    const XMMATRIX world = XMMatrixTransformation(g_XMZero, Quaternion::Identity, g_XMOne, g_XMZero, Quaternion::Identity, g_XMZero);
+    m_worldMatrix = world;
 }
 
-void SModelInstance::MoveTo(Vector3 position) {
-}
-
-void SModelInstance::RotateTo(Quaternion rotation) {
-}
-
-void SModelInstance::ScaleTo(Vector3 scale) {
-}
