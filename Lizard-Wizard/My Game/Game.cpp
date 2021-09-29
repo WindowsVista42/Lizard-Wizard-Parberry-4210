@@ -438,9 +438,9 @@ void CGame::RenderFrame() {
 
     m_pRenderer->BeginFrame();
     {
-        //NOTE(sean): this has to be separate because each instance has to be rendered into its own batch,
-        //in the near future we wont be uploading data to the gpu so this wont matter.
-        //future apis for rendering stuff should be kinda similar to this though, without needing to be wrapped in Begin() {} End()
+        //NOTE(sean): these need to be in separate batches because each instance has to be rendered with its own world matrix,
+        //this allows us to position, rotate, and scale models without having to *actually* calculate the translations
+        //this api should be pretty similar to how we'll render actual models in the near-future 
         {
             const Vector3 p0 = { 0.0, 0.0, 0.0 };
             const Vector3 s0 = { 100.0, 100.0, 100.0 };
@@ -453,6 +453,7 @@ void CGame::RenderFrame() {
             m_pRenderer->DrawDebugModelInstance(&model_instance);
         }
 
+        //NOTE(sean): the reason batching all of this together works is that we're doing all the vertex calculations on the cpu
         m_pRenderer->BeginDebugBatch();
         {
             for every(j, m_pDynamicsWorld->getNumCollisionObjects()) {
