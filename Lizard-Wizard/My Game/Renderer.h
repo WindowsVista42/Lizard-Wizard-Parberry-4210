@@ -16,7 +16,8 @@ private:
     */
 
     /// This is a basic line rendering effect
-    std::unique_ptr<BasicEffect> m_pDebugEffect;
+    std::unique_ptr<BasicEffect> m_pDebugLineEffect;
+    std::unique_ptr<BasicEffect> m_pDebugTriangleEffect;
     void CreateAllEffects();
 
     GraphicsResource m_cubeVertexBuffer;
@@ -46,7 +47,8 @@ public:
 
     const usize GetNumFrames() const;
 
-    void BeginDebugBatch();
+    void BeginDebugLineBatch();
+    void BeginDebugTriangleBatch();
     void EndDebugDrawing();
 
     //TODO(sean): look into converting these into XMMVECTOR for simd performance?
@@ -69,7 +71,8 @@ public:
 
     u32 AddDebugModel(SDebugModel* model);
 
-    void DrawDebugModel(SDebugModel* model);
+    void DrawDebugLineModel(SDebugModel* model);
+    void DrawDebugTriangleModel(SDebugModel* model);
     void DrawDebugModelInstance(SModelInstance* instance);
 
     void ResetDebugWorldMatrix();

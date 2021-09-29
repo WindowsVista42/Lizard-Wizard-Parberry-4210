@@ -6,7 +6,7 @@
 //TODO(sean): Create real models that are VertexPNT stuff
 
 //NOTE(sean):
-enum DebugModelType { LINE_LIST, TRIANGLE_LIST };
+enum class DebugModelType { LINE_LIST, TRIANGLE_LIST };
 
 //NOTE(sean);
 /// Basic 3d line-model

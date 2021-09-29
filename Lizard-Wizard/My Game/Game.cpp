@@ -183,7 +183,7 @@ void CGame::Initialize(){
         };
 
         // this is probably 0 in this contrived case
-        u32 index = m_pRenderer->AddDebugModel(&SDebugModel(verts, 9));
+        u32 index = m_pRenderer->AddDebugModel(&SDebugModel(verts, 9, DebugModelType::TRIANGLE_LIST));
         model_instance = SModelInstance(index);
         Vector3 scale = { 100.0, 100.0, 100.0 };
         model_instance.m_worldMatrix = MoveScaleMatrix(Vector3::Zero, scale);
@@ -471,7 +471,7 @@ void CGame::RenderFrame() {
         }
 
         //NOTE(sean): the reason batching all of this together works, is that we're doing all the vertex calculations on the cpu instead of the gpu
-        m_pRenderer->BeginDebugBatch();
+        m_pRenderer->BeginDebugLineBatch();
         {
             for every(j, m_pDynamicsWorld->getNumCollisionObjects()) {
                 btCollisionObject* obj = m_pDynamicsWorld->getCollisionObjectArray()[j];

@@ -73,8 +73,23 @@ void CRenderer::CreateAllEffects() {
         );
 
         //TODO(sean): Figure out what the extra fields for this *can* do
-        m_pDebugEffect = std::make_unique<BasicEffect>(m_pD3DDevice, EffectFlags::VertexColor, pipeline_state_desc);
-        m_pDebugEffect->SetProjection(XMLoadFloat4x4(&m_projection));
+        m_pDebugLineEffect = std::make_unique<BasicEffect>(m_pD3DDevice, EffectFlags::VertexColor, pipeline_state_desc);
+        m_pDebugLineEffect->SetProjection(XMLoadFloat4x4(&m_projection));
+    }
+
+    {
+        EffectPipelineStateDescription pipeline_state_desc(
+            &VertexPC::InputLayout,
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
+            CommonStates::CullNone,
+            m_RenderTargetState,
+            D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
+        );
+
+        //TODO(sean): Figure out what the extra fields for this *can* do
+        m_pDebugTriangleEffect = std::make_unique<BasicEffect>(m_pD3DDevice, EffectFlags::VertexColor, pipeline_state_desc);
+        m_pDebugTriangleEffect->SetProjection(XMLoadFloat4x4(&m_projection));
     }
 
     /*
@@ -172,14 +187,21 @@ void CRenderer::DrawCube(const Vector3& position) {
 }
 */
 
-void CRenderer::BeginDebugBatch() {
+void CRenderer::BeginDebugLineBatch() {
     m_pPrimitiveBatch->Begin(m_pCommandList);
 
     XMMATRIX world = XMMatrixTransformation( g_XMZero, Quaternion::Identity, g_XMOne, g_XMZero, Quaternion::Identity, g_XMZero);
 
-    m_pDebugEffect->SetWorld(world);
-    m_pDebugEffect->SetView(XMLoadFloat4x4(&m_view));
-    m_pDebugEffect->Apply(m_pCommandList);
+    m_pDebugLineEffect->SetWorld(world);
+    m_pDebugLineEffect->SetView(XMLoadFloat4x4(&m_view));
+    m_pDebugLineEffect->Apply(m_pCommandList);
+}
+
+void CRenderer::BeginDebugTriangleBatch() {
+    m_pPrimitiveBatch->Begin(m_pCommandList);
+
+    m_pDebugTriangleEffect->SetView(XMLoadFloat4x4(&m_view));
+    m_pDebugTriangleEffect->Apply(m_pCommandList);
 }
 
 void CRenderer::EndDebugDrawing() {
@@ -439,25 +461,45 @@ void CRenderer::DrawDebugModelInstance(SModelInstance* instance) {
 */
 
 void CRenderer::DrawDebugModelInstance(SModelInstance* instance) {
-    BeginDebugBatch();
-    {
-        m_pDebugEffect->SetWorld(instance->m_worldMatrix);
-        m_pDebugEffect->Apply(m_pCommandList);
-        DrawDebugModel(&m_debugModels[instance->m_modelIndex]);
+    SDebugModel* pModel = &m_debugModels[instance->m_modelIndex];
+
+    switch (pModel->m_modelType) {
+    case(DebugModelType::LINE_LIST): {
+        BeginDebugLineBatch();
+        {
+            m_pDebugLineEffect->SetWorld(instance->m_worldMatrix);
+            m_pDebugLineEffect->Apply(m_pCommandList);
+            DrawDebugLineModel(pModel);
+        }
+        EndDebugDrawing();
+    } break;
+
+    case(DebugModelType::TRIANGLE_LIST): {
+        BeginDebugTriangleBatch();
+        {
+            m_pDebugTriangleEffect->SetWorld(instance->m_worldMatrix);
+            m_pDebugTriangleEffect->Apply(m_pCommandList);
+            DrawDebugTriangleModel(pModel);
+        }
+        EndDebugDrawing();
+    } break;
     }
-    EndDebugDrawing();
 }
 
 void CRenderer::ResetDebugWorldMatrix() {
     //NOTE(sean): we might want to look into not making this happen on every draw call
     const XMMATRIX world = XMMatrixTransformation(g_XMZero, Quaternion::Identity, g_XMOne, g_XMZero, Quaternion::Identity, g_XMZero);
-    m_pDebugEffect->SetWorld(world);
-    m_pDebugEffect->Apply(m_pCommandList);
+    m_pDebugLineEffect->SetWorld(world);
+    m_pDebugLineEffect->Apply(m_pCommandList);
 }
 
 //NOTE(sean): if performance is required, this can be made nocopy
-void CRenderer::DrawDebugModel(SDebugModel* model) {
-    m_pPrimitiveBatch->Draw(D3D_PRIMITIVE_TOPOLOGY_LINELIST, model->m_lineList.data(), model->m_lineList.size());
+void CRenderer::DrawDebugLineModel(SDebugModel* model) {
+    m_pPrimitiveBatch->Draw(D3D_PRIMITIVE_TOPOLOGY_LINELIST, model->m_vertexList.data(), model->m_vertexList.size());
+}
+
+void CRenderer::DrawDebugTriangleModel(SDebugModel* model) {
+    m_pPrimitiveBatch->Draw(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, model->m_vertexList.data(), model->m_vertexList.size());
 }
 
 const usize CRenderer::GetNumFrames() const {
