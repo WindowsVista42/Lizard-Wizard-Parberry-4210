@@ -22,3 +22,5 @@ typedef VertexPositionColor VertexPC;
 
 #define every(name, count) (usize (name) = 0; (name) < (count); (name) += 1)
 
+#define BT_SHAPE_TYPE_BOX 0
+#define BT_SHAPE_TYPE_CAPSULE 10
