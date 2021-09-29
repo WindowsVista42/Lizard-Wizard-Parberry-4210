@@ -166,6 +166,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Common.cpp" />
+    <ClCompile Include="Math.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="Raycast.cpp" />
     <ClCompile Include="Renderer.cpp" />
@@ -177,6 +178,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h" />
+    <ClInclude Include="Math.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="Raycast.h" />
     <ClInclude Include="Renderer.h" />
