@@ -20,6 +20,7 @@ struct SModelInstance {
     u32 m_modelIndex;
     XMMATRIX m_worldMatrix; // i dont know if this should be called model or world matrix
 
+    SModelInstance();
     SModelInstance(u32 instance);
 };
 

@@ -24,3 +24,10 @@ SModelInstance::SModelInstance(u32 instance) {
     m_worldMatrix = world;
 }
 
+SModelInstance::SModelInstance() {
+    m_modelIndex = UINT_MAX; // i really hope you segfault if you default construct
+
+    const XMMATRIX world = XMMatrixTransformation(g_XMZero, Quaternion::Identity, g_XMOne, g_XMZero, Quaternion::Identity, g_XMZero);
+    m_worldMatrix = world;
+}
+
