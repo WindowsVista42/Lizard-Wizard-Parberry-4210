@@ -442,18 +442,51 @@ void CGame::RenderFrame() {
         //this allows us to position, rotate, and scale models without having to *actually* calculate the translations
         //this api should be pretty similar to how we'll render actual models in the near-future 
         {
-            const Vector3 p0 = { 0.0, 0.0, 0.0 };
-            const Vector3 s0 = { 100.0, 100.0, 100.0 };
-            model_instance.m_worldMatrix = MoveScaleMatrix(p0, s0);
-            m_pRenderer->DrawDebugModelInstance(&model_instance);
+            {
+                const Vector3 pos = { 0.0, 0.0, 0.0 };
+                const Vector3 scl = { 100.0, 100.0, 100.0 };
+                model_instance.m_worldMatrix = MoveScaleMatrix(pos, scl);
+                m_pRenderer->DrawDebugModelInstance(&model_instance);
+            }
     
-            const Vector3 p1 = { 200.0, 0.0, 0.0 };
-            const Vector3 s1 = { 50.0, 50.0, 50.0 };
-            model_instance.m_worldMatrix = MoveScaleMatrix(p1, s1);
-            m_pRenderer->DrawDebugModelInstance(&model_instance);
+            {
+                const Vector3 pos = { 200.0, 0.0, 0.0 };
+                const Vector3 scl = { 50.0, 50.0, 50.0 };
+                model_instance.m_worldMatrix = MoveScaleMatrix(pos, scl);
+                m_pRenderer->DrawDebugModelInstance(&model_instance);
+            }
+
+            for every(j, m_pDynamicsWorld->getNumCollisionObjects()) {
+                btCollisionObject* obj = m_pDynamicsWorld->getCollisionObjectArray()[j];
+                btCollisionShape* shape = obj->getCollisionShape();
+                btRigidBody* body = btRigidBody::upcast(obj);
+                btTransform trans;
+
+                if (body && body->getMotionState()) {
+                    body->getMotionState()->getWorldTransform(trans);
+                } else {
+                    trans = obj->getWorldTransform();
+                }
+
+
+                //TODO(sean): figure out how i want to format switch statements so that they dont drift to the right forever and ever and ever and ever and ever and ever ..........
+                switch(shape->getShapeType()) {
+                case(BT_SHAPE_TYPE_BOX): {} break;
+
+                case(BT_SHAPE_TYPE_CAPSULE): {} break;
+
+                default: {
+                    const Vector3 pos = *(Vector3*)&trans.getOrigin();
+                    const Vector3 scl = { 10.0, 10.0, 10.0 };
+                    const Quaternion rot = *(Quaternion*)&trans.getRotation();
+                    model_instance.m_worldMatrix = MoveRotateScaleMatrix(pos, rot, scl);
+                    m_pRenderer->DrawDebugModelInstance(&model_instance);
+                } break;
+                }
+            }
         }
 
-        //NOTE(sean): the reason batching all of this together works is that we're doing all the vertex calculations on the cpu
+        //NOTE(sean): the reason batching all of this together works, is that we're doing all the vertex calculations on the cpu instead of the gpu
         m_pRenderer->BeginDebugBatch();
         {
             for every(j, m_pDynamicsWorld->getNumCollisionObjects()) {
