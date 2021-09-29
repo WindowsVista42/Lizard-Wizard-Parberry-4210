@@ -27,7 +27,7 @@ CGame::~CGame(){
 }
 
 // Custom User Input
-// (Ethan) We actually only need this function since the keybind and mouse functionality you gave me are identical, should be correctly adjusted for the new input system.
+//NOTE(ethan): We actually only need this function since the keybind and mouse functionality you gave me are identical, should be correctly adjusted for the new input system.
 void CGame::UpdateCustomBindState(CustomBind* customBind) {
     if (GetKeyState(customBind->bind) < 0) {
         if (!customBind->held) {
@@ -45,6 +45,8 @@ void CGame::UpdateCustomBindState(CustomBind* customBind) {
 }
 
 // Projectile Creation
+//FIXME(sean): on 144hz monitors this function will only sometimes shoot the projectile out of the player
+//this is probably aleviated with collision groups because its just an update-rate thing
 void CGame::FireProjectile() {
     btCollisionShape* projectile = new btSphereShape(btScalar(50.));
     m_pCollisionShapes.push_back(projectile);
@@ -53,7 +55,7 @@ void CGame::FireProjectile() {
     btTransform startTransform;
     startTransform.setIdentity();
     i32 projectileSpeed = 100;
-    btScalar mass(2.);
+    btScalar mass(0.1); //NOTE(sean): for things that the player might be able to interact with, we want the mass to be smaller
     btScalar friction(0.5);
     bool isDynamic = (mass != 0.f);
     Vector3 lookdir = m_pRenderer->m_pCamera->GetViewVector();
@@ -90,11 +92,7 @@ void CGame::FireRaycast() {
 /// Create the renderer and the object manager, load images and sounds, and
 /// begin the game.
 /// 
-
-
 void CGame::Initialize(){
-    //m_pRenderer = new LSpriteRenderer(eSpriteMode::Batched2D); 
-    //m_pRenderer->Initialize(eSprite::Size); 
     m_pRenderer = new CRenderer();
     m_pRenderer->Initialize();
   
@@ -103,6 +101,7 @@ void CGame::Initialize(){
     m_pObjectManager = new CObjectManager; //set up the object manager 
     LoadSounds(); //load the sounds for this game
 
+    //TODO(ethan): Move this into its own init function
     // Bullet3 Initialize
     {
         m_pCollisionConfiguration = new btDefaultCollisionConfiguration();
@@ -152,7 +151,7 @@ void CGame::Initialize(){
          }
 
         // Player Rigidbody
-        // Note : This ideally will act as the players physical presence in the world, has the shape of a capsule.
+        // NOTE(ethan): This ideally will act as the players physical presence in the world, has the shape of a capsule.
         {
             // Creates our players body / hitbox.
             btCollisionShape* playerShape = new btCapsuleShape(btScalar(100.), btScalar(250.));
@@ -242,7 +241,6 @@ void CGame::BeginGame(){
 
 /// Poll the keyboard state and respond to the key presses that happened since
 /// the last frame
-
 void CGame::InputHandler() {
     m_pKeyboard->GetState(); //get current keyboard state 
 
