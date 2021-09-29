@@ -1,6 +1,5 @@
-#pragma once
-
 #include <cstdint>
+#include <Renderer3D.h>
 
 typedef uint8_t u8;
 typedef uint16_t u16;
@@ -18,4 +17,8 @@ typedef intptr_t isize;
 typedef float f32;
 typedef double f64;
 
+typedef VertexPositionNormalTexture VertexPNT;
+typedef VertexPositionColor VertexPC;
+
 #define every(name, count) (usize (name) = 0; (name) < (count); (name) += 1)
+
