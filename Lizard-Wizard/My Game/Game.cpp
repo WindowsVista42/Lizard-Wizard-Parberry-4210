@@ -181,10 +181,10 @@ void CGame::Initialize(){
     }
 
     // Lets bind this action to to the user's mouse. For key values : https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
-    m_pLeftClick = new CustomBind;
-    m_pLeftClick->bind = 1;
-    m_pRightClick = new CustomBind; //&rightClick;
-    m_pRightClick->bind = 2;
+    m_leftClick = {};
+    m_leftClick.bind = VK_LBUTTON;
+    m_rightClick = {};
+    m_rightClick.bind = VK_RBUTTON;
     BeginGame();
 }
 
@@ -339,13 +339,13 @@ void CGame::InputHandler() {
         SetCursorPos(center.x, center.y);
 
         // Mouse Click Testing
-        UpdateCustomBindState(m_pLeftClick);
-        UpdateCustomBindState(m_pRightClick);
+        UpdateCustomBindState(&m_leftClick);
+        UpdateCustomBindState(&m_rightClick);
 
-        if (m_pLeftClick->pressed)
+        if (m_leftClick.pressed)
             FireProjectile();
 
-        if (m_pRightClick->pressed)
+        if (m_rightClick.pressed)
             FireRaycast();
 
         Vector2 delta = { (f32)(cursor_pos.x - center.x), (f32)(cursor_pos.y - center.y) };
