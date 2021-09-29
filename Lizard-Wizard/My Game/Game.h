@@ -40,7 +40,7 @@ class CGame:
 	public LSettings,
 	public CCommon
 { 
-  private:
+private:
     // Bullet3 Declarations
     btDefaultCollisionConfiguration* m_pCollisionConfiguration;
     btCollisionDispatcher* m_pDispatcher;
@@ -56,11 +56,11 @@ class CGame:
     
 
     // UserInput Vector
-    CustomBind m_currentBinds;
+    //CustomBind m_currentBinds;
     
     // Projectile Vector
-    std::vector<Projectile*> m_currentProjectiles;
-    std::vector<RayProjectile*> m_currentRayProjectiles;
+    //std::vector<Projectile> m_currentProjectiles;
+    std::vector<RayProjectile> m_currentRayProjectiles;
 
 
     bool m_bDrawFrameRate = false; ///< Draw the frame rate.
@@ -77,7 +77,7 @@ class CGame:
     void FireProjectile();
     void FireRaycast();
 
-  public:
+public:
     ~CGame(); ///< Destructor.
     void Initialize(); ///< Initialize the game.
     void ProcessFrame(); ///< Process an animation frame.

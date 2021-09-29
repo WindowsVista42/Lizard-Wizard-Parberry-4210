@@ -65,10 +65,12 @@ void CGame::FireRaycast() {
     Vector3 Position = Vector3(m_pRenderer->m_pCamera->GetPos().x, m_pRenderer->m_pCamera->GetPos().y, m_pRenderer->m_pCamera->GetPos().z);
     Vector3 Direction = Vector3(m_pRenderer->m_pCamera->GetViewVector().x, m_pRenderer->m_pCamera->GetViewVector().y, m_pRenderer->m_pCamera->GetViewVector().z);
     f32 X = m_pRenderer->m_pCamera->GetPos().x;
-    RayProjectile* newRay = new RayProjectile();
-    newRay->Pos1 = Position;
-    newRay->Pos2 = Direction;
-    newRay->Color = Colors::IndianRed;
+
+    RayProjectile newRay = RayProjectile();
+    newRay.Pos1 = Position;
+    newRay.Pos2 = Direction;
+    newRay.Color = Colors::IndianRed;
+
     m_currentRayProjectiles.push_back(newRay);
 }
 
@@ -95,7 +97,7 @@ void CGame::Initialize(){
         m_pDynamicsWorld = new btDiscreteDynamicsWorld(m_pDispatcher, m_pBroadphaseChache, m_pSolver, m_pCollisionConfiguration);
         m_pDynamicsWorld->setGravity(btVector3(0.0, -5000.0, 0.0));
         m_pCollisionShapes = btAlignedObjectArray<btCollisionShape*>();
-        m_currentRayProjectiles = std::vector<RayProjectile*>();
+        m_currentRayProjectiles = std::vector<RayProjectile>();
         //m_physicsScratch = StagedBuffer(16 * 1024);   
 
         // Ground Collider
@@ -188,8 +190,8 @@ void CGame::Initialize(){
     }
 
     // Lets bind this action to to the user's mouse. For key values : https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
-    m_leftClick = CustomBind(VK_LBUTTON);
-    m_rightClick = CustomBind(VK_RBUTTON);
+    m_leftClick = CustomBind::New(VK_LBUTTON);
+    m_rightClick = CustomBind::New(VK_RBUTTON);
 
     BeginGame();
 }
@@ -514,7 +516,7 @@ void CGame::RenderFrame() {
             }
 
             for every(j, m_currentRayProjectiles.size()) {
-                m_pRenderer->DrawDebugRay(m_currentRayProjectiles[j]->Pos1, m_currentRayProjectiles[j]->Pos2, 50000, m_currentRayProjectiles[j]->Color);
+                m_pRenderer->DrawDebugRay(m_currentRayProjectiles[j].Pos1, m_currentRayProjectiles[j].Pos2, 50000, m_currentRayProjectiles[j].Color);
             }
         }
         m_pRenderer->EndDebugDrawing();
