@@ -2,11 +2,9 @@
 #define RENDERER_H
 
 #include "Defines.h"
+#include "Model.h"
 #include "StagedBuffer.h"
 #include <Renderer3D.h>
-
-typedef VertexPositionNormalTexture VertexPNT;
-typedef VertexPositionColor VertexPC;
 
 //NOTE(sean): A lot of this implementation is reverse-engineered based on what LSpriteRenderer does
 class CRenderer: public LRenderer3D {
@@ -29,6 +27,10 @@ private:
     void CreateCubeBuffers();
 
     StagedBuffer m_debugScratch; // this expects to be cleared after every function call that uses it
+
+    //TODO(sean): do this same thing, but on the gpu
+    std::vector<SDebugModel> m_debugModels;
+    std::vector<SModelInstance> m_debugModelInstances;
 
 public:
     // I dont like putting this behind walls because it doesnt stop people from fucking with it
@@ -60,10 +62,14 @@ public:
     //void DrawDebugCylinder(const BoundingSphere sphere, const XMVECTORF32 color);
     //void DrawDebugCapsule(const BoundingSphere sphere, const XMVECTORF32 color);
     //void DrawDebugGrid(const Vector3 center, const Vector3 orientation, const f32 length, const f32 width, const u32 length_segments, const u32 width_segments, const XMVECTORF32 color);
-    void DrawDebugCapsule(const Vector3 origin, const u32 radius, const u32 height, const u32 segments, const XMVECTORF32 color);
+    void DrawDebugCapsule(const Vector3 origin, const f32 radius, const f32 height, const u32 segments, const XMVECTORF32 color);
     void DrawDebugGrid(const Vector3 x_axis, const Vector3 y_axis, const Vector3 origin, const u32 length_segments, const u32 width_segments, const XMVECTORF32 color);
 
     void DrawDebugCubeInternal(const CXMMATRIX world, const XMVECTORF32 color);
+
+    u32 AddDebugModel(SDebugModel* model);
+    void DrawDebugModel(SDebugModel* model);
+    void DrawDebugModelInstance(SModelInstance* instance);
 
     HWND GetHwnd();
     u32 GetResolutionWidth();
@@ -72,10 +78,6 @@ public:
     //TODO(sean): Implement this
     //NOTE(sean): Frustum Culling -- Don't render things behind the cameras near clip plane
     //const bool BoxInFrustum(const BoundingBox&) const;
-};
-
-struct Model {
-    Vector3* m_pTriangleList;
 };
 
 #endif

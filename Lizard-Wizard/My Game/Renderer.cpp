@@ -330,8 +330,8 @@ void CRenderer::DrawDebugOBB(
 
 void CRenderer::DrawDebugCapsule(
    const Vector3 origin, 
-   const u32 radius, 
-   const u32 height, 
+   const f32 radius, 
+   const f32 height, 
    const u32 segments,
    const XMVECTORF32 color
 ) {
@@ -433,6 +433,29 @@ void CRenderer::DrawDebugCubeInternal(
     m_pPrimitiveBatch->DrawIndexed(D3D_PRIMITIVE_TOPOLOGY_LINELIST, indices, 24, vertices, 8);
 }
 
+u32 CRenderer::AddDebugModel(SDebugModel* model) {
+    m_debugModels.push_back(*model);
+    return m_debugModels.size() - 1;
+}
+
+void CRenderer::DrawDebugModelInstance(SModelInstance* instance) {
+    m_pDebugEffect->SetWorld(instance->m_worldMatrix);
+    DrawDebugModel(&m_debugModels[instance->m_modelIndex]);
+
+    //NOTE(sean): we might want to look into not making this happen on every draw call
+    {
+        const XMVECTORF32 scale = { 1.0f, 1.0f, 1.0f };
+        const XMVECTORF32 translate = { 0.0, 0.0, 0.0 };
+        XMMATRIX world = XMMatrixTransformation(g_XMZero, Quaternion::Identity, scale, g_XMZero, Quaternion::Identity, g_XMZero);
+        m_pDebugEffect->SetWorld(world);
+    }
+}
+
+//NOTE(sean): if performance is required, this can be made nocopy
+void CRenderer::DrawDebugModel(SDebugModel* model) {
+    m_pPrimitiveBatch->Draw(D3D_PRIMITIVE_TOPOLOGY_LINELIST, model->m_lineList.data(), model->m_lineList.size());
+}
+
 const usize CRenderer::GetNumFrames() const {
     return m_frameNumber;
 }
@@ -448,4 +471,3 @@ u32 CRenderer::GetResolutionWidth() {
 u32 CRenderer::GetResolutionHeight() {
     return m_nWinHeight;
 }
-
