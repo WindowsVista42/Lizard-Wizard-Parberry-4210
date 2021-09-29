@@ -1,7 +1,4 @@
 * Debug Renderer
-	+ Add new effect to debug render triangles
-	+ Load triangle list debug model type
-	+ Add functions to debug render triangle lists
 	+ Load model file (.obj or some equivelant)
 
 * Main Renderer
