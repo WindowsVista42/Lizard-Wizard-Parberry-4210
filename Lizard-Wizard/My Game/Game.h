@@ -48,8 +48,7 @@ class CGame:
     btSequentialImpulseConstraintSolver* m_pSolver;
     btDiscreteDynamicsWorld* m_pDynamicsWorld;
     btAlignedObjectArray<btCollisionShape*> m_pCollisionShapes;
-    enum ColliderType { BOX, SPHERE, PLANE };
-    std::vector<ColliderType> m_colliderTypes;
+
     CustomBind m_leftClick;
     CustomBind m_rightClick;
 
@@ -80,7 +79,6 @@ class CGame:
 
   public:
     ~CGame(); ///< Destructor.
-    void UpdateCustomBindState(CustomBind*);
     void Initialize(); ///< Initialize the game.
     void ProcessFrame(); ///< Process an animation frame.
     void Release(); ///< Release the renderer.

@@ -188,10 +188,9 @@ void CGame::Initialize(){
     }
 
     // Lets bind this action to to the user's mouse. For key values : https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
-    m_leftClick = {};
-    m_leftClick.bind = VK_LBUTTON;
-    m_rightClick = {};
-    m_rightClick.bind = VK_RBUTTON;
+    m_leftClick = CustomBind(VK_LBUTTON);
+    m_rightClick = CustomBind(VK_RBUTTON);
+
     BeginGame();
 }
 
@@ -347,8 +346,8 @@ void CGame::InputHandler() {
         SetCursorPos(center.x, center.y);
 
         // Mouse Click Testing
-        UpdateCustomBindState(&m_leftClick);
-        UpdateCustomBindState(&m_rightClick);
+        m_leftClick.UpdateState();
+        m_rightClick.UpdateState();
 
         if (m_leftClick.pressed)
             FireProjectile();
@@ -457,6 +456,7 @@ void CGame::RenderFrame() {
 
                 case(BT_SHAPE_TYPE_CAPSULE): {} break;
 
+                //FIXME(sean): figure out why rotation isnt working, it could be a bullet thing or the math could be wrong
                 default: {
                     const Vector3 pos = *(Vector3*)&trans.getOrigin();
                     const Vector3 scl = { 10.0, 10.0, 10.0 };
@@ -485,9 +485,12 @@ void CGame::RenderFrame() {
 
                 switch(shape->getShapeType()) {
                 case(BT_SHAPE_TYPE_BOX): {
+                    //NOTE(sean): render box
                     btBoxShape* castratedObject = reinterpret_cast<btBoxShape*>(shape);
                     BoundingBox box = BoundingBox(*(Vector3*)&trans.getOrigin(), *(Vector3*)&(castratedObject->getHalfExtentsWithMargin()));
                     m_pRenderer->DrawDebugAABB(box, Colors::Red);
+
+                    //NOTE(sean): render grid on box
                     Vector3 ext = *(Vector3*)&castratedObject->getHalfExtentsWithMargin();
                     Vector3 x_axis(ext.x, 0, 0);
                     Vector3 y_axis(0.0, 0.0, ext.z);
@@ -505,7 +508,7 @@ void CGame::RenderFrame() {
                 default: {
                     btSphereShape* castratedObject = reinterpret_cast<btSphereShape*>(shape);
                     BoundingSphere sphere = BoundingSphere(*(Vector3*)&trans.getOrigin(), castratedObject->getRadius());
-                    m_pRenderer->DrawDebugSphere(sphere, 32, Colors::CadetBlue);
+                    m_pRenderer->DrawDebugSphere(sphere, 16, Colors::CadetBlue);
                 } break;
                 }
             }
