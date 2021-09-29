@@ -5,20 +5,25 @@
 
 //TODO(sean): Create real models that are VertexPNT stuff
 
+//NOTE(sean):
+enum DebugModelType { LINE_LIST, TRIANGLE_LIST };
+
 //NOTE(sean);
 /// Basic 3d line-model
 struct SDebugModel {
-    std::vector<VertexPC> m_lineList;
+    DebugModelType m_modelType;
+    std::vector<VertexPC> m_vertexList;
 
-    SDebugModel(const VertexPC* data, const u32 count);
-    //void FromLineList(const VertexPC* line_list);
+    // assumes DebugModelType::LINE_LIST
+    SDebugModel(const VertexPC* triangles, const u32 count);
+    SDebugModel(const VertexPC* triangles, const u32 count, DebugModelType type);
 };
 
 //NOTE(sean):
 /// Instance of a model, we store the index of the model we want to render as, and we store the model matrix
 struct SModelInstance {
     u32 m_modelIndex;
-    XMMATRIX m_worldMatrix; // i dont know if this should be called model or world matrix
+    XMMATRIX m_worldMatrix;
 
     SModelInstance();
     SModelInstance(u32 instance);
