@@ -1,0 +1,11 @@
+* Debug Renderer
+	+ Add new effect to debug render triangles
+	+ Load triangle list debug model type
+	+ Add functions to debug render triangle lists
+	+ Load model file (.obj or some equivelant)
+
+* Main Renderer
+	+ Add Model type
+	+ Add triangle rendering effect with colors and normals
+	+ Figure out diffuse lighting
+	+ Figure out texture mapping
