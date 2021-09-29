@@ -55,8 +55,8 @@ class CGame:
     btAlignedObjectArray<btCollisionShape*> m_pCollisionShapes;
     enum ColliderType { BOX, SPHERE, PLANE };
     std::vector<ColliderType> m_colliderTypes;
-    CustomBind* m_pLeftClick;
-    CustomBind* m_pRightClick;
+    CustomBind m_leftClick;
+    CustomBind m_rightClick;
 
     //StagedBuffer m_physicsScratch;
     
