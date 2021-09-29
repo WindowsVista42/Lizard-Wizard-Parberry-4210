@@ -8,6 +8,7 @@
 #include "Common.h"
 #include "ObjectManager.h"
 #include "Settings.h"
+#include "CustomBind.h"
 #include <vector>
 
 // Bullet3 Inclusions
@@ -24,21 +25,15 @@
 /// next animation frame. `Release()` will be called at game exit but before
 /// any destructors are run.
 
-// Bind Struct
-typedef struct CustomBind {
-    i32 bind;
-    b8 held, pressed, _pad0, _pad1;
-} CustomBind;
-
-typedef struct Projectile {
+struct Projectile {
     char projectile;
-} Projectile;
+};
 
-typedef struct RayProjectile {
+struct RayProjectile {
     Vector3 Pos1;
     Vector3 Pos2;
     XMVECTORF32 Color;
-} RayProjectile;
+};
 
 class CGame:
 	public LComponent, 

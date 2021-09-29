@@ -28,24 +28,6 @@ CGame::~CGame(){
   delete m_pObjectManager;
 }
 
-// Custom User Input
-//NOTE(ethan): We actually only need this function since the keybind and mouse functionality you gave me are identical, should be correctly adjusted for the new input system.
-void CGame::UpdateCustomBindState(CustomBind* customBind) {
-    if (GetKeyState(customBind->bind) < 0) {
-        if (!customBind->held) {
-            customBind->pressed = true;
-        }
-        else {
-            customBind->pressed = false;
-        }
-        customBind->held = true;
-    }
-    else {
-        customBind->held = false;
-        customBind->pressed = false;
-    }
-}
-
 // Projectile Creation
 //FIXME(sean): on 144hz monitors this function will only sometimes shoot the projectile out of the player
 //this is probably aleviated with collision groups because its just an update-rate thing
