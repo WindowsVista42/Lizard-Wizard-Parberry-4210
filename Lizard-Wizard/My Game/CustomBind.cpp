@@ -18,3 +18,9 @@ void CustomBind::UpdateState() {
         pressed = false;
     }
 }
+
+CustomBind CustomBind::New(i32 bind) {
+    CustomBind custom_bind;
+    custom_bind.bind = bind;
+    return custom_bind;
+}
