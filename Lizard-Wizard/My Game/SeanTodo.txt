@@ -9,3 +9,4 @@
 	+ Add triangle rendering effect with colors and normals
 	+ Figure out diffuse lighting
 	+ Figure out texture mapping
+	+ Figure out deferred rendering
