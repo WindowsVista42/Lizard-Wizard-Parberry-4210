@@ -172,13 +172,10 @@ void CRenderer::DrawCube(const Vector3& position) {
 }
 */
 
-void CRenderer::BeginDebugDrawing() {
+void CRenderer::BeginDebugBatch() {
     m_pPrimitiveBatch->Begin(m_pCommandList);
 
-    const XMVECTORF32 scale = { 1.0f, 1.0f, 1.0f };
-    const XMVECTORF32 translate = { 0.0, 0.0, 0.0 };
-
-    XMMATRIX world = XMMatrixTransformation( g_XMZero, Quaternion::Identity, scale, g_XMZero, Quaternion::Identity, g_XMZero);
+    XMMATRIX world = XMMatrixTransformation( g_XMZero, Quaternion::Identity, g_XMOne, g_XMZero, Quaternion::Identity, g_XMZero);
 
     m_pDebugEffect->SetWorld(world);
     m_pDebugEffect->SetView(XMLoadFloat4x4(&m_view));
@@ -431,15 +428,31 @@ u32 CRenderer::AddDebugModel(SDebugModel* model) {
     return m_debugModels.size() - 1;
 }
 
+/*
 void CRenderer::DrawDebugModelInstance(SModelInstance* instance) {
     m_pDebugEffect->SetWorld(instance->m_worldMatrix);
-    DrawDebugModel(&m_debugModels[instance->m_modelIndex]);
+    m_pDebugEffect->Apply(m_pCommandList);
 
-    //NOTE(sean): we might want to look into not making this happen on every draw call
+    DrawDebugModel(&m_debugModels[instance->m_modelIndex]);
+}
+
+*/
+
+void CRenderer::DrawDebugModelInstance(SModelInstance* instance) {
+    BeginDebugBatch();
     {
-        const XMMATRIX world = XMMatrixTransformation(g_XMZero, Quaternion::Identity, g_XMOne, g_XMZero, Quaternion::Identity, g_XMZero);
-        m_pDebugEffect->SetWorld(world);
+        m_pDebugEffect->SetWorld(instance->m_worldMatrix);
+        m_pDebugEffect->Apply(m_pCommandList);
+        DrawDebugModel(&m_debugModels[instance->m_modelIndex]);
     }
+    EndDebugDrawing();
+}
+
+void CRenderer::ResetDebugWorldMatrix() {
+    //NOTE(sean): we might want to look into not making this happen on every draw call
+    const XMMATRIX world = XMMatrixTransformation(g_XMZero, Quaternion::Identity, g_XMOne, g_XMZero, Quaternion::Identity, g_XMZero);
+    m_pDebugEffect->SetWorld(world);
+    m_pDebugEffect->Apply(m_pCommandList);
 }
 
 //NOTE(sean): if performance is required, this can be made nocopy

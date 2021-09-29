@@ -2,6 +2,7 @@
 /// \brief Code for the game class CGame.
 
 #include "Game.h"
+#include "Math.h"
 #include "Renderer.h"
 #include "GameDefines.h"
 #include "SpriteRenderer.h"
@@ -9,7 +10,6 @@
 #include "shellapi.h"
 #include <vector>
 #include <iostream>
-
 
 /// Delete the object manager. The renderer needs to be deleted before this
 /// destructor runs so it will be done elsewhere.
@@ -21,6 +21,8 @@ const f32 sensitivity = 0.0333;
 
 static Vector3 player_pos = { 0.0f, 0.0f, 0.0f };
 const f32 move_speed = 10.0;
+
+static SModelInstance model_instance;
 
 CGame::~CGame(){
   delete m_pObjectManager;
@@ -180,6 +182,29 @@ void CGame::Initialize(){
         }
     }
 
+    //NOTE(sean): testing debug model loading
+    //getting this to work will be pretty similar to actual 3d models
+    {
+        const VertexPC verts[9] = {
+            // position and color
+            { {{-1.f, -1.f, -1.f, 0.f }}, {{1.0, 1.0, 1.0, 1.0}} },
+            { {{ 1.f, -1.f, -1.f, 0.f }}, {{1.0, 1.0, 1.0, 1.0}} },
+            { {{ 1.f, -1.f,  1.f, 0.f }}, {{1.0, 1.0, 1.0, 1.0}} },
+            { {{-1.f, -1.f,  1.f, 0.f }}, {{1.0, 1.0, 1.0, 1.0}} },
+            { {{-1.f,  1.f, -1.f, 0.f }}, {{1.0, 1.0, 1.0, 1.0}} },
+            { {{ 1.f,  1.f, -1.f, 0.f }}, {{1.0, 1.0, 1.0, 1.0}} },
+            { {{ 1.f,  1.f,  1.f, 0.f }}, {{1.0, 1.0, 1.0, 1.0}} },
+            { {{-1.f,  1.f,  1.f, 0.f }}, {{1.0, 1.0, 1.0, 1.0}} },
+            { {{ 1.f,  3.f,  1.f, 0.f }}, {{1.0, 1.0, 1.0, 1.0}} }
+        };
+
+        // this is probably 0 in this contrived case
+        u32 index = m_pRenderer->AddDebugModel(&SDebugModel(verts, 9));
+        model_instance = SModelInstance(index);
+        Vector3 scale = { 100.0, 100.0, 100.0 };
+        model_instance.m_worldMatrix = MoveScaleMatrix(Vector3::Zero, scale);
+    }
+
     // Lets bind this action to to the user's mouse. For key values : https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
     m_leftClick = {};
     m_leftClick.bind = VK_LBUTTON;
@@ -328,6 +353,7 @@ void CGame::InputHandler() {
         //     . .
         //
         // i came, i saw, i praised, the lord, then break the law.
+        // you flipped it upside down :(
 
         RECT rect;
         GetWindowRect(m_pRenderer->GetHwnd(), &rect);
@@ -412,7 +438,22 @@ void CGame::RenderFrame() {
 
     m_pRenderer->BeginFrame();
     {
-        m_pRenderer->BeginDebugDrawing();
+        //NOTE(sean): this has to be separate because each instance has to be rendered into its own batch,
+        //in the near future we wont be uploading data to the gpu so this wont matter.
+        //future apis for rendering stuff should be kinda similar to this though, without needing to be wrapped in Begin() {} End()
+        {
+            const Vector3 p0 = { 0.0, 0.0, 0.0 };
+            const Vector3 s0 = { 100.0, 100.0, 100.0 };
+            model_instance.m_worldMatrix = MoveScaleMatrix(p0, s0);
+            m_pRenderer->DrawDebugModelInstance(&model_instance);
+    
+            const Vector3 p1 = { 200.0, 0.0, 0.0 };
+            const Vector3 s1 = { 50.0, 50.0, 50.0 };
+            model_instance.m_worldMatrix = MoveScaleMatrix(p1, s1);
+            m_pRenderer->DrawDebugModelInstance(&model_instance);
+        }
+
+        m_pRenderer->BeginDebugBatch();
         {
             for every(j, m_pDynamicsWorld->getNumCollisionObjects()) {
                 btCollisionObject* obj = m_pDynamicsWorld->getCollisionObjectArray()[j];
@@ -458,7 +499,6 @@ void CGame::RenderFrame() {
             }
         }
         m_pRenderer->EndDebugDrawing();
-
     }
     m_pRenderer->EndFrame();
 }

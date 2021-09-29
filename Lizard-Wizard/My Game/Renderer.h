@@ -46,7 +46,7 @@ public:
 
     const usize GetNumFrames() const;
 
-    void BeginDebugDrawing();
+    void BeginDebugBatch();
     void EndDebugDrawing();
 
     //TODO(sean): look into converting these into XMMVECTOR for simd performance?
@@ -68,8 +68,11 @@ public:
     void DrawDebugCubeInternal(const CXMMATRIX world, const XMVECTORF32 color);
 
     u32 AddDebugModel(SDebugModel* model);
+
     void DrawDebugModel(SDebugModel* model);
     void DrawDebugModelInstance(SModelInstance* instance);
+
+    void ResetDebugWorldMatrix();
 
     HWND GetHwnd();
     u32 GetResolutionWidth();
