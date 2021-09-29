@@ -195,7 +195,7 @@ void CGame::Initialize(){
 /// should abort from deeper in the Engine code leaving you with an error
 /// message in a dialog box.
 
-void CGame::LoadImages(){  
+void CGame::LoadImages(){
     /*
     m_pRenderer->BeginResourceUpload();
 
