@@ -183,8 +183,8 @@ void CGame::Initialize(){
         };
 
         // this is probably 0 in this contrived case
-        u32 index = m_pRenderer->AddDebugModel(&SDebugModel(verts, 9, DebugModelType::TRIANGLE_LIST));
-        model_instance = SModelInstance(index);
+        u32 handle = m_pRenderer->AddDebugModel(&SDebugModel(verts, 9, DebugModelType::TRIANGLE_LIST));
+        model_instance = SModelInstance(handle);
         Vector3 scale = { 100.0, 100.0, 100.0 };
         model_instance.m_worldMatrix = MoveScaleMatrix(Vector3::Zero, scale);
     }
@@ -319,7 +319,7 @@ void CGame::InputHandler() {
             btScalar magnitude = velocity.length();
             btScalar max_speed = 1200.0;
 
-            if (magnitude <=     max_speed) {
+            if (magnitude <= max_speed) {
                 pBody->applyCentralForce(*(btVector3*)&delta_movement);
             }
 
