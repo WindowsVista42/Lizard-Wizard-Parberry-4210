@@ -11,6 +11,9 @@
 #include <vector>
 #include <iostream>
 
+// HEY LOL ITS ME IM DOING A TEST AHAHAH *BITES LIP*
+
+
 /// Delete the object manager. The renderer needs to be deleted before this
 /// destructor runs so it will be done elsewhere.
 
@@ -46,6 +49,7 @@ void CGame::FireProjectile() {
     btVector3 localInertia(lookdir.x * 500., lookdir.y * 500., lookdir.z * 500.);
     if (isDynamic)
         projectile->calculateLocalInertia(mass, localInertia);
+    }
     startTransform.setOrigin(*(btVector3*)&m_pRenderer->m_pCamera->GetPos() + btVector3(lookdir.x * 250., lookdir.y * 250., lookdir.z * 250.));
 
     // std::cout << "{"  << lookdir.x << ", " << lookdir.y << ", " << lookdir.z << "}" << std::endl;
