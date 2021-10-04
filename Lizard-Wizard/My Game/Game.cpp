@@ -47,7 +47,7 @@ void CGame::FireProjectile() {
     bool isDynamic = (mass != 0.f);
     Vector3 lookdir = m_pRenderer->m_pCamera->GetViewVector();
     btVector3 localInertia(lookdir.x * 500., lookdir.y * 500., lookdir.z * 500.);
-    if (isDynamic)
+    if (isDynamic) {
         projectile->calculateLocalInertia(mass, localInertia);
     }
     startTransform.setOrigin(*(btVector3*)&m_pRenderer->m_pCamera->GetPos() + btVector3(lookdir.x * 250., lookdir.y * 250., lookdir.z * 250.));
