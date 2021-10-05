@@ -7,6 +7,7 @@
 #include "GameDefines.h"
 #include "SpriteRenderer.h"
 #include "ComponentIncludes.h"
+#include "ProjectileManager.h"
 #include "shellapi.h"
 #include <vector>
 #include <iostream>
@@ -31,54 +32,6 @@ CGame::~CGame(){
   delete m_pObjectManager;
 }
 
-// Projectile Creation
-//FIXME(sean): on 144hz monitors this function will only sometimes shoot the projectile out of the player
-//this is probably aleviated with collision groups because its just an update-rate thing
-void CGame::FireProjectile() {
-    btCollisionShape* projectile = new btSphereShape(btScalar(50.));
-    m_pCollisionShapes.push_back(projectile);
-
-    // Implicating playerShape as a dynamic object.
-    btTransform startTransform;
-    startTransform.setIdentity();
-    i32 projectileSpeed = 100;
-    btScalar mass(0.1); //NOTE(sean): for things that the player might be able to interact with, we want the mass to be smaller
-    btScalar friction(0.5);
-    bool isDynamic = (mass != 0.f);
-    Vector3 lookdir = m_pRenderer->m_pCamera->GetViewVector();
-    btVector3 localInertia(lookdir.x * 500., lookdir.y * 500., lookdir.z * 500.);
-    if (isDynamic) {
-        projectile->calculateLocalInertia(mass, localInertia);
-    }
-    startTransform.setOrigin(*(btVector3*)&m_pRenderer->m_pCamera->GetPos() + btVector3(lookdir.x * 250., lookdir.y * 250., lookdir.z * 250.));
-
-    // std::cout << "{"  << lookdir.x << ", " << lookdir.y << ", " << lookdir.z << "}" << std::endl;
-    // Motionstate again.
-    btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
-    btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, projectile, localInertia);
-    rbInfo.m_friction = friction;
-    btRigidBody* body = new btRigidBody(rbInfo);
-    body->setAngularFactor(btVector3(0., 0., 0.));
-    m_pDynamicsWorld->addRigidBody(body);
-    body->applyForce(btVector3((projectileSpeed * 25000.) * lookdir.x, (projectileSpeed * 25000.) * lookdir.y, (projectileSpeed * 25000.) * lookdir.z), *(btVector3*)&m_pRenderer->m_pCamera->GetPos());
-}
-
-void CGame::FireRaycast() {
-    Vector3 lookdir = m_pRenderer->m_pCamera->GetViewVector();
-    btScalar param(0.5);
-    Vector3 Position = Vector3(m_pRenderer->m_pCamera->GetPos().x, m_pRenderer->m_pCamera->GetPos().y, m_pRenderer->m_pCamera->GetPos().z);
-    Vector3 Direction = Vector3(m_pRenderer->m_pCamera->GetViewVector().x, m_pRenderer->m_pCamera->GetViewVector().y, m_pRenderer->m_pCamera->GetViewVector().z);
-    f32 X = m_pRenderer->m_pCamera->GetPos().x;
-
-    RayProjectile newRay = RayProjectile();
-    newRay.Pos1 = Position;
-    newRay.Pos2 = Direction;
-    newRay.Color = Colors::IndianRed;
-
-    m_currentRayProjectiles.push_back(newRay);
-}
-
-
 /// Create the renderer and the object manager, load images and sounds, and
 /// begin the game.
 /// 
@@ -88,7 +41,8 @@ void CGame::Initialize(){
   
     LoadImages(); //load images from xml file list
 
-    m_pObjectManager = new CObjectManager; //set up the object manager 
+    m_pObjectManager = new CObjectManager; //set up the object manager
+    m_pProjectileManager = new ProjectileManager(); // set up projectile manager
     LoadSounds(); //load the sounds for this game
 
     //TODO(ethan): Move this into its own init function
@@ -102,6 +56,7 @@ void CGame::Initialize(){
         m_pDynamicsWorld->setGravity(btVector3(0.0, -5000.0, 0.0));
         m_pCollisionShapes = btAlignedObjectArray<btCollisionShape*>();
         m_currentRayProjectiles = std::vector<RayProjectile>();
+        m_pProjectileManager->InitializeProjectiles(m_pCollisionShapes, &m_currentRayProjectiles, m_pDynamicsWorld);
         //m_physicsScratch = StagedBuffer(16 * 1024);   
 
         // Ground Collider
@@ -356,10 +311,10 @@ void CGame::InputHandler() {
         m_rightClick.UpdateState();
 
         if (m_leftClick.pressed)
-            FireProjectile();
+            m_pProjectileManager->GenerateSimProjectile(m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), 5, Colors::IndianRed);
 
         if (m_rightClick.pressed)
-            FireRaycast();
+            m_pProjectileManager->GenerateRayProjectile(m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), Colors::IndianRed);
 
         Vector2 delta = { (f32)(cursor_pos.x - center.x), (f32)(cursor_pos.y - center.y) };
         delta *= mouse_sensitivity;

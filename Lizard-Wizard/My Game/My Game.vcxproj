@@ -169,7 +169,7 @@
     <ClCompile Include="CustomBind.cpp" />
     <ClCompile Include="Math.cpp" />
     <ClCompile Include="Model.cpp" />
-    <ClCompile Include="Raycast.cpp" />
+    <ClCompile Include="ProjectileManager.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -182,7 +182,7 @@
     <ClInclude Include="CustomBind.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="Model.h" />
-    <ClInclude Include="Raycast.h" />
+    <ClInclude Include="ProjectileManager.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Defines.h" />
     <ClInclude Include="Game.h" />

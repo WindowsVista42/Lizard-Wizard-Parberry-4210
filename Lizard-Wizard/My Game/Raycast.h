@@ -12,13 +12,13 @@
 // Bullet3 Inclusions
 #include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>
-#include <CommonRigidBodyBase.h>
+//#include <CommonRigidBodyBase.h>
 
-class RaytestDemo : public CommonRigidBodyBase
+class RaytestDemo //: public CommonRigidBodyBase
 {
 public:
 	RaytestDemo(struct GUIHelperInterface* helper)
-		: CommonRigidBodyBase(helper)
+		//: CommonRigidBodyBase(helper)
 	{
 	}
 	virtual ~RaytestDemo()
@@ -38,6 +38,6 @@ public:
 		float pitch = -30;
 		float yaw = 129;
 		float targetPos[3] = { -4.6, -4.7, -5.75 };
-		m_guiHelper->resetCamera(dist, yaw, pitch, targetPos[0], targetPos[1], targetPos[2]);
-	}#pragma once
+		//m_guiHelper->resetCamera(dist, yaw, pitch, targetPos[0], targetPos[1], targetPos[2]);
+	}//#pragma once
 };

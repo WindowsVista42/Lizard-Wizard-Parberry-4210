@@ -7,6 +7,7 @@
 #include "Component.h"
 #include "Common.h"
 #include "ObjectManager.h"
+#include "ProjectileManager.h"
 #include "Settings.h"
 #include "CustomBind.h"
 #include <vector>
@@ -25,32 +26,18 @@
 /// next animation frame. `Release()` will be called at game exit but before
 /// any destructors are run.
 
-struct Projectile {
-    char projectile;
-};
-
-struct RayProjectile {
-    Vector3 Pos1;
-    Vector3 Pos2;
-    XMVECTORF32 Color;
-};
-
 class CGame:
 	public LComponent, 
 	public LSettings,
 	public CCommon
 { 
 private:
-    // Bullet3 Declarations
-    btDefaultCollisionConfiguration* m_pCollisionConfiguration;
-    btCollisionDispatcher* m_pDispatcher;
-    btDbvtBroadphase* m_pBroadphaseChache;
-    btSequentialImpulseConstraintSolver* m_pSolver;
-    btDiscreteDynamicsWorld* m_pDynamicsWorld;
-    btAlignedObjectArray<btCollisionShape*> m_pCollisionShapes;
-
+    // Mouse Binds
     CustomBind m_leftClick;
     CustomBind m_rightClick;
+
+    // Projectile Declarations
+    ProjectileManager* m_pProjectileManager;
 
     //StagedBuffer m_physicsScratch;
     
@@ -60,7 +47,7 @@ private:
     
     // Projectile Vector
     //std::vector<Projectile> m_currentProjectiles;
-    std::vector<RayProjectile> m_currentRayProjectiles;
+    //std::vector<RayProjectile> m_currentRayProjectiles;
 
 
     bool m_bDrawFrameRate = false; ///< Draw the frame rate.
@@ -72,12 +59,17 @@ private:
     void InputHandler(); ///< The keyboard handler.
     void RenderFrame(); ///< Render an animation frame.
     void DrawFrameRateText(); ///< Draw frame rate text to screen.
-
-    // Projectiles 
-    void FireProjectile();
     void FireRaycast();
 
 public:
+    // Bullet3 Declarations
+    btDefaultCollisionConfiguration* m_pCollisionConfiguration;
+    btCollisionDispatcher* m_pDispatcher;
+    btDbvtBroadphase* m_pBroadphaseChache;
+    btSequentialImpulseConstraintSolver* m_pSolver;
+    btAlignedObjectArray<btCollisionShape*> m_pCollisionShapes;
+    btDiscreteDynamicsWorld* m_pDynamicsWorld;
+    std::vector<RayProjectile> m_currentRayProjectiles;
     ~CGame(); ///< Destructor.
     void Initialize(); ///< Initialize the game.
     void ProcessFrame(); ///< Process an animation frame.
