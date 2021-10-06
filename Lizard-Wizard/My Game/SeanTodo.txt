@@ -1,6 +1,3 @@
-* Debug Renderer
-	+ Load model file (.obj or some equivelant)
-
 * Main Renderer
 	+ Add Model type
 	+ Add triangle rendering effect with colors and normals
