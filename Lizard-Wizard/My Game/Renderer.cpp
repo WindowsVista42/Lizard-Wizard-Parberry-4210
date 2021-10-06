@@ -602,7 +602,7 @@ u32 CRenderer::LoadDebugModel(const char* name, XMVECTORF32 color) {
 
         delete[] mesh;
 
-        return 0;
+        return handle;
     } else {
         ABORT("Unable to find file."); // ABORT
     }
