@@ -28,8 +28,8 @@ struct RayProjectile {
 class ProjectileManager {
 
     public:
-        void GenerateSimProjectile(const Vector3, const Vector3, const i32, const XMVECTORF32);
-        void GenerateRayProjectile(const Vector3, const Vector3, const XMVECTORF32);
+        void GenerateSimProjectile(const Vector3, const Vector3, const i32, const i32, const i32, const XMVECTORF32);
+        void GenerateRayProjectile(const Vector3, const Vector3, const i32, const i32, const XMVECTORF32);
         void InitializeProjectiles(btAlignedObjectArray<btCollisionShape*>, std::vector<RayProjectile>*, btDiscreteDynamicsWorld*);
         void DestroyAllProjectiles();
 
@@ -37,6 +37,7 @@ class ProjectileManager {
         btAlignedObjectArray<btCollisionShape*> currentSimProjectiles;
         std::vector<RayProjectile>* currentRayProjectiles;
         btDiscreteDynamicsWorld* currentWorld;
+        i32 randomSeed;
 };
 
 

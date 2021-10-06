@@ -315,11 +315,13 @@ void CGame::InputHandler() {
         m_leftClick.UpdateState();
         m_rightClick.UpdateState();
 
-        if (m_leftClick.pressed)
-            m_pProjectileManager->GenerateSimProjectile(m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), 5, Colors::IndianRed);
+        if (m_leftClick.pressed) {
+            std::cout << m_pRenderer->m_pCamera->GetViewVector().x << " " << m_pRenderer->m_pCamera->GetViewVector().y << " " << m_pRenderer->m_pCamera->GetViewVector().z << std::endl;
+            m_pProjectileManager->GenerateSimProjectile(m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), 5, 4, 5, Colors::IndianRed);
+        }
 
         if (m_rightClick.pressed)
-            m_pProjectileManager->GenerateRayProjectile(m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), Colors::IndianRed);
+            m_pProjectileManager->GenerateRayProjectile(m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), 5, 5, Colors::IndianRed);
 
         Vector2 delta = { (f32)(cursor_pos.x - center.x), (f32)(cursor_pos.y - center.y) };
         delta *= mouse_sensitivity;
