@@ -5,19 +5,16 @@
 #include "Model.h"
 #include "StagedBuffer.h"
 #include <Renderer3D.h>
+#include <Model.h>
 
 //NOTE(sean): A lot of this implementation is reverse-engineered based on what LSpriteRenderer does
+//The DirectXTK12 docs are super helpful for all of this as well :)
 class CRenderer: public LRenderer3D {
 private:
     usize m_frameNumber = 0;
 
-    /*
-        TODO(sean): Add member variables
-    */
-
-    /// This is a basic line rendering effect
-    std::unique_ptr<BasicEffect> m_pDebugLineEffect;
-    std::unique_ptr<BasicEffect> m_pDebugTriangleEffect;
+    std::unique_ptr<BasicEffect> m_pDebugLineEffect; //< Debug line rendering effect
+    std::unique_ptr<BasicEffect> m_pDebugTriangleEffect; // Debug triangle rendering effect
     void CreateAllEffects();
 
     GraphicsResource m_cubeVertexBuffer;
@@ -32,6 +29,11 @@ private:
     //TODO(sean): do this same thing, but on the gpu
     std::vector<SDebugModel> m_debugModels;
     std::vector<SModelInstance> m_debugModelInstances;
+
+    std::vector<std::shared_ptr<Model>> m_debugModelsVBO;
+
+    //Model instances used for rendering
+    //std::vector<Model> m_models;
 
 public:
     // I dont like putting this behind walls because it doesnt stop people from fucking with it
@@ -49,9 +51,10 @@ public:
 
     void BeginDebugLineBatch();
     void BeginDebugTriangleBatch();
-    void EndDebugDrawing();
+    void EndDebugBatch();
 
     //TODO(sean): look into converting these into XMMVECTOR for simd performance?
+    //NOTE(sean): Put these in between BeginDebugLineBatch() and EndDebugBatch()
     void DrawDebugLine(const Vector3 A, const Vector3 B, const XMVECTORF32 color);
     void DrawDebugTriangle(const Vector3 A, const Vector3 B, const Vector3 C, const XMVECTORF32 color);
     void DrawDebugQuad(const Vector3 A, const Vector3 B, const Vector3 C, const Vector3 D, const XMVECTORF32 color);
@@ -69,12 +72,16 @@ public:
 
     void DrawDebugCubeInternal(const CXMMATRIX world, const XMVECTORF32 color);
 
+    //NOTE(sean): these are self-contained, no shimmying into a batch
+    u32 LoadDebugModel(const char* name);
     u32 AddDebugModel(SDebugModel* model);
+    void LoadAllModels();
 
     void DrawDebugLineModel(SDebugModel* model);
     void DrawDebugTriangleModel(SDebugModel* model);
     void DrawDebugModelInstance(SModelInstance* instance);
 
+    // not sure if this is *entirely* needed
     void ResetDebugWorldMatrix();
 
     HWND GetHwnd();

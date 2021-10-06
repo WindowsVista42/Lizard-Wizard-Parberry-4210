@@ -1,6 +1,10 @@
 #include <cstdint>
 #include <Renderer3D.h>
 
+//NOTE(sean): if you read this and youre wondering why on earth i would do this i just like the type names better
+
+typedef wchar_t wchar;
+
 typedef uint8_t u8;
 typedef uint16_t u16;
 typedef uint32_t u32;

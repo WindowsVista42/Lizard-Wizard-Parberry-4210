@@ -40,6 +40,7 @@ void CGame::Initialize(){
     m_pRenderer->Initialize();
   
     LoadImages(); //load images from xml file list
+    LoadModels(); //load models from xml file list
 
     m_pObjectManager = new CObjectManager; //set up the object manager
     m_pProjectileManager = new ProjectileManager(); // set up projectile manager
@@ -161,6 +162,10 @@ void CGame::Initialize(){
 /// image file. If the image tag or the image file are missing, then the game
 /// should abort from deeper in the Engine code leaving you with an error
 /// message in a dialog box.
+
+void CGame::LoadModels() {
+    m_pRenderer->LoadAllModels();
+}
 
 void CGame::LoadImages(){
     /*
@@ -478,7 +483,7 @@ void CGame::RenderFrame() {
                 m_pRenderer->DrawDebugRay(m_currentRayProjectiles[j].Pos1, m_currentRayProjectiles[j].Pos2, 50000, m_currentRayProjectiles[j].Color);
             }
         }
-        m_pRenderer->EndDebugDrawing();
+        m_pRenderer->EndDebugBatch();
     }
     m_pRenderer->EndFrame();
 }

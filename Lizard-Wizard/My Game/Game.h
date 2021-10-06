@@ -53,13 +53,13 @@ private:
     bool m_bDrawFrameRate = false; ///< Draw the frame rate.
     
     void LoadImages(); ///< Load images.
+    void LoadModels(); ///< Load models.
     void LoadSounds(); ///< Load sounds.
     void BeginGame(); ///< Begin playing the game.
     void CreateObjects(); ///< Create game objects.
     void InputHandler(); ///< The keyboard handler.
     void RenderFrame(); ///< Render an animation frame.
     void DrawFrameRateText(); ///< Draw frame rate text to screen.
-    void FireRaycast();
 
 public:
     // Bullet3 Declarations

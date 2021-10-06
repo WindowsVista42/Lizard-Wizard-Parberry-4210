@@ -1,5 +1,7 @@
 #include "Model.h"
 #include "Math.h"
+#include <string>
+#include <Model.h>
 
 void LoadTrianglesAsLines(const VertexPC* triangles, const u32 count, std::vector<VertexPC>* line_list) {
     // we want to grab every 2 and slap them into a line if that makes sense
@@ -51,4 +53,3 @@ SModelInstance::SModelInstance() {
     const XMMATRIX world = XMMatrixTransformation(g_XMZero, Quaternion::Identity, g_XMOne, g_XMZero, Quaternion::Identity, g_XMZero);
     m_worldMatrix = world;
 }
-
