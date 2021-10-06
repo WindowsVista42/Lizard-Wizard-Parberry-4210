@@ -570,10 +570,10 @@ u32 CRenderer::LoadDebugModel(const char* name, XMVECTORF32 color) {
             if (index_count == 0) { ABORT("Input VBO has ZERO indices!"); }
 
             vertices = new VBOVertex[vertex_count];
-            if (vertices = 0) { ABORT("Failed to allocate VBO vertex buffer!"); }
+            if (vertices == 0) { ABORT("Failed to allocate VBO vertex buffer!"); }
 
             indices = new u16[index_count];
-            if (indices = 0) { ABORT("Failed to allocate VBO index buffer!"); }
+            if (indices == 0) { ABORT("Failed to allocate VBO index buffer!"); }
 
             //TODO(sean): error checking?
             fread(vertices, sizeof(VBOVertex), vertex_count, fp);
