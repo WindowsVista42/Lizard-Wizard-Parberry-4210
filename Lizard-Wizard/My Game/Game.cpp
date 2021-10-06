@@ -392,6 +392,7 @@ void CGame::RenderFrame() {
             {
                 const Vector3 pos = { 0.0, 0.0, 0.0 };
                 const Vector3 scl = { 100.0, 100.0, 100.0 };
+                model_instance.m_modelIndex = 0;
                 model_instance.m_worldMatrix = MoveScaleMatrix(pos, scl);
                 m_pRenderer->DrawDebugModelInstance(&model_instance);
             }
@@ -399,6 +400,7 @@ void CGame::RenderFrame() {
             {
                 const Vector3 pos = { 200.0, 0.0, 0.0 };
                 const Vector3 scl = { 50.0, 50.0, 50.0 };
+                model_instance.m_modelIndex = 0;
                 model_instance.m_worldMatrix = MoveScaleMatrix(pos, scl);
                 m_pRenderer->DrawDebugModelInstance(&model_instance);
             }

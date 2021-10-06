@@ -453,7 +453,7 @@ u32 CRenderer::AddDebugModel(SDebugModel* model) {
 }
 
 void CRenderer::LoadAllModels() {
-    LoadDebugModel("suzanne");
+    LoadDebugModel("suzanne", Colors::Peru);
 }
 
 /*
@@ -524,12 +524,13 @@ u32 CRenderer::GetResolutionHeight() {
     return m_nWinHeight;
 }
 
-// LSpriteRenderer::LoadByIndex used as ref
-u32 CRenderer::LoadDebugModel(const char* name) {
-    if (m_pXmlSettings == 0) { ABORT("Unable to find gamesettings.xml");  } // ABORT
+u32 CRenderer::LoadDebugModel(const char* name, XMVECTORF32 color) {
+    // LSpriteRenderer::LoadByIndex() used as ref
+
+    if (m_pXmlSettings == 0) { ABORT("Unable to find gamesettings.xml");  }
 
     XMLElement* models_tag = m_pXmlSettings->FirstChildElement("models");
-    if (models_tag == 0) { ABORT("Unable to find \"models\" tag"); } // ABORT
+    if (models_tag == 0) { ABORT("Unable to find \"models\" tag"); }
 
     std::string path(models_tag->Attribute("path"));
     XMLElement* model_tag = models_tag->FirstChildElement("model");
@@ -540,18 +541,68 @@ u32 CRenderer::LoadDebugModel(const char* name) {
     }
 
     // was not found
-    if (model_tag == 0) { ABORT("Unable to find name tag");  } // ABORT
+    if (model_tag == 0) { ABORT("Unable to find name tag");  }
 
     if (model_tag->Attribute("file")) {
-        const std::string file = path + "\\" + model_tag->Attribute("file");
+        const std::string fpath = path + "\\" + model_tag->Attribute("file");
 
-        //auto model = Model::CreateFromVBO(m_pD3DDevice, std::wstring(file.begin(), file.end()).c_str());
-        //if (model.get()->meshes.size() != 1) { ABORT("VBO file must contain only one mesh");  } // ABORT
+        //NOTE(sean): VBO file format: https://github.com/microsoft/DirectXMesh/blob/master/Meshconvert/Mesh.cpp
+        struct VBOVertex {
+            XMFLOAT3 position;
+            XMFLOAT3 normal;
+            XMFLOAT2 texture;
+        };
 
-        //NOTE(sean): I'm pretty sure this copies, which in that case i really dont like,
-        //but it should be okay because we're not super performance critical here
-        //m_debugModelsVBO.emplace_back(model);
-        //return m_debugModelsVBO.size() - 1;
+        //TODO(sean): load models from vbo file
+        u32 vertex_count = 0;
+        u32 index_count = 0;
+        VBOVertex* vertices = 0;
+        u16* indices = 0;
+
+        {
+            FILE* fp = fopen(fpath.c_str(), "rb");
+            if (fp == 0) { ABORT("Attempted to open VBO file and failed!"); }
+
+            fread(&vertex_count, sizeof(u32), 1, fp);
+            if (vertex_count == 0) { ABORT("Input VBO has ZERO vertices!"); }
+
+            fread(&index_count, sizeof(u32), 1, fp);
+            if (index_count == 0) { ABORT("Input VBO has ZERO indices!"); }
+
+            vertices = new VBOVertex[vertex_count];
+            if (vertices = 0) { ABORT("Failed to allocate VBO vertex buffer!"); }
+
+            indices = new u16[index_count];
+            if (indices = 0) { ABORT("Failed to allocate VBO index buffer!"); }
+
+            //TODO(sean): error checking?
+            fread(vertices, sizeof(VBOVertex), vertex_count, fp);
+            fread(indices, sizeof(u16), index_count, fp);
+
+            fclose(fp);
+        }
+
+        //NOTE(sean): closest number under 2048 that is a multiple of 3,
+        //this seems to be the limit for the current primitive batch
+        if (index_count > 2046) {
+            ABORT("Input VBO must not contain more than 2046 indices!");
+        }
+
+        VertexPC* mesh = new VertexPC[index_count];
+
+        // unpack index list
+        for every(index, index_count) {
+            mesh[index] = { vertices[indices[index]].position, *(XMFLOAT4*)&color }; // position and color
+        }
+
+        delete[] vertices;
+        delete[] indices;
+
+        u32 handle = AddDebugModel(&SDebugModel(mesh, index_count, DebugModelType::LINE_LIST));
+
+        delete[] mesh;
+
+        return 0;
     } else {
         ABORT("Unable to find file."); // ABORT
     }

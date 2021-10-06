@@ -73,7 +73,7 @@ public:
     void DrawDebugCubeInternal(const CXMMATRIX world, const XMVECTORF32 color);
 
     //NOTE(sean): these are self-contained, no shimmying into a batch
-    u32 LoadDebugModel(const char* name);
+    u32 LoadDebugModel(const char* name, XMVECTORF32 color);
     u32 AddDebugModel(SDebugModel* model);
     void LoadAllModels();
 
