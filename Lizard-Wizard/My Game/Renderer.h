@@ -27,8 +27,8 @@ private:
     StagedBuffer m_debugScratch; // this expects to be cleared after every function call that uses it
 
     //TODO(sean): do this same thing, but on the gpu
-    std::vector<SDebugModel> m_debugModels;
-    std::vector<SModelInstance> m_debugModelInstances;
+    std::vector<DebugModel> m_debugModels;
+    std::vector<ModelInstance> m_debugModelInstances;
 
     std::vector<std::shared_ptr<Model>> m_debugModelsVBO;
 
@@ -74,12 +74,12 @@ public:
 
     //NOTE(sean): these are self-contained, no shimmying into a batch
     u32 LoadDebugModel(const char* name, XMVECTORF32 color);
-    u32 AddDebugModel(SDebugModel* model);
+    u32 AddDebugModel(DebugModel* model);
     void LoadAllModels();
 
-    void DrawDebugLineModel(SDebugModel* model);
-    void DrawDebugTriangleModel(SDebugModel* model);
-    void DrawDebugModelInstance(SModelInstance* instance);
+    void DrawDebugLineModel(DebugModel* model);
+    void DrawDebugTriangleModel(DebugModel* model);
+    void DrawDebugModelInstance(ModelInstance* instance);
 
     // not sure if this is *entirely* needed
     void ResetDebugWorldMatrix();

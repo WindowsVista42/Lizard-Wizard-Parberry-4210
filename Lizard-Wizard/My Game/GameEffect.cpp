@@ -9,7 +9,7 @@ namespace {
         XMMATRIX worldViewProjection;
     };
 
-    static_assert((sizeof(GameEffectConstants) % 16 == 0, "Constant Buffer size alignment");
+    static_assert((sizeof(GameEffectConstants) % 16) == 0, "Constant Buffer size alignment");
 
     constexpr u32 DirtyConstantBuffer = 0x1;
     constexpr u32 DirtyWorldViewProjectionmatrix = 0x2;
@@ -19,9 +19,12 @@ namespace {
 GameEffect::GameEffect(
     ID3D12Device* device,
     const DirectX::EffectPipelineStateDescription& pipeline_state_desc
-):
+) :
     m_device(device),
-    m_dirtyFlags(u32(-1))
+    m_dirtyFlags(u32(-1)),
+    m_world(XMMatrixIdentity()),
+    m_view(XMMatrixIdentity()),
+    m_projection(XMMatrixIdentity())
 {
     //NOTE(sean): Create root signature for HLSL stuff
 
@@ -109,5 +112,3 @@ void XM_CALLCONV GameEffect::SetMatrices(DirectX::FXMMATRIX world, DirectX::CXMM
     m_projection = projection;
     m_dirtyFlags |= DirtyWorldViewProjectionmatrix;
 }
-
-

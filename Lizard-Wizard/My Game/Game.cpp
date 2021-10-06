@@ -26,7 +26,7 @@ const f32 sensitivity = 0.0333;
 static Vector3 player_pos = { 0.0f, 0.0f, 0.0f };
 const f32 move_speed = 10.0;
 
-static SModelInstance model_instance;
+static ModelInstance model_instance;
 
 CGame::~CGame(){
   delete m_pObjectManager;
@@ -143,8 +143,8 @@ void CGame::Initialize(){
         };
 
         // this is probably 0 in this contrived case
-        u32 handle = m_pRenderer->AddDebugModel(&SDebugModel(verts, 9, DebugModelType::TRIANGLE_LIST));
-        model_instance = SModelInstance(handle);
+        u32 handle = m_pRenderer->AddDebugModel(&DebugModel(verts, 9, DebugModelType::TRIANGLE_LIST));
+        model_instance = ModelInstance(handle);
         Vector3 scale = { 100.0, 100.0, 100.0 };
         model_instance.m_worldMatrix = MoveScaleMatrix(Vector3::Zero, scale);
     }

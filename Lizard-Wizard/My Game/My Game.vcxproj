@@ -167,6 +167,7 @@
   <ItemGroup>
     <ClCompile Include="Common.cpp" />
     <ClCompile Include="CustomBind.cpp" />
+    <ClCompile Include="GameEffect.cpp" />
     <ClCompile Include="Math.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="ProjectileManager.cpp" />
@@ -180,6 +181,7 @@
   <ItemGroup>
     <ClInclude Include="Common.h" />
     <ClInclude Include="CustomBind.h" />
+    <ClInclude Include="GameEffect.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="ProjectileManager.h" />

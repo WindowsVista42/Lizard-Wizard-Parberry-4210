@@ -19,12 +19,12 @@ void LoadTrianglesAsLines(const VertexPC* triangles, const u32 count, std::vecto
     }
 }
 
-SDebugModel::SDebugModel(const VertexPC* triangles, const u32 count) {
+DebugModel::DebugModel(const VertexPC* triangles, const u32 count) {
     m_modelType = DebugModelType::LINE_LIST;
     LoadTrianglesAsLines(triangles, count, &m_vertexList);
 }
 
-SDebugModel::SDebugModel(const VertexPC* triangles, const u32 count, DebugModelType type) {
+DebugModel::DebugModel(const VertexPC* triangles, const u32 count, DebugModelType type) {
     m_modelType = type;
 
     switch (m_modelType) {
@@ -40,14 +40,14 @@ SDebugModel::SDebugModel(const VertexPC* triangles, const u32 count, DebugModelT
     }
 }
 
-SModelInstance::SModelInstance(u32 instance) {
+ModelInstance::ModelInstance(u32 instance) {
     m_modelIndex = instance;
 
     const XMMATRIX world = XMMatrixTransformation(g_XMZero, Quaternion::Identity, g_XMOne, g_XMZero, Quaternion::Identity, g_XMZero);
     m_worldMatrix = world;
 }
 
-SModelInstance::SModelInstance() {
+ModelInstance::ModelInstance() {
     m_modelIndex = UINT_MAX; // i really hope you segfault if you default construct
 
     const XMMATRIX world = XMMatrixTransformation(g_XMZero, Quaternion::Identity, g_XMOne, g_XMZero, Quaternion::Identity, g_XMZero);

@@ -148,18 +148,14 @@ void CRenderer::CreateCubeBuffers() {
     }
 }
 
-/// <summary>
 /// Begin Rendering a frame.
 /// Put all DrawXYZ() or other functions in between this and EndFrame()
-/// </summary>
 void CRenderer::BeginFrame() {
     LRenderer3D::BeginFrame();
 }
 
-/// <summary>
 /// End Rendering a frame.
 /// Put all DrawXYZ() or other functions in between this and BeginFrame()
-/// </summary>
 void CRenderer::EndFrame() {
     LRenderer3D::EndFrame();
     m_frameNumber += 1;
@@ -189,6 +185,9 @@ void CRenderer::DrawCube(const Vector3& position) {
 }
 */
 
+/// Begins a debug line batch.
+/// Code that follows this will be batched into ONE draw call
+/// Needs to use compatable functions
 void CRenderer::BeginDebugLineBatch() {
     m_pPrimitiveBatch->Begin(m_pCommandList);
 
@@ -199,6 +198,9 @@ void CRenderer::BeginDebugLineBatch() {
     m_pDebugLineEffect->Apply(m_pCommandList);
 }
 
+/// Begins a debug triangle batch.
+/// Code that follows this will be batched into ONE draw call
+/// Needs to use compatable functions
 void CRenderer::BeginDebugTriangleBatch() {
     m_pPrimitiveBatch->Begin(m_pCommandList);
 
@@ -206,10 +208,14 @@ void CRenderer::BeginDebugTriangleBatch() {
     m_pDebugTriangleEffect->Apply(m_pCommandList);
 }
 
+/// Ends any currently open batch
+/// Use this to "draw" the current batched items, however actual rendering is technically performed later
 void CRenderer::EndDebugBatch() {
     m_pPrimitiveBatch->End();
 }
 
+/// Draw a colored "Debug Line" from A to B
+/// A - B
 void CRenderer::DrawDebugLine(
     const Vector3 A,
     const Vector3 B,
@@ -218,6 +224,10 @@ void CRenderer::DrawDebugLine(
     m_pPrimitiveBatch->DrawLine(VertexPC(A, color), VertexPC(B, color));
 }
 
+/// Draw a colored "Debug Triangle".
+///   A
+///  / \
+/// B - C
 void CRenderer::DrawDebugTriangle(
     const Vector3 A,
     const Vector3 B,
@@ -228,6 +238,10 @@ void CRenderer::DrawDebugTriangle(
     m_pPrimitiveBatch->Draw(D3D_PRIMITIVE_TOPOLOGY_LINESTRIP, vertices, 4);
 }
 
+/// Draw a colored "Debug Quad".
+/// A - B
+/// |   |
+/// C - D
 void CRenderer::DrawDebugQuad(
     const Vector3 A,
     const Vector3 B,
@@ -239,6 +253,9 @@ void CRenderer::DrawDebugQuad(
     m_pPrimitiveBatch->Draw(D3D_PRIMITIVE_TOPOLOGY_LINESTRIP, vertices, 5);
 }
 
+/// Draw a colored "Debug Ray".
+/// A --->
+
 void CRenderer::DrawDebugRay(
     const Vector3 origin,
     const Vector3 direction,
@@ -249,6 +266,14 @@ void CRenderer::DrawDebugRay(
     DrawDebugLine(origin, end, color);
 }
 
+/// Draw a colored "Debug Ring".
+///      A - B
+///    /       \
+///   C         D
+///   |         |
+///   E         F
+///    \       /
+///      G - H
 void CRenderer::DrawDebugRing(
     const Vector3 origin,
     const Vector3 orientation,
@@ -269,6 +294,8 @@ void CRenderer::DrawDebugRing(
 
 //NOTE(sean): https://github.com/Microsoft/DirectXTK/wiki/DebugDraw
 //TODO(sean): If performance ***really*** becomes a problem, make this nocopy
+/// Draw a colored "Debug Ring".
+/// This does the same thing as DrawDebugRing()
 void CRenderer::DrawDebugRing2(
     FXMVECTOR origin,
     FXMVECTOR majorAxis,
@@ -309,6 +336,8 @@ void CRenderer::DrawDebugRing2(
     m_debugScratch.Reset(0);
 }
 
+/// Draw a colored "Debug Sphere".
+/// I'm not drawing a diagram for this one
 void CRenderer::DrawDebugSphere(
     const BoundingSphere sphere,
     const u32 segments,
@@ -325,6 +354,7 @@ void CRenderer::DrawDebugSphere(
 }
 
 //NOTE(sean): https://github.com/Microsoft/DirectXTK/wiki/DebugDraw
+/// Draw a colored box
 void CRenderer::DrawDebugAABB(
     const BoundingBox box,
     const XMVECTORF32 color
@@ -334,6 +364,7 @@ void CRenderer::DrawDebugAABB(
 }
 
 //NOTE(sean): https://github.com/Microsoft/DirectXTK/wiki/DebugDraw
+/// Draw a colored box, but it's rotated
 void CRenderer::DrawDebugOBB(
     const BoundingOrientedBox obb,
     const XMVECTORF32 color
@@ -342,6 +373,7 @@ void CRenderer::DrawDebugOBB(
     DrawDebugCubeInternal(world, color);
 }
 
+/// Draw a colored "Debug Capsule"
 void CRenderer::DrawDebugCapsule(
    const Vector3 origin, 
    const f32 radius, 
@@ -373,6 +405,12 @@ void CRenderer::DrawDebugCapsule(
 // I tried to make this faster but it turns out this is really damn fast.
 // The only way I could feasibly make this faster would be by mapping the internal buffer myself.
 // This would get rid of the deep copy the DrawXYZ() functions perform
+/// Draw a colored "Debug Grid"
+/// A - B - C
+/// |   |   |
+/// D - E - F
+/// |   |   |
+/// G - H - I
 void CRenderer::DrawDebugGrid(
     const Vector3 x_axis,
     const Vector3 y_axis,
@@ -407,6 +445,7 @@ void CRenderer::DrawDebugGrid(
 }
 
 //NOTE(sean): https://github.com/Microsoft/DirectXTK/wiki/DebugDraw
+/// Internal function (ask sean if you want to know what it does)
 void CRenderer::DrawDebugCubeInternal(
     const CXMMATRIX world,
     const XMVECTORF32 color
@@ -447,7 +486,9 @@ void CRenderer::DrawDebugCubeInternal(
     m_pPrimitiveBatch->DrawIndexed(D3D_PRIMITIVE_TOPOLOGY_LINELIST, indices, 24, vertices, 8);
 }
 
-u32 CRenderer::AddDebugModel(SDebugModel* model) {
+/// Add a DebugModel to the renderer's internal list.
+/// This function will return a handle to the index in the list.
+u32 CRenderer::AddDebugModel(DebugModel* model) {
     m_debugModels.push_back(*model);
     return m_debugModels.size() - 1;
 }
@@ -466,8 +507,13 @@ void CRenderer::DrawDebugModelInstance(SModelInstance* instance) {
 
 */
 
-void CRenderer::DrawDebugModelInstance(SModelInstance* instance) {
-    SDebugModel* pModel = &m_debugModels[instance->m_modelIndex];
+/// Draw an instance of a DebugModel.
+/// For example, you might want to render 3 enemies of the same type.
+/// Instead of storing an entire copy of the model in each enemy, we store the model once,
+/// then reference it with a "handle", in this case a bog-standard index into an array.
+/// To move, scasle, and rotate the model, change the world matrix in the instance.
+void CRenderer::DrawDebugModelInstance(ModelInstance* instance) {
+    DebugModel* pModel = &m_debugModels[instance->m_modelIndex];
 
     switch (pModel->m_modelType) {
     case(DebugModelType::LINE_LIST): {
@@ -492,38 +538,46 @@ void CRenderer::DrawDebugModelInstance(SModelInstance* instance) {
     }
 }
 
+/// Resets the debug world matricies to zero, you probably dont need to touch this though.
 void CRenderer::ResetDebugWorldMatrix() {
     //NOTE(sean): we might want to look into not making this happen on every draw call
-    const XMMATRIX world = XMMatrixTransformation(g_XMZero, Quaternion::Identity, g_XMOne, g_XMZero, Quaternion::Identity, g_XMZero);
+    const XMMATRIX world = XMMatrixIdentity();
     m_pDebugLineEffect->SetWorld(world);
     m_pDebugLineEffect->Apply(m_pCommandList);
 }
 
 //NOTE(sean): if performance is required, this can be made nocopy
-void CRenderer::DrawDebugLineModel(SDebugModel* model) {
+/// Internal method to draw a DebugModel
+void CRenderer::DrawDebugLineModel(DebugModel* model) {
     m_pPrimitiveBatch->Draw(D3D_PRIMITIVE_TOPOLOGY_LINELIST, model->m_vertexList.data(), model->m_vertexList.size());
 }
 
-void CRenderer::DrawDebugTriangleModel(SDebugModel* model) {
+/// Internal method to draw a DebugModel
+void CRenderer::DrawDebugTriangleModel(DebugModel* model) {
     m_pPrimitiveBatch->Draw(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, model->m_vertexList.data(), model->m_vertexList.size());
 }
 
+/// Get the number of frames elapsed since the start of the program
 const usize CRenderer::GetNumFrames() const {
     return m_frameNumber;
 }
 
+/// Get the windows Hwnd (Window Handle)
 HWND CRenderer::GetHwnd() {
     return m_Hwnd;
 }
 
+/// Get the horizontal resolution
 u32 CRenderer::GetResolutionWidth() {
     return m_nWinWidth;
 }
 
+/// Get the vertical resolution
 u32 CRenderer::GetResolutionHeight() {
     return m_nWinHeight;
 }
 
+/// Load a debug model with the name.
 u32 CRenderer::LoadDebugModel(const char* name, XMVECTORF32 color) {
     // LSpriteRenderer::LoadByIndex() used as ref
 
@@ -598,7 +652,7 @@ u32 CRenderer::LoadDebugModel(const char* name, XMVECTORF32 color) {
         delete[] vertices;
         delete[] indices;
 
-        u32 handle = AddDebugModel(&SDebugModel(mesh, index_count, DebugModelType::LINE_LIST));
+        u32 handle = AddDebugModel(&DebugModel(mesh, index_count, DebugModelType::LINE_LIST));
 
         delete[] mesh;
 

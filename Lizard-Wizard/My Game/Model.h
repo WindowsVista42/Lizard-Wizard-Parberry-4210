@@ -10,23 +10,23 @@ enum class DebugModelType { LINE_LIST, TRIANGLE_LIST };
 
 //NOTE(sean);
 /// Basic 3d line-model
-struct SDebugModel {
+struct DebugModel {
     DebugModelType m_modelType;
     std::vector<VertexPC> m_vertexList;
 
     // assumes DebugModelType::LINE_LIST
-    SDebugModel(const VertexPC* triangles, const u32 count);
-    SDebugModel(const VertexPC* triangles, const u32 count, DebugModelType type);
+    DebugModel(const VertexPC* triangles, const u32 count);
+    DebugModel(const VertexPC* triangles, const u32 count, DebugModelType type);
 };
 
 //NOTE(sean):
 /// Instance of a model, we store the index of the model we want to render as, and we store the model matrix
-struct SModelInstance {
+struct ModelInstance {
     u32 m_modelIndex;
     XMMATRIX m_worldMatrix;
 
-    SModelInstance();
-    SModelInstance(u32 instance);
+    ModelInstance();
+    ModelInstance(u32 instance);
 };
 
 #endif
