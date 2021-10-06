@@ -1,5 +1,7 @@
 #include "Renderer.h"
 #include "Math.h"
+#include <Model.h>
+#include <iostream>
 
 const u32 g_cubeVertexCount = 8;
 const Vector3 g_cubeVertices[g_cubeVertexCount] = {
@@ -204,7 +206,7 @@ void CRenderer::BeginDebugTriangleBatch() {
     m_pDebugTriangleEffect->Apply(m_pCommandList);
 }
 
-void CRenderer::EndDebugDrawing() {
+void CRenderer::EndDebugBatch() {
     m_pPrimitiveBatch->End();
 }
 
@@ -450,6 +452,10 @@ u32 CRenderer::AddDebugModel(SDebugModel* model) {
     return m_debugModels.size() - 1;
 }
 
+void CRenderer::LoadAllModels() {
+    LoadDebugModel("suzanne");
+}
+
 /*
 void CRenderer::DrawDebugModelInstance(SModelInstance* instance) {
     m_pDebugEffect->SetWorld(instance->m_worldMatrix);
@@ -471,7 +477,7 @@ void CRenderer::DrawDebugModelInstance(SModelInstance* instance) {
             m_pDebugLineEffect->Apply(m_pCommandList);
             DrawDebugLineModel(pModel);
         }
-        EndDebugDrawing();
+        EndDebugBatch();
     } break;
 
     case(DebugModelType::TRIANGLE_LIST): {
@@ -481,7 +487,7 @@ void CRenderer::DrawDebugModelInstance(SModelInstance* instance) {
             m_pDebugTriangleEffect->Apply(m_pCommandList);
             DrawDebugTriangleModel(pModel);
         }
-        EndDebugDrawing();
+        EndDebugBatch();
     } break;
     }
 }
@@ -516,4 +522,37 @@ u32 CRenderer::GetResolutionWidth() {
 
 u32 CRenderer::GetResolutionHeight() {
     return m_nWinHeight;
+}
+
+// LSpriteRenderer::LoadByIndex used as ref
+u32 CRenderer::LoadDebugModel(const char* name) {
+    if (m_pXmlSettings == 0) { ABORT("Unable to find gamesettings.xml");  } // ABORT
+
+    XMLElement* models_tag = m_pXmlSettings->FirstChildElement("models");
+    if (models_tag == 0) { ABORT("Unable to find \"models\" tag"); } // ABORT
+
+    std::string path(models_tag->Attribute("path"));
+    XMLElement* model_tag = models_tag->FirstChildElement("model");
+
+    // find specific tag
+    while (model_tag != 0 && strcmp(name, model_tag->Attribute("name"))) {
+        model_tag = model_tag->NextSiblingElement("model");
+    }
+
+    // was not found
+    if (model_tag == 0) { ABORT("Unable to find name tag");  } // ABORT
+
+    if (model_tag->Attribute("file")) {
+        const std::string file = path + "\\" + model_tag->Attribute("file");
+
+        //auto model = Model::CreateFromVBO(m_pD3DDevice, std::wstring(file.begin(), file.end()).c_str());
+        //if (model.get()->meshes.size() != 1) { ABORT("VBO file must contain only one mesh");  } // ABORT
+
+        //NOTE(sean): I'm pretty sure this copies, which in that case i really dont like,
+        //but it should be okay because we're not super performance critical here
+        //m_debugModelsVBO.emplace_back(model);
+        //return m_debugModelsVBO.size() - 1;
+    } else {
+        ABORT("Unable to find file."); // ABORT
+    }
 }
