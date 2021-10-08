@@ -23,7 +23,7 @@ static f32 yaw = 0.0f;
 static f32 pitch = 0.0f;
 const f32 sensitivity = 0.0333;
 
-static Vector3 player_pos = { 0.0f, 0.0f, 0.0f };
+static Vector3 player_pos = { 0.0f, 1500.0f, -2500.0f };
 const f32 move_speed = 10.0;
 
 static ModelInstance model_instance;
@@ -64,7 +64,7 @@ void CGame::Initialize(){
         {
             // Ground
             //btCollisionShape* collisionShape = m_physicsScratch.Alloc(sizeof(btBoxShape));
-            btCollisionShape* collisionShape = new btBoxShape(btVector3(1500., 50., 1500.));
+            btCollisionShape* collisionShape = new btBoxShape(btVector3(3000., 50., 3000.));
             m_pCollisionShapes.push_back(collisionShape);
 
             // Transforms
@@ -122,6 +122,43 @@ void CGame::Initialize(){
             btRigidBody* body = new btRigidBody(rbInfo);
             body->setAngularFactor(btVector3(0, 0, 0));
 
+            m_pDynamicsWorld->addRigidBody(body);
+        }
+        
+
+        // Wall Collider
+        {
+            // Wall
+            //btCollisionShape* collisionShape = m_physicsScratch.Alloc(sizeof(btBoxShape));
+            btCollisionShape* collisionShape = new btBoxShape(btVector3(150., 3000., 3000.));
+            m_pCollisionShapes.push_back(collisionShape);
+
+            // Transforms
+            btTransform collisionTransform;
+            collisionTransform.setIdentity();
+            collisionTransform.setOrigin(btVector3(-3000, 2800, 0));
+
+            // Mass
+            btScalar mass(0.);
+            btScalar restitution(0.f);
+            btScalar friction(1.5);
+
+            // Rigidbody is dynamic if and only if mass is non zero, otherwise static
+            bool isDynamic = (mass != 0.f);
+
+            btVector3 localInertia(0, 0, 0);
+            if (isDynamic)
+                collisionShape->calculateLocalInertia(mass, localInertia);
+
+            // Motion state, is optional.
+            btDefaultMotionState* myMotionState = new btDefaultMotionState(collisionTransform);
+            btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, collisionShape, localInertia);
+            rbInfo.m_restitution = restitution;
+            rbInfo.m_friction = friction;
+            btRigidBody* body = new btRigidBody(rbInfo);
+
+
+            // Adds body to the dynamic world.
             m_pDynamicsWorld->addRigidBody(body);
         }
     }
@@ -321,7 +358,7 @@ void CGame::InputHandler() {
         }
 
         if (m_rightClick.pressed)
-            m_pProjectileManager->GenerateRayProjectile(m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), 1, 1, Colors::IndianRed);
+            m_pProjectileManager->GenerateRayProjectile(m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), 10, 3, 3, Colors::IndianRed, false);
 
         Vector2 delta = { (f32)(cursor_pos.x - center.x), (f32)(cursor_pos.y - center.y) };
         delta *= mouse_sensitivity;
@@ -366,6 +403,7 @@ void CGame::RenderFrame() {
 
     m_pRenderer->m_pCamera->SetYaw(yaw);
     m_pRenderer->m_pCamera->SetPitch(pitch);
+    //m_pRenderer->m_pCamera->MoveTo(player_pos);
 
     { //NOTE(sean): update camera position :/
         btCollisionObject* obj = m_pDynamicsWorld->getCollisionObjectArray()[1];
@@ -484,7 +522,8 @@ void CGame::RenderFrame() {
             }
 
             for every(j, m_currentRayProjectiles.size()) {
-                m_pRenderer->DrawDebugRay(m_currentRayProjectiles[j].Pos1, m_currentRayProjectiles[j].Pos2, 50000, m_currentRayProjectiles[j].Color);
+                //m_pRenderer->DrawDebugRay(m_currentRayProjectiles[j].Pos1, m_currentRayProjectiles[j].Pos2, 50000, m_currentRayProjectiles[j].Color);
+                m_pRenderer->DrawDebugLine(m_currentRayProjectiles[j].Pos1, m_currentRayProjectiles[j].Pos2, m_currentRayProjectiles[j].Color);
             }
         }
         m_pRenderer->EndDebugBatch();

@@ -85,7 +85,7 @@ void ProjectileManager::GenerateSimProjectile(Vector3 startPos, Vector3 lookDire
     }
 }
 
-void ProjectileManager::GenerateRayProjectile(Vector3 startPos, Vector3 lookDirection, i32 rayCount, i32 rayAccuracy, XMVECTORF32 rayColor) {
+void ProjectileManager::GenerateRayProjectile(Vector3 startPos, Vector3 lookDirection, i32 rayCount, i32 rayAccuracy, i32 rayBounces, XMVECTORF32 rayColor, b8 recursed) {
     /* Note(Ethan) :
        currently includes :
        Vector3 for position, Vector3 for lookvector (direction), color.
@@ -96,57 +96,56 @@ void ProjectileManager::GenerateRayProjectile(Vector3 startPos, Vector3 lookDire
 
     f32 negativeAccuracy = rayAccuracy * -1;
     f32 range = (rayAccuracy - negativeAccuracy + 1);
-    for (i32 i = 0; i < rayCount; i++) {
-        srand(randomSeed);
-        randomSeed++;
-        if (randomSeed > 999) {
-            randomSeed = 0;
-        }
-        lookDirection = Vector3(lookDirection.x + ((negativeAccuracy + double((range + 1.0) * rand() / (RAND_MAX + 1.0))) / 100.), lookDirection.y + ((negativeAccuracy + double((range + 1.0) * rand() / (RAND_MAX + 1.0))) / 100.), lookDirection.z + ((negativeAccuracy + double((range + 1.0) * rand() / (RAND_MAX + 1.0))) / 100.));
-        btScalar param(0.5);
-        RayProjectile newRay = RayProjectile();
-        newRay.Pos1 = startPos;
-        newRay.Pos2 = lookDirection;
-        newRay.Color = rayColor;
-        //currentWorld->getDebugDrawer()->drawLine(*(btVector3*)&startPos, *(btVector3*)&lookDirection, btVector4(0, 0, 0, 1));
-        btCollisionWorld::AllHitsRayResultCallback allResults(*(btVector3*)&startPos, *(btVector3*)&lookDirection);
-        //btCollisionWorld::ClosestRayResultCallback closestResults(*(btVector3*)&startPos, *(btVector3*)&lookDirection);
-        //closestResults.m_flags |= btTriangleRaycastCallback::kF_FilterBackfaces;
-        allResults.m_flags |= btTriangleRaycastCallback::kF_KeepUnflippedNormal;
-        allResults.m_flags |= btTriangleRaycastCallback::kF_UseSubSimplexConvexCastRaytest;
-        currentWorld->rayTest(btVector3(lookDirection.x * 300, lookDirection.y * 300, lookDirection.z * 300), btVector3(lookDirection.x * 50000, lookDirection.y * 50000, lookDirection.z * 50000), allResults);
+    RayProjectile newRay = RayProjectile();
 
-        for (int i = 0; i < allResults.m_hitFractions.size(); i++)
-        {
-            btVector3 hitPosition = allResults.m_hitPointWorld[i];
-            btScalar dotProduct = allResults.m_hitPointWorld[i].dot(allResults.m_hitNormalWorld[i]);
-            //XMVECTOR Result = XMVector3Dot(Incident, Normal);
-            // Result = XMVectorAdd(Result, Result);
-            //Result = XMVectorNegativeMultiplySubtract(Result, Normal, Incident);
-        }
 
-        /*
-        if (closestResults.hasHit())
-        {
-            btVector3 hitPosition = closestResults.m_hitNormalWorld;
-            printf("Target hit at (%f, %f, %f)", hitPosition.getX(), hitPosition.getY(), hitPosition.getZ());
-            btCollisionShape* projectile = new btSphereShape(btScalar(50.));
-            currentSimProjectiles.push_back(projectile);
+    newRay.Pos1 = Vector3(startPos.x, startPos.y, startPos.z) + lookDirection * 500.;
+    newRay.Pos2 = Vector3(startPos.x, startPos.y, startPos.z) + lookDirection * 5000.;
 
-            // Implicating projectile as a dynamic object.
-            btTransform startTransform;
-            startTransform.setIdentity();
-            btScalar mass(0.1); //NOTE(sean): for things that the player might be able to interact with, we want the mass to be smaller
-            btScalar friction(0.5);
-            bool isDynamic = (mass != 0.f);
-            btVector3 localInertia(lookDirection.x * 500., lookDirection.y * 500., lookDirection.z * 500.);
-            if (isDynamic) {
-                projectile->calculateLocalInertia(mass, localInertia);
+
+    newRay.Color = rayColor;
+    if (recursed == true) {
+        newRay.Pos1 = Vector3(startPos.x, startPos.y, startPos.z) + Vector3(lookDirection.x, lookDirection.y, lookDirection.z);
+        btCollisionWorld::ClosestRayResultCallback rayResults(*(btVector3*)&startPos + *(btVector3*)&lookDirection * 500., *(btVector3*)&startPos + *(btVector3*)&lookDirection * 5000.);
+        currentWorld->rayTest(*(btVector3*)&startPos + *(btVector3*)&lookDirection * 500., *(btVector3*)&startPos + *(btVector3*)&lookDirection * 5000., rayResults);
+        if (rayResults.hasHit()) {
+            printf("Ray hit at (%f, %f, %f)\n", rayResults.m_hitPointWorld.getX(), rayResults.m_hitPointWorld.getY(), rayResults.m_hitPointWorld.getZ());
+            btVector3 hitPosition = rayResults.m_hitPointWorld;
+            btScalar dotProduct = (*(btVector3*)&startPos).dot(rayResults.m_hitNormalWorld);
+            btVector3 incomingDirection = btVector3(hitPosition - *(btVector3*)&startPos).normalize();
+            btVector3 reflectedDirection = *(btVector3*)&lookDirection - 2. * (*(btVector3*)&lookDirection * rayResults.m_hitNormalWorld) * rayResults.m_hitNormalWorld;
+            if (rayBounces > 0) {
+                GenerateRayProjectile(*(Vector3*)&hitPosition, *(Vector3*)&reflectedDirection, 1, 1, rayBounces - 1, Colors::PeachPuff, true);
             }
-            startTransform.setOrigin(*(btVector3*)&hitPosition);
+            newRay.Pos2 = *(Vector3*)&hitPosition;
         }
-        */
         currentRayProjectiles->push_back(newRay);
+    } else {
+        for (i32 i = 0; i < rayCount; i++) {
+            srand(randomSeed);
+            randomSeed++;
+            if (randomSeed > 999) {
+                randomSeed = 0;
+            }
+            lookDirection = Vector3(lookDirection.x + ((negativeAccuracy + double((range + 1.0) * rand() / (RAND_MAX + 1.0))) / 100.), lookDirection.y + ((negativeAccuracy + double((range + 1.0) * rand() / (RAND_MAX + 1.0))) / 100.), lookDirection.z + ((negativeAccuracy + double((range + 1.0) * rand() / (RAND_MAX + 1.0))) / 100.));
+            printf("Lookdirection at (%f, %f, %f)\n", lookDirection.x, lookDirection.y, lookDirection.z);
+            newRay.Pos1 = Vector3(startPos.x, startPos.y, startPos.z) + lookDirection * 500.;
+
+            btCollisionWorld::ClosestRayResultCallback rayResults(*(btVector3*)&startPos + *(btVector3*)&lookDirection * 500., *(btVector3*)&startPos + *(btVector3*)&lookDirection * 5000.);
+            currentWorld->rayTest(*(btVector3*)&startPos + *(btVector3*)&lookDirection * 500., *(btVector3*)&startPos + *(btVector3*)&lookDirection * 5000., rayResults);
+            if (rayResults.hasHit()) {
+                printf("Ray hit at (%f, %f, %f)\n", rayResults.m_hitPointWorld.getX(), rayResults.m_hitPointWorld.getY(), rayResults.m_hitPointWorld.getZ());
+                btVector3 hitPosition = rayResults.m_hitPointWorld;
+                btScalar dotProduct = (*(btVector3*)&startPos).dot(rayResults.m_hitNormalWorld);
+                btVector3 incomingDirection = btVector3(hitPosition - *(btVector3*)&startPos).normalize();
+                btVector3 reflectedDirection = *(btVector3*)&lookDirection - 2. * (*(btVector3*)&lookDirection * rayResults.m_hitNormalWorld) * rayResults.m_hitNormalWorld;
+                if (rayBounces > 0) {
+                    GenerateRayProjectile(*(Vector3*)&hitPosition, *(Vector3*)&reflectedDirection, 1, 1, rayBounces - 1, Colors::LightPink, true);
+                }
+                newRay.Pos2 = *(Vector3*)&hitPosition;
+            }
+            currentRayProjectiles->push_back(newRay);
+        }
     }
 }
 
