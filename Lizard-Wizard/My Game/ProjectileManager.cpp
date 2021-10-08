@@ -61,7 +61,7 @@ void ProjectileManager::GenerateSimProjectile(Vector3 startPos, Vector3 lookDire
         btCollisionShape* projectile = new btSphereShape(btScalar(50.));
         currentSimProjectiles.push_back(projectile);
 
-        // Implicating playerShape as a dynamic object.
+        // Implicating projectile as a dynamic object.
         btTransform startTransform;
         startTransform.setIdentity();
         btScalar mass(0.1); //NOTE(sean): for things that the player might be able to interact with, we want the mass to be smaller
@@ -108,6 +108,44 @@ void ProjectileManager::GenerateRayProjectile(Vector3 startPos, Vector3 lookDire
         newRay.Pos1 = startPos;
         newRay.Pos2 = lookDirection;
         newRay.Color = rayColor;
+        //currentWorld->getDebugDrawer()->drawLine(*(btVector3*)&startPos, *(btVector3*)&lookDirection, btVector4(0, 0, 0, 1));
+        btCollisionWorld::AllHitsRayResultCallback allResults(*(btVector3*)&startPos, *(btVector3*)&lookDirection);
+        //btCollisionWorld::ClosestRayResultCallback closestResults(*(btVector3*)&startPos, *(btVector3*)&lookDirection);
+        //closestResults.m_flags |= btTriangleRaycastCallback::kF_FilterBackfaces;
+        allResults.m_flags |= btTriangleRaycastCallback::kF_KeepUnflippedNormal;
+        allResults.m_flags |= btTriangleRaycastCallback::kF_UseSubSimplexConvexCastRaytest;
+        currentWorld->rayTest(btVector3(lookDirection.x * 300, lookDirection.y * 300, lookDirection.z * 300), btVector3(lookDirection.x * 50000, lookDirection.y * 50000, lookDirection.z * 50000), allResults);
+
+        for (int i = 0; i < allResults.m_hitFractions.size(); i++)
+        {
+            btVector3 hitPosition = allResults.m_hitPointWorld[i];
+            btScalar dotProduct = allResults.m_hitPointWorld[i].dot(allResults.m_hitNormalWorld[i]);
+            //XMVECTOR Result = XMVector3Dot(Incident, Normal);
+            // Result = XMVectorAdd(Result, Result);
+            //Result = XMVectorNegativeMultiplySubtract(Result, Normal, Incident);
+        }
+
+        /*
+        if (closestResults.hasHit())
+        {
+            btVector3 hitPosition = closestResults.m_hitNormalWorld;
+            printf("Target hit at (%f, %f, %f)", hitPosition.getX(), hitPosition.getY(), hitPosition.getZ());
+            btCollisionShape* projectile = new btSphereShape(btScalar(50.));
+            currentSimProjectiles.push_back(projectile);
+
+            // Implicating projectile as a dynamic object.
+            btTransform startTransform;
+            startTransform.setIdentity();
+            btScalar mass(0.1); //NOTE(sean): for things that the player might be able to interact with, we want the mass to be smaller
+            btScalar friction(0.5);
+            bool isDynamic = (mass != 0.f);
+            btVector3 localInertia(lookDirection.x * 500., lookDirection.y * 500., lookDirection.z * 500.);
+            if (isDynamic) {
+                projectile->calculateLocalInertia(mass, localInertia);
+            }
+            startTransform.setOrigin(*(btVector3*)&hitPosition);
+        }
+        */
         currentRayProjectiles->push_back(newRay);
     }
 }
