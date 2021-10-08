@@ -28,12 +28,14 @@ struct RayProjectile {
 class ProjectileManager {
 
     public:
-        void GenerateSimProjectile(const Vector3, const Vector3, const i32, const i32, const i32, const XMVECTORF32);
+        void GenerateSimProjectile(const Vector3, const Vector3, const f32, const i32, const i32, const XMVECTORF32);
         void GenerateRayProjectile(const Vector3, const Vector3, const i32, const i32, const i32, const XMVECTORF32, const b8);
         void InitializeProjectiles(btAlignedObjectArray<btCollisionShape*>, std::vector<RayProjectile>*, btDiscreteDynamicsWorld*);
         void DestroyAllProjectiles();
 
     private:
+        void CalculateRay(RayProjectile&, Vector3, btVector3, btVector3, i32, XMVECTORF32);
+
         btAlignedObjectArray<btCollisionShape*> currentSimProjectiles;
         std::vector<RayProjectile>* currentRayProjectiles;
         btDiscreteDynamicsWorld* currentWorld;
