@@ -12,6 +12,8 @@
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="ObjectManager.cpp" />
     <ClCompile Include="StagedBuffer.cpp" />
+    <ClCompile Include="GameEffect.cpp" />
+    <ClCompile Include="Convert.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h" />
@@ -26,6 +28,8 @@
     <ClInclude Include="Object.h" />
     <ClInclude Include="ObjectManager.h" />
     <ClInclude Include="StagedBuffer.h" />
+    <ClInclude Include="GameEffect.h" />
+    <ClInclude Include="Convert.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="My Game.rc" />

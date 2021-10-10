@@ -9,6 +9,8 @@
 #include <time.h>
 #include <stdio.h>
 #include <vector>
+#include "Convert.h"
+#include "Math.h"
 
 // Bullet3 Inclusions
 #include <btBulletCollisionCommon.h>
@@ -25,22 +27,6 @@
      wachu looking at bud
 
 */
-
-Vector3 JitterVector3(Vector3 input, f32 negativeAccuracy, f32 range) {
-    return Vector3(
-        input.x + ((negativeAccuracy + double((range + 1.0) * rand() / (RAND_MAX + 1.0))) / 100.),
-        input.y + ((negativeAccuracy + double((range + 1.0) * rand() / (RAND_MAX + 1.0))) / 100.),
-        input.z + ((negativeAccuracy + double((range + 1.0) * rand() / (RAND_MAX + 1.0))) / 100.)
-    );
-}
-
-Vector3 into(btVector3 input) {
-    return *(Vector3*)&input;
-}
-
-btVector3 into(Vector3 input) {
-    return *(btVector3*)&input;
-}
 
 void ProjectileManager::GenerateSimProjectile(Vector3 startPos, Vector3 lookDirection, f32 projectileVelocity, i32 projectileCount, i32 projectileAccuracy, XMVECTORF32 projectileColor) {
     /* Note(Ethan) :
@@ -81,7 +67,7 @@ void ProjectileManager::GenerateSimProjectile(Vector3 startPos, Vector3 lookDire
         if (isDynamic) {
             projectile->calculateLocalInertia(mass, localInertia);
         }
-        startTransform.setOrigin(into(startPos) + btVector3(lookDirection.x * 250., lookDirection.y * 250., lookDirection.z * 250.));
+        startTransform.setOrigin(convert(startPos) + btVector3(lookDirection.x * 250., lookDirection.y * 250., lookDirection.z * 250.));
 
         // std::cout << "{"  << lookdir.x << ", " << lookdir.y << ", " << lookdir.z << "}" << std::endl;
         // Motionstate again.
@@ -93,7 +79,7 @@ void ProjectileManager::GenerateSimProjectile(Vector3 startPos, Vector3 lookDire
         currentWorld->addRigidBody(body);
 
         projectileVelocity = projectileVelocity * 250.0f;
-        body->applyForce(btVector3(projectileVelocity * lookDirection.x, projectileVelocity * lookDirection.y, projectileVelocity * lookDirection.z), into(startPos));
+        body->applyForce(btVector3(projectileVelocity * lookDirection.x, projectileVelocity * lookDirection.y, projectileVelocity * lookDirection.z), convert(startPos));
     }
 }
 
@@ -104,19 +90,18 @@ void ProjectileManager::CalculateRay(RayProjectile& newRay, Vector3 Pos1, btVect
     currentWorld->rayTest(btStartPos + btLookDirection * 500., btStartPos + btLookDirection * 5000., rayResults);
 
     if (rayResults.hasHit()) {
-
         btVector3 hitPosition = rayResults.m_hitPointWorld;
         btScalar dotProduct = btStartPos.dot(rayResults.m_hitNormalWorld);
         btVector3 incomingDirection = (hitPosition - btStartPos).normalize();
         btVector3 reflectedDirection = btLookDirection - 2. * (btLookDirection * rayResults.m_hitNormalWorld) * rayResults.m_hitNormalWorld;
 
         if (rayBounces > 0) {
-            GenerateRayProjectile(into(hitPosition), into(reflectedDirection), 1, 1, rayBounces - 1, color, true);
+            GenerateRayProjectile(convert(hitPosition), convert(reflectedDirection), 1, 1, rayBounces - 1, color, true);
         }
 
-        newRay.Pos2 = into(hitPosition);
+        newRay.Pos2 = convert(hitPosition);
     } else {
-        newRay.Pos2 = into(btStartPos + btLookDirection * 5000.0);
+        newRay.Pos2 = convert(btStartPos + btLookDirection * 5000.0);
     }
 }
 
@@ -138,7 +123,7 @@ void ProjectileManager::GenerateRayProjectile(Vector3 startPos, Vector3 lookDire
     newRay.Color = rayColor;
 
     if (recursed) {
-        CalculateRay(newRay, (startPos + lookDirection), into(startPos), into(lookDirection), rayBounces, Colors::PeachPuff);
+        CalculateRay(newRay, (startPos + lookDirection), convert(startPos), convert(lookDirection), rayBounces, Colors::PeachPuff);
 
         currentRayProjectiles->push_back(newRay);
     } else {
@@ -150,7 +135,7 @@ void ProjectileManager::GenerateRayProjectile(Vector3 startPos, Vector3 lookDire
             }
 
             lookDirection = JitterVector3(lookDirection, negativeAccuracy, range);
-            CalculateRay(newRay, (startPos + lookDirection * 500.0f), into(startPos), into(lookDirection), rayBounces, Colors::Peru);
+            CalculateRay(newRay, (startPos + lookDirection * 500.0f), convert(startPos), convert(lookDirection), rayBounces, Colors::Peru);
 
             currentRayProjectiles->push_back(newRay);
         }
