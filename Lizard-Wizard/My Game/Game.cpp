@@ -14,7 +14,6 @@
 
 // HEY LOL ITS ME IM DOING A TEST AHAHAH *BITES LIP*
 
-
 /// Delete the object manager. The renderer needs to be deleted before this
 /// destructor runs so it will be done elsewhere.
 
@@ -24,9 +23,11 @@ static f32 pitch = 0.0f;
 const f32 sensitivity = 0.0333;
 
 static Vector3 player_pos = { 0.0f, 1500.0f, -2500.0f };
-const f32 move_speed = 10.0;
+const f32 move_speed = 20.0;
 
 static ModelInstance model_instance;
+
+static bool flycam_enabled = false;
 
 CGame::~CGame(){
   delete m_pObjectManager;
@@ -259,9 +260,7 @@ void CGame::InputHandler() {
     if (m_pKeyboard->TriggerDown(VK_F2)) //toggle frame rate 
         m_bDrawFrameRate = !m_bDrawFrameRate;
 
-    if (m_pKeyboard->TriggerDown(VK_SPACE)) //play sound
-       // m_pAudio->play(eSound::Clang);
-    {
+    if (m_pKeyboard->TriggerDown(VK_SPACE) && !flycam_enabled) {
         btCollisionObject* pObj = m_pDynamicsWorld->getCollisionObjectArray()[1];
         pObj->activate(true);
         btRigidBody* pBody = btRigidBody::upcast(pObj);
@@ -286,6 +285,10 @@ void CGame::InputHandler() {
     if (m_pKeyboard->Down(VK_DOWN))
         pitch += sensitivity;
 
+    if (m_pKeyboard->TriggerDown('F')) {
+        flycam_enabled = !flycam_enabled;
+    }
+
     {
         Vector3 delta_movement = Vector3::Zero;
         Vector3 lookdir = m_pRenderer->m_pCamera->GetViewVector();
@@ -308,25 +311,37 @@ void CGame::InputHandler() {
             delta_movement -= lookdir;
         }
 
+        if (flycam_enabled) {
+            if (m_pKeyboard->Down(VK_SPACE)) {
+                delta_movement += Vector3::UnitY;
+            }
+            if (m_pKeyboard->Down(VK_LCONTROL)) {
+                delta_movement -= Vector3::UnitY;
+            }
+        }
+
         if (delta_movement != Vector3::Zero) {
             delta_movement.Normalize();
-            btCollisionObject* pObj = m_pDynamicsWorld->getCollisionObjectArray()[1];
-            pObj->activate(true);
-            btRigidBody* pBody = btRigidBody::upcast(pObj);
-            delta_movement *= 17500.0;
+
+            if (!flycam_enabled) {
+                btCollisionObject* pObj = m_pDynamicsWorld->getCollisionObjectArray()[1];
+                pObj->activate(true);
+                btRigidBody* pBody = btRigidBody::upcast(pObj);
+                delta_movement *= 17500.0;
 
 
-            btVector3 velocity = pBody->getLinearVelocity();
-            btScalar magnitude = velocity.length();
-            btScalar max_speed = 1200.0;
+                btVector3 velocity = pBody->getLinearVelocity();
+                btScalar magnitude = velocity.length();
+                btScalar max_speed = 1200.0;
 
-            if (magnitude <= max_speed) {
-                pBody->applyCentralForce(*(btVector3*)&delta_movement);
+                if (magnitude <= max_speed) {
+                    pBody->applyCentralForce(*(btVector3*)&delta_movement);
+                }
+
+            } else {
+                player_pos += delta_movement * move_speed;
+
             }
-
-            // std::cout << velocity.getX() << ", " << velocity.getY() << ", " << velocity.getZ() << "\n";
-
-            //player_pos += delta_movement * move_speed;
         }
     }
 
@@ -353,7 +368,6 @@ void CGame::InputHandler() {
         m_rightClick.UpdateState();
 
         if (m_leftClick.pressed) {
-            //std::cout << m_pRenderer->m_pCamera->GetViewVector().x << " " << m_pRenderer->m_pCamera->GetViewVector().y << " " << m_pRenderer->m_pCamera->GetViewVector().z << std::endl;
             m_pProjectileManager->GenerateSimProjectile(m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), 5, 4, 5, Colors::IndianRed);
         }
 
@@ -403,21 +417,23 @@ void CGame::RenderFrame() {
 
     m_pRenderer->m_pCamera->SetYaw(yaw);
     m_pRenderer->m_pCamera->SetPitch(pitch);
-    //m_pRenderer->m_pCamera->MoveTo(player_pos);
 
-    { //NOTE(sean): update camera position :/
+    if (!flycam_enabled) {
         btCollisionObject* obj = m_pDynamicsWorld->getCollisionObjectArray()[1];
         btCollisionShape* shape = obj->getCollisionShape();
         btRigidBody* body = btRigidBody::upcast(obj);
         btTransform trans;
+
         if (body && body->getMotionState()) {
             body->getMotionState()->getWorldTransform(trans);
         }
         else {
             trans = obj->getWorldTransform();
         }
+
         m_pRenderer->m_pCamera->MoveTo(*(Vector3*)&trans.getOrigin());
-        //m_pRenderer->m_pCamera->MoveTo(player_pos);
+    } else {
+        m_pRenderer->m_pCamera->MoveTo(player_pos);
     }
 
     static f32 time = 0.0;
