@@ -1,31 +1,14 @@
 #include "Renderer.h"
 #include "Math.h"
+#include "Helpers.h"
 #include <Model.h>
 #include <iostream>
-
-const u32 g_cubeVertexCount = 8;
-const Vector3 g_cubeVertices[g_cubeVertexCount] = {
-    Vector3(1.0, 1.0, 1.0),
-    Vector3(1.0, 1.0, 0.0),
-    Vector3(1.0, 0.0, 1.0),
-    Vector3(1.0, 0.0, 0.0),
-    Vector3(0.0, 1.0, 1.0),
-    Vector3(0.0, 1.0, 0.0),
-    Vector3(0.0, 0.0, 1.0),
-    Vector3(0.0, 0.0, 0.0),
-};
-
-//TODO(sean): get proper cube indices
-const u32 g_cubeIndexCount = 6;
-const u32 g_cubeIndices[g_cubeIndexCount] = {
-    0, 1, 2,
-    3, 2, 1
-};
 
 CRenderer::CRenderer():
     LRenderer3D(),
     m_pCamera(new LBaseCamera),
-    m_debugScratch(16 * 1024) // 16k
+    m_debugScratch(16 * 1024), // 16k
+    m_models((u32)ModelType::Count)
 {
     //NOTE(sean): Windows window stuff
     m_f32BgColor = Colors::Black; // NOTE(sean): set the clear color
@@ -46,7 +29,6 @@ CRenderer::CRenderer():
     m_pCamera->SetPerspective(aspect, fov_radians, near_clip, far_clip);
     m_pCamera->MoveTo(Vector3(0.0f, 0.0f, 0.0f));
 
-    //m_pCamera->SetOrthographic(width, height, near_clip, far_clip);
 }
 
 CRenderer::~CRenderer() {
@@ -57,13 +39,7 @@ CRenderer::~CRenderer() {
 void CRenderer::Initialize() {
     LRenderer3D::Initialize();
 
-    CreateAllEffects();
-    CreateCubeBuffers();
-}
-
-void CRenderer::CreateAllEffects() {
     // This is very similar to vulkan :)
-
     {
         EffectPipelineStateDescription pipeline_state_desc(
             &VertexPC::InputLayout,
@@ -108,50 +84,6 @@ void CRenderer::CreateAllEffects() {
     }
 }
 
-template <class T>
-void CreateBufferAndView(u8* data, isize size, GraphicsResource& resource, std::shared_ptr<D3D12_VERTEX_BUFFER_VIEW>& view) {
-        resource = GraphicsMemory::Get().Allocate(size);
-        memcpy(resource.Memory(), data, size); // i like this function
-
-        view = std::make_shared<D3D12_VERTEX_BUFFER_VIEW>();
-        view->BufferLocation = resource.GpuAddress();
-        view->StrideInBytes = sizeof(T);
-        view->SizeInBytes = (u32)resource.Size();
-}
-
-void CreateBufferAndView(u8* data, isize size, GraphicsResource& resource, std::shared_ptr<D3D12_INDEX_BUFFER_VIEW>& view) {
-        resource = GraphicsMemory::Get().Allocate(size);
-        memcpy(resource.Memory(), data, size);
-
-        view = std::make_shared<D3D12_INDEX_BUFFER_VIEW>();
-        view->BufferLocation = resource.GpuAddress();
-        view->SizeInBytes = (u32)resource.Size();
-        view->Format = DXGI_FORMAT_R32_UINT;
-}
-
-void CRenderer::CreateCubeBuffers() {
-    { //NOTE(sean): vertex buffer
-        VertexPNT vertices[g_cubeVertexCount];
-        //Vector3 normal(-Vector3::UnitZ);
-        //Vector2 texture = Vector2(0.0, 0.0);
-        Vector3 color = Colors::Red;
-
-        for every(index, g_cubeVertexCount) {
-            vertices[index] = VertexPNT(g_cubeVertices[index], Vector3::UnitZ, Colors::Red);
-        }
-
-        auto data = (u8*)&vertices;
-        const isize size = g_cubeVertexCount * sizeof(VertexPNT);
-        CreateBufferAndView<VertexPNT>(data, size, m_cubeVertexBuffer, m_pVertexBufferView);
-    }
-
-    { //NOTE(sean): index buffer
-        auto data = (u8*)&g_cubeIndices;
-        const isize size = g_cubeIndexCount * sizeof(u32);
-        CreateBufferAndView(data, size, m_cubeIndexBuffer, m_pIndexBufferView);
-    }
-}
-
 /// Begin Rendering a frame.
 /// Put all DrawXYZ() or other functions in between this and EndFrame()
 void CRenderer::BeginFrame() {
@@ -164,30 +96,6 @@ void CRenderer::EndFrame() {
     LRenderer3D::EndFrame();
     m_frameNumber += 1;
 }
-
-/*
-// TODO(sean): Implement the actual renderer
-/// <summary>
-/// Render a cube at the position.
-/// </summary>
-/// <param name="cube_position"></param>
-void CRenderer::DrawCube(const Vector3& position) {
-    const XMVECTORF32 scale = { 1.0f, 1.0f, 1.0f };
-    const XMVECTORF32 translate = { position.x, position.y, position.z };
-
-    XMMATRIX world = XMMatrixTransformation( g_XMZero, Quaternion::Identity, scale, g_XMZero, Quaternion::Identity, translate);
-
-    m_pDebugLineEffect->SetWorld(world);
-    m_pDebugLineEffect->SetView(XMLoadFloat4x4(&m_view));
-
-    m_pDebugLineEffect->Apply(m_pCommandList);
-
-    m_pCommandList->IASetVertexBuffers(0, 1, m_pVertexBufferView.get());
-    m_pCommandList->IASetIndexBuffer(m_pIndexBufferView.get());
-    m_pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST); //NOTE(sean): we want a triangle list here for custom meshes
-    m_pCommandList->DrawIndexedInstanced(g_cubeIndexCount, 1, 0, 0, 0);
-}
-*/
 
 /// Begins a debug line batch.
 /// Code that follows this will be batched into ONE draw call
@@ -498,7 +406,8 @@ u32 CRenderer::AddDebugModel(DebugModel* model) {
 }
 
 void CRenderer::LoadAllModels() {
-    LoadDebugModel("suzanne", Colors::Peru);
+    LoadDebugModel("untitled", Colors::Peru);
+    LoadModel("untitled", ModelType::Cube);
 }
 
 /*
@@ -581,102 +490,132 @@ u32 CRenderer::GetResolutionHeight() {
     return m_nWinHeight;
 }
 
-/// Load a debug model with the name.
-u32 CRenderer::LoadDebugModel(const char* name, XMVECTORF32 color) {
-    // LSpriteRenderer::LoadByIndex() used as ref
+//NOTE(sean): VBO file format: https://github.com/microsoft/DirectXMesh/blob/master/Meshconvert/Mesh.cpp
+struct VBOData {
+    u32 vertex_count;
+    u32 index_count;
+    VertexPNT* vertices;
+    u16* indices;
 
-    if (m_pXmlSettings == 0) { ABORT("Unable to find gamesettings.xml");  }
-
-    XMLElement* models_tag = m_pXmlSettings->FirstChildElement("models");
-    if (models_tag == 0) { ABORT("Unable to find \"models\" tag"); }
-
-    std::string path(models_tag->Attribute("path"));
-    XMLElement* model_tag = models_tag->FirstChildElement("model");
-
-    // find specific tag
-    while (model_tag != 0 && strcmp(name, model_tag->Attribute("name"))) {
-        model_tag = model_tag->NextSiblingElement("model");
-    }
-
-    // was not found
-    if (model_tag == 0) { ABORT("Unable to find name tag");  }
-
-    if (model_tag->Attribute("file")) {
-        const std::string fpath = path + "\\" + model_tag->Attribute("file");
-
-        //NOTE(sean): VBO file format: https://github.com/microsoft/DirectXMesh/blob/master/Meshconvert/Mesh.cpp
-        struct VBOVertex {
-            XMFLOAT3 position;
-            XMFLOAT3 normal;
-            XMFLOAT2 texture;
-        };
-
-        //TODO(sean): load models from vbo file
-        u32 vertex_count = 0;
-        u32 index_count = 0;
-        VBOVertex* vertices = 0;
-        u16* indices = 0;
-
-        {
-            FILE* fp = fopen(fpath.c_str(), "rb");
-            if (fp == 0) { ABORT("Attempted to open VBO file and failed!"); }
-
-            fread(&vertex_count, sizeof(u32), 1, fp);
-            if (vertex_count == 0) { ABORT("Input VBO has ZERO vertices!"); }
-
-            fread(&index_count, sizeof(u32), 1, fp);
-            if (index_count == 0) { ABORT("Input VBO has ZERO indices!"); }
-
-            vertices = new VBOVertex[vertex_count];
-            if (vertices == 0) { ABORT("Failed to allocate VBO vertex buffer!"); }
-
-            indices = new u16[index_count];
-            if (indices == 0) { ABORT("Failed to allocate VBO index buffer!"); }
-
-            //TODO(sean): error checking?
-            fread(vertices, sizeof(VBOVertex), vertex_count, fp);
-            fread(indices, sizeof(u16), index_count, fp);
-
-            fclose(fp);
-        }
-
-        //NOTE(sean): closest number under 2048 that is a multiple of 3,
-        //this seems to be the limit for the current primitive batch
-        if (index_count > 2046) {
-            ABORT("Input VBO must not contain more than 2046 indices!");
-        }
-
-        VertexPC* mesh = new VertexPC[index_count];
-
-        // unpack index list
-        for every(index, index_count) {
-            mesh[index] = { vertices[indices[index]].position, *(XMFLOAT4*)&color }; // position and color
-        }
-
+    void free() {
         delete[] vertices;
         delete[] indices;
-
-        u32 handle = AddDebugModel(&DebugModel(mesh, index_count, DebugModelType::LINE_LIST));
-
-        delete[] mesh;
-
-        return handle;
-    } else {
-        ABORT("Unable to find file."); // ABORT
     }
+};
+
+//NOTE(sean): VBO file format: https://github.com/microsoft/DirectXMesh/blob/master/Meshconvert/Mesh.cpp
+void LoadVBO(const char* fpath, VBOData* model) {
+    // TODO(sean): error checking?
+
+    FILE* fp = fopen(fpath, "rb");
+
+    fread(&model->vertex_count, sizeof(u32), 1, fp);
+    fread(&model->index_count, sizeof(u32), 1, fp);
+
+    model->vertices = new VertexPNT[model->vertex_count];
+    model->indices = new u16[model->index_count];
+
+    fread(model->vertices, sizeof(VertexPNT), model->vertex_count, fp);
+    fread(model->indices, sizeof(u16), model->index_count, fp);
+
+    fclose(fp);
 }
 
-void CRenderer::GameEffectRenderTestCube() {
-    static const XMMATRIX WORLD_MATRIX = MoveScaleMatrix(Vector3(0.0, 0.0, 0.0), Vector3(100.0, 100.0, 100.0));
+/// Load a debug model with the name.
+/// Debug models are assumed to be VBO (.vbo) files.
+u32 CRenderer::LoadDebugModel(const char* name, XMVECTORF32 color) {
+    std::string fpath = XMLFindItem(m_pXmlSettings, "models", "model", name);
+    ABORT_EQ_FORMAT(fpath, "", "Unable to find \"%s\\%s\\%s\"", "models", "model", name);
 
-    m_pGameEffect->SetWorld(WORLD_MATRIX);
+    VBOData vbo_data;
+    LoadVBO(fpath.c_str(), &vbo_data);
+
+    //NOTE(sean): closest number under 2048 that is a multiple of 3,
+    //this seems to be the limit for the current primitive batch
+    if (vbo_data.index_count > 2046) {
+        ABORT("Input VBO must not contain more than 2046 indices!");
+    }
+
+    VertexPC* mesh = new VertexPC[vbo_data.index_count];
+
+    // unpack index list
+    for every(index, vbo_data.index_count) {
+        mesh[index] = { vbo_data.vertices[vbo_data.indices[index]].position, *(XMFLOAT4*)&color }; // position and color
+    }
+
+    u32 handle = AddDebugModel(&DebugModel(mesh, vbo_data.index_count, DebugModelType::LINE_LIST));
+
+    vbo_data.free();
+    delete[] mesh;
+
+    return handle;
+}
+
+template <class T>
+void CreateBufferAndView(u8* data, isize size, GraphicsResource& resource, std::shared_ptr<D3D12_VERTEX_BUFFER_VIEW>& view) {
+        resource = GraphicsMemory::Get().Allocate(size);
+        memcpy(resource.Memory(), data, size); // i like this function
+
+        view = std::make_shared<D3D12_VERTEX_BUFFER_VIEW>();
+        view->BufferLocation = resource.GpuAddress();
+        view->StrideInBytes = sizeof(T);
+        view->SizeInBytes = (u32)resource.Size();
+}
+
+void CreateBufferAndView(u8* data, isize size, GraphicsResource& resource, std::shared_ptr<D3D12_INDEX_BUFFER_VIEW>& view) {
+        resource = GraphicsMemory::Get().Allocate(size);
+        memcpy(resource.Memory(), data, size);
+
+        view = std::make_shared<D3D12_INDEX_BUFFER_VIEW>();
+        view->BufferLocation = resource.GpuAddress();
+        view->SizeInBytes = (u32)resource.Size();
+        view->Format = DXGI_FORMAT_R32_UINT;
+}
+
+/// Load a model.
+/// Models are assumed to be VBO (.vbo) files.
+void CRenderer::LoadModel(const char* name, ModelType model_type) {
+    std::string fpath = XMLFindItem(m_pXmlSettings, "models", "model", name);
+    ABORT_EQ_FORMAT(fpath, "", "Unable to find \"%s\\%s\\%s\"", "models", "model", name);
+
+    VBOData vbo_data;
+    LoadVBO(fpath.c_str(), &vbo_data);
+
+    GameModel* pmodel = &m_models[(u32)model_type];
+    pmodel->index_count = vbo_data.index_count;
+
+    u32* indices = new u32[vbo_data.index_count];
+    for every(index, vbo_data.index_count) {
+        indices[index] = vbo_data.indices[index];
+    }
+
+    { //NOTE(sean): vertex buffer
+        auto data = (u8*)vbo_data.vertices;
+        const isize size = vbo_data.vertex_count * sizeof(VertexPNT);
+        CreateBufferAndView<VertexPNT>(data, size, pmodel->vertex_buffer, pmodel->vertex_view);
+    }
+
+    { //NOTE(sean): index buffer
+        auto data = (u8*)indices;
+        const isize size = vbo_data.index_count * sizeof(u32);
+        CreateBufferAndView(data, size, pmodel->index_buffer, pmodel->index_view);
+    }
+
+    vbo_data.free();
+    delete[] indices;
+}
+
+void CRenderer::RenderInstance(ModelInstance* instance) {
+    m_pGameEffect->SetWorld(instance->m_worldMatrix);
     m_pGameEffect->SetView(XMLoadFloat4x4(&m_view));
 
     m_pGameEffect->Apply(m_pCommandList);
 
-    m_pCommandList->IASetVertexBuffers(0, 1, m_pVertexBufferView.get());
-    m_pCommandList->IASetIndexBuffer(m_pIndexBufferView.get());
+    GameModel* pmodel = &m_models[instance->m_modelIndex];
+    m_pCommandList->IASetVertexBuffers(0, 1, pmodel->vertex_view.get());
+    m_pCommandList->IASetIndexBuffer(pmodel->index_view.get());
+
     m_pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    m_pCommandList->DrawIndexedInstanced(g_cubeIndexCount, 1, 0, 0, 0);
+    m_pCommandList->DrawIndexedInstanced(pmodel->index_count, 1, 0, 0, 0);
 }

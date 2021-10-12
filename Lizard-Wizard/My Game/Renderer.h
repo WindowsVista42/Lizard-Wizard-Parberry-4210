@@ -14,29 +14,15 @@ class CRenderer: public LRenderer3D {
 private:
     usize m_frameNumber = 0;
 
-    std::unique_ptr<BasicEffect> m_pDebugLineEffect; //< Debug line rendering effect
-    std::unique_ptr<BasicEffect> m_pDebugTriangleEffect; // Debug triangle rendering effect
-    void CreateAllEffects();
-
-    GraphicsResource m_cubeVertexBuffer;
-    GraphicsResource m_cubeIndexBuffer;
-    //TODO(sean): do these really need to be pointers???
-    std::shared_ptr<D3D12_VERTEX_BUFFER_VIEW> m_pVertexBufferView;
-    std::shared_ptr<D3D12_INDEX_BUFFER_VIEW> m_pIndexBufferView;
-    void CreateCubeBuffers();
-
-    StagedBuffer m_debugScratch; // this expects to be cleared after every function call that uses it
-
-    //TODO(sean): do this same thing, but on the gpu
+    StagedBuffer m_debugScratch;
+    std::unique_ptr<BasicEffect> m_pDebugLineEffect;
+    std::unique_ptr<BasicEffect> m_pDebugTriangleEffect;
     std::vector<DebugModel> m_debugModels;
     std::vector<ModelInstance> m_debugModelInstances;
 
-    std::vector<std::shared_ptr<Model>> m_debugModelsVBO;
-
     std::unique_ptr<GameEffect> m_pGameEffect;
-
-    //Model instances used for rendering
-    //std::vector<Model> m_models;
+    std::vector<GameModel> m_models;
+    std::vector<ModelInstance> m_modelInstances;
 
 public:
     // I dont like putting this behind walls because it doesnt stop people from fucking with it
@@ -92,6 +78,8 @@ public:
     u32 GetResolutionHeight();
 
     void GameEffectRenderTestCube();
+    void RenderInstance(ModelInstance* instance);
+    void LoadModel(const char* name, ModelType model_type);
 
     //TODO(sean): Implement this
     //NOTE(sean): Frustum Culling -- Don't render things behind the cameras near clip plane

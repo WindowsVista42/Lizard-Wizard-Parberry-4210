@@ -166,7 +166,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Common.cpp" />
-    <ClCompile Include="Convert.cpp" />
+    <ClCompile Include="Helpers.cpp" />
     <ClCompile Include="CustomBind.cpp" />
     <ClCompile Include="GameEffect.cpp" />
     <ClCompile Include="Math.cpp" />
@@ -181,7 +181,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h" />
-    <ClInclude Include="Convert.h" />
+    <ClInclude Include="Helpers.h" />
     <ClInclude Include="CustomBind.h" />
     <ClInclude Include="GameEffect.h" />
     <ClInclude Include="Math.h" />

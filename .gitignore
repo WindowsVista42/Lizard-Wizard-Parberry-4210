@@ -354,4 +354,5 @@ MigrationBackup/
 *.exe
 
 Lizard-Wizard/Media/
-Lizard-Wizard/Tools/
+Lizard-Wizard/Tools/*.exe
+

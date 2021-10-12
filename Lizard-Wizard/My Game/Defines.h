@@ -28,3 +28,19 @@ typedef VertexPositionColor VertexPC;
 
 #define BT_SHAPE_TYPE_BOX 0
 #define BT_SHAPE_TYPE_CAPSULE 10
+
+/// Formatted abort when (lhs == rhs)
+#define ABORT_EQ_FORMAT(lhs, rhs, format, ...) \
+if((lhs) == (rhs)) { \
+    char message[128]; \
+    sprintf(message, (format), __VA_ARGS__); \
+    ABORT(message); \
+}
+
+/// Formatted abort when (lhs != rhs)
+#define ABORT_NE_FORMAT(lhs, rhs, format, ...) \
+if((lhs) != (rhs)) { \
+    char message[256]; \
+    sprintf(message, (format), __VA_ARGS__); \
+    ABORT(message); \
+}

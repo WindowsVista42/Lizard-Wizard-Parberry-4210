@@ -29,4 +29,17 @@ struct ModelInstance {
     ModelInstance(u32 instance);
 };
 
+enum class ModelType: u32 {
+    Cube,
+    Count // keep this last
+};
+
+struct GameModel {
+    u32 index_count;
+    GraphicsResource vertex_buffer;
+    GraphicsResource index_buffer;
+    std::shared_ptr<D3D12_VERTEX_BUFFER_VIEW> vertex_view;
+    std::shared_ptr<D3D12_INDEX_BUFFER_VIEW> index_view;
+};
+
 #endif

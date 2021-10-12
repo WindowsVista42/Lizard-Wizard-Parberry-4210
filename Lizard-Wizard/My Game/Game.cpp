@@ -545,7 +545,10 @@ void CGame::RenderFrame() {
         m_pRenderer->EndDebugBatch();
 
         {
-            m_pRenderer->GameEffectRenderTestCube();
+            ModelInstance instance = {};
+            instance.m_modelIndex = (u32)ModelType::Cube;
+            instance.m_worldMatrix = MoveScaleMatrix(Vector3(0.0f, 0.0f, 0.0f), Vector3(100.0f, 100.0f, 100.0f));
+            m_pRenderer->RenderInstance(&instance);
         }
     }
     m_pRenderer->EndFrame();
