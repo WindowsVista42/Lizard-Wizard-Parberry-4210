@@ -94,14 +94,18 @@ void CRenderer::CreateAllEffects() {
         m_pDebugTriangleEffect->SetProjection(XMLoadFloat4x4(&m_projection));
     }
 
-    /*
-    //TODO(sean): Move this into member variables
-    m_pLineEffect->EnableDefaultLighting();
-    m_pLineEffect->SetFogColor(Colors::Black);
-    m_pLineEffect->SetFogStart(10.0);
-    m_pLineEffect->SetFogEnd(100.0);
-    m_pLineEffect->SetDiffuseColor(Colors::Red);
-    */
+    {
+        EffectPipelineStateDescription pipeline_state_desc(
+            &VertexPNT::InputLayout,
+            CommonStates::NonPremultiplied,
+            CommonStates::DepthDefault,
+            CommonStates::CullNone,
+            m_RenderTargetState
+        );
+
+        m_pGameEffect = std::make_unique<GameEffect>(m_pD3DDevice, pipeline_state_desc);
+        m_pGameEffect->SetProjection(XMLoadFloat4x4(&m_projection));
+    }
 }
 
 template <class T>
@@ -127,18 +131,18 @@ void CreateBufferAndView(u8* data, isize size, GraphicsResource& resource, std::
 
 void CRenderer::CreateCubeBuffers() {
     { //NOTE(sean): vertex buffer
-        VertexPC vertices[g_cubeVertexCount];
+        VertexPNT vertices[g_cubeVertexCount];
         //Vector3 normal(-Vector3::UnitZ);
         //Vector2 texture = Vector2(0.0, 0.0);
         Vector3 color = Colors::Red;
 
-        for (Vector3 position: g_cubeVertices) {
-            vertices[0] = VertexPC(position, Colors::Red);
+        for every(index, g_cubeVertexCount) {
+            vertices[index] = VertexPNT(g_cubeVertices[index], Vector3::UnitZ, Colors::Red);
         }
 
         auto data = (u8*)&vertices;
-        const isize size = g_cubeVertexCount * sizeof(VertexPC);
-        CreateBufferAndView<VertexPC>(data, size, m_cubeVertexBuffer, m_pVertexBufferView);
+        const isize size = g_cubeVertexCount * sizeof(VertexPNT);
+        CreateBufferAndView<VertexPNT>(data, size, m_cubeVertexBuffer, m_pVertexBufferView);
     }
 
     { //NOTE(sean): index buffer
@@ -227,7 +231,7 @@ void CRenderer::DrawDebugLine(
 /// Draw a colored "Debug Triangle".
 ///   A
 ///  / \
-/// B - C
+/// C - B
 void CRenderer::DrawDebugTriangle(
     const Vector3 A,
     const Vector3 B,
@@ -241,7 +245,7 @@ void CRenderer::DrawDebugTriangle(
 /// Draw a colored "Debug Quad".
 /// A - B
 /// |   |
-/// C - D
+/// D - C
 void CRenderer::DrawDebugQuad(
     const Vector3 A,
     const Vector3 B,
@@ -269,11 +273,11 @@ void CRenderer::DrawDebugRay(
 /// Draw a colored "Debug Ring".
 ///      A - B
 ///    /       \
-///   C         D
+///   H         C
 ///   |         |
-///   E         F
+///   G         D
 ///    \       /
-///      G - H
+///      F - E
 void CRenderer::DrawDebugRing(
     const Vector3 origin,
     const Vector3 orientation,
@@ -660,4 +664,19 @@ u32 CRenderer::LoadDebugModel(const char* name, XMVECTORF32 color) {
     } else {
         ABORT("Unable to find file."); // ABORT
     }
+}
+
+void CRenderer::GameEffectRenderTestCube() {
+    static const XMMATRIX WORLD_MATRIX = MoveScaleMatrix(Vector3(0.0, 0.0, 0.0), Vector3(100.0, 100.0, 100.0));
+
+    m_pGameEffect->SetWorld(WORLD_MATRIX);
+    m_pGameEffect->SetView(XMLoadFloat4x4(&m_view));
+
+    m_pGameEffect->Apply(m_pCommandList);
+
+    m_pCommandList->IASetVertexBuffers(0, 1, m_pVertexBufferView.get());
+    m_pCommandList->IASetIndexBuffer(m_pIndexBufferView.get());
+    m_pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    m_pCommandList->DrawIndexedInstanced(g_cubeIndexCount, 1, 0, 0, 0);
 }

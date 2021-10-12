@@ -4,22 +4,21 @@
 //NOTE(sean): this is actually a really nice way to do a bitset,
 //courtesy of --> https://github.com/microsoft/DirectXTK12/wiki/Authoring-an-Effect
 namespace {
-    struct __declspec(align(16)) GameEffectConstants
-    {
+    struct __declspec(align(16)) GameEffectConstants {
         XMMATRIX worldViewProjection;
     };
 
     static_assert((sizeof(GameEffectConstants) % 16) == 0, "Constant Buffer size alignment");
 
     constexpr u32 DirtyConstantBuffer = 0x1;
-    constexpr u32 DirtyWorldViewProjectionmatrix = 0x2;
+    constexpr u32 DirtyWorldViewProjectionMatrix = 0x2;
     //NOTE(sean): other bit flags go here
 }
 
 GameEffect::GameEffect(
     ID3D12Device* device,
     const DirectX::EffectPipelineStateDescription& pipeline_state_desc
-) :
+):
     m_device(device),
     m_dirtyFlags(u32(-1)),
     m_world(XMMatrixIdentity()),
@@ -27,7 +26,6 @@ GameEffect::GameEffect(
     m_projection(XMMatrixIdentity())
 {
     //NOTE(sean): Create root signature for HLSL stuff
-
     D3D12_ROOT_SIGNATURE_FLAGS root_signature_flags =
         D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
         D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
@@ -55,29 +53,25 @@ GameEffect::GameEffect(
 
 void GameEffect::Apply(ID3D12GraphicsCommandList* command_list) {
     //NOTE(sean): update dirty data
-    if (m_dirtyFlags & DirtyWorldViewProjectionmatrix) {
-        m_worldViewProjection = XMMatrixMultiply(XMMatrixMultiply(m_world, m_view), m_projection);
+    if (m_dirtyFlags & DirtyWorldViewProjectionMatrix) {
+        XMMATRIX world_view = XMMatrixMultiply(m_world, m_view);
+        m_worldViewProjection = XMMatrixTranspose(XMMatrixMultiply(world_view, m_projection));
 
-        m_dirtyFlags &= ~DirtyWorldViewProjectionmatrix;
+        m_dirtyFlags &= ~DirtyWorldViewProjectionMatrix;
         m_dirtyFlags |= DirtyConstantBuffer;
     }
 
     if (m_dirtyFlags & DirtyConstantBuffer) {
         auto constant_buffer = GraphicsMemory::Get(m_device.Get()).AllocateConstant<GameEffectConstants>();
 
-        //NOTE(sean): I'm not sure if this is needed, might be able to remove
-        //I think this is probably just the memory layout being different
-        XMMATRIX transpose = XMMatrixTranspose(m_worldViewProjection);
-
         GameEffectConstants data = {};
-        data.worldViewProjection = transpose;
+        data.worldViewProjection = m_worldViewProjection;
 
         memcpy(constant_buffer.Memory(), &data, constant_buffer.Size());
         std::swap(m_constantBuffer, constant_buffer);
 
         m_dirtyFlags &= ~DirtyConstantBuffer;
     }
-
 
     //NOTE(sean): set root signature and parameters
     command_list->SetGraphicsRootSignature(m_rootSignature.Get());
@@ -93,22 +87,22 @@ void GameEffect::Apply(ID3D12GraphicsCommandList* command_list) {
 
 void XM_CALLCONV GameEffect::SetWorld(DirectX::FXMMATRIX world) {
     m_world = world;
-    m_dirtyFlags |= DirtyWorldViewProjectionmatrix;
+    m_dirtyFlags |= DirtyWorldViewProjectionMatrix;
 }
 
 void XM_CALLCONV GameEffect::SetView(DirectX::FXMMATRIX view) {
     m_view = view;
-    m_dirtyFlags |= DirtyWorldViewProjectionmatrix;
+    m_dirtyFlags |= DirtyWorldViewProjectionMatrix;
 }
 
 void XM_CALLCONV GameEffect::SetProjection(DirectX::FXMMATRIX projection) {
     m_projection = projection;
-    m_dirtyFlags |= DirtyWorldViewProjectionmatrix;
+    m_dirtyFlags |= DirtyWorldViewProjectionMatrix;
 }
 
 void XM_CALLCONV GameEffect::SetMatrices(DirectX::FXMMATRIX world, DirectX::CXMMATRIX view, DirectX::CXMMATRIX projection) {
     m_world = world;
     m_view = view;
     m_projection = projection;
-    m_dirtyFlags |= DirtyWorldViewProjectionmatrix;
+    m_dirtyFlags |= DirtyWorldViewProjectionMatrix;
 }

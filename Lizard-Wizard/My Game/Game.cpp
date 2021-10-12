@@ -543,6 +543,10 @@ void CGame::RenderFrame() {
             }
         }
         m_pRenderer->EndDebugBatch();
+
+        {
+            m_pRenderer->GameEffectRenderTestCube();
+        }
     }
     m_pRenderer->EndFrame();
 }

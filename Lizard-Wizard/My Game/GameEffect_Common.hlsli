@@ -9,12 +9,18 @@
 "DescriptorTable ( SRV(t0) )," \
 "CBV(b0)"
 
-cbuffer Constants : register(b0) {
+cbuffer GameEffectConstants : register(b0) {
 	float4x4 WorldViewProjection;
 }
 
 struct VSOutput {
 	float4 PositionPS : SV_Position;
+};
+
+struct VSInput {
+	float3 PositionVS : SV_POSITION;
+	float3 NormalVS : NORMAL;
+	float2 TextureVS : TEXCOORD;
 };
 
 #endif

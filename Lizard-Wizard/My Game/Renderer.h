@@ -4,6 +4,7 @@
 #include "Defines.h"
 #include "Model.h"
 #include "StagedBuffer.h"
+#include "GameEffect.h"
 #include <Renderer3D.h>
 #include <Model.h>
 
@@ -31,6 +32,8 @@ private:
     std::vector<ModelInstance> m_debugModelInstances;
 
     std::vector<std::shared_ptr<Model>> m_debugModelsVBO;
+
+    std::unique_ptr<GameEffect> m_pGameEffect;
 
     //Model instances used for rendering
     //std::vector<Model> m_models;
@@ -87,6 +90,8 @@ public:
     HWND GetHwnd();
     u32 GetResolutionWidth();
     u32 GetResolutionHeight();
+
+    void GameEffectRenderTestCube();
 
     //TODO(sean): Implement this
     //NOTE(sean): Frustum Culling -- Don't render things behind the cameras near clip plane
