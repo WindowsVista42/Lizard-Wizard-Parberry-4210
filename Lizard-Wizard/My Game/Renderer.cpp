@@ -129,9 +129,9 @@ void CRenderer::EndDebugBatch() {
 /// Draw a colored "Debug Line" from A to B
 /// A - B
 void CRenderer::DrawDebugLine(
-    const Vector3 A,
-    const Vector3 B,
-    const XMVECTORF32 color
+    const Vec3 A,
+    const Vec3 B,
+    const Vec4 color
 ) {
     m_pPrimitiveBatch->DrawLine(VertexPC(A, color), VertexPC(B, color));
 }
@@ -141,10 +141,10 @@ void CRenderer::DrawDebugLine(
 ///  / \
 /// C - B
 void CRenderer::DrawDebugTriangle(
-    const Vector3 A,
-    const Vector3 B,
-    const Vector3 C,
-    const XMVECTORF32 color
+    const Vec3 A,
+    const Vec3 B,
+    const Vec3 C,
+    const Vec4 color
 ) {
     VertexPC vertices[4] = { VertexPC(A, color), VertexPC(B, color), VertexPC(C, color), VertexPC(A, color) };
     m_pPrimitiveBatch->Draw(D3D_PRIMITIVE_TOPOLOGY_LINESTRIP, vertices, 4);
@@ -155,11 +155,11 @@ void CRenderer::DrawDebugTriangle(
 /// |   |
 /// D - C
 void CRenderer::DrawDebugQuad(
-    const Vector3 A,
-    const Vector3 B,
-    const Vector3 C,
-    const Vector3 D,
-    const XMVECTORF32 color
+    const Vec3 A,
+    const Vec3 B,
+    const Vec3 C,
+    const Vec3 D,
+    const Vec4 color
 ) {
     VertexPC vertices[5] = { VertexPC(A, color), VertexPC(B, color), VertexPC(C, color), VertexPC(D, color), VertexPC(A, color) };
     m_pPrimitiveBatch->Draw(D3D_PRIMITIVE_TOPOLOGY_LINESTRIP, vertices, 5);
@@ -169,10 +169,10 @@ void CRenderer::DrawDebugQuad(
 /// A --->
 
 void CRenderer::DrawDebugRay(
-    const Vector3 origin,
-    const Vector3 direction,
+    const Vec3 origin,
+    const Vec3 direction,
     const f32 length,
-    const XMVECTORF32 color
+    const Vec4 color
 ) {
     const Vector3 end = origin + direction * length;
     DrawDebugLine(origin, end, color);
@@ -187,11 +187,11 @@ void CRenderer::DrawDebugRay(
 ///    \       /
 ///      F - E
 void CRenderer::DrawDebugRing(
-    const Vector3 origin,
-    const Vector3 orientation,
+    const Vec3 origin,
+    const Vec3 orientation,
     const f32 radius,
     const u32 segments,
-    const XMVECTORF32 color
+    const Vec4 color
 ) {
     // select a normal
     Vector3 normal(orientation.z, orientation.z, -orientation.x-orientation.y);
@@ -209,11 +209,11 @@ void CRenderer::DrawDebugRing(
 /// Draw a colored "Debug Ring".
 /// This does the same thing as DrawDebugRing()
 void CRenderer::DrawDebugRing2(
-    FXMVECTOR origin,
-    FXMVECTOR majorAxis,
-    FXMVECTOR minorAxis,
+    Vec3 origin,
+    Vec3 majorAxis,
+    Vec3 minorAxis,
     const u32 segments,
-    const XMVECTORF32 color
+    const Vec4 color
 ) {
     VertexPC* verts = (VertexPC*)m_debugScratch.Alloc(((usize)segments + 1) * sizeof(VertexPC));
 
@@ -253,7 +253,7 @@ void CRenderer::DrawDebugRing2(
 void CRenderer::DrawDebugSphere(
     const BoundingSphere sphere,
     const u32 segments,
-    const XMVECTORF32 color
+    const Vec4 color
 ) {
     XMVECTOR center = XMLoadFloat3(&sphere.Center);
 
@@ -269,7 +269,7 @@ void CRenderer::DrawDebugSphere(
 /// Draw a colored box
 void CRenderer::DrawDebugAABB(
     const BoundingBox box,
-    const XMVECTORF32 color
+    const Vec4 color
 ) {
     XMMATRIX world = MoveScaleMatrix(box.Center, box.Extents);
     DrawDebugCubeInternal(world, color);
@@ -279,7 +279,7 @@ void CRenderer::DrawDebugAABB(
 /// Draw a colored box, but it's rotated
 void CRenderer::DrawDebugOBB(
     const BoundingOrientedBox obb,
-    const XMVECTORF32 color
+    const Vec4 color
 ) {
     XMMATRIX world = MoveRotateScaleMatrix(obb.Center, obb.Orientation, obb.Extents);
     DrawDebugCubeInternal(world, color);
@@ -287,11 +287,11 @@ void CRenderer::DrawDebugOBB(
 
 /// Draw a colored "Debug Capsule"
 void CRenderer::DrawDebugCapsule(
-   const Vector3 origin, 
+   const Vec3 origin, 
    const f32 radius, 
    const f32 height, 
    const u32 segments,
-   const XMVECTORF32 color
+   const Vec4 color
 ) {
     XMVECTOR center = XMLoadFloat3(&origin);
 
@@ -324,12 +324,12 @@ void CRenderer::DrawDebugCapsule(
 /// |   |   |
 /// G - H - I
 void CRenderer::DrawDebugGrid(
-    const Vector3 x_axis,
-    const Vector3 y_axis,
-    const Vector3 origin,
+    const Vec3 x_axis,
+    const Vec3 y_axis,
+    const Vec3 origin,
     const u32 x_segments,
     const u32 y_segments,
-    const XMVECTORF32 color
+    const Vec4 color
 ) {
     for every(i, x_segments) {
         f32 percent = f32(i) / f32(x_segments - 1);
@@ -359,8 +359,8 @@ void CRenderer::DrawDebugGrid(
 //NOTE(sean): https://github.com/Microsoft/DirectXTK/wiki/DebugDraw
 /// Internal function (ask sean if you want to know what it does)
 void CRenderer::DrawDebugCubeInternal(
-    const CXMMATRIX world,
-    const XMVECTORF32 color
+    const Mat4x4& world,
+    const Vec4 color
 ) {
      const XMVECTORF32 vert_pos[8] = {
          {{{ -1.f, -1.f, -1.f, 0.f }}},
@@ -409,16 +409,6 @@ void CRenderer::LoadAllModels() {
     LoadDebugModel("untitled", Colors::Peru);
     LoadModel("untitled", ModelType::Cube);
 }
-
-/*
-void CRenderer::DrawDebugModelInstance(SModelInstance* instance) {
-    m_pDebugEffect->SetWorld(instance->m_worldMatrix);
-    m_pDebugEffect->Apply(m_pCommandList);
-
-    DrawDebugModel(&m_debugModels[instance->m_modelIndex]);
-}
-
-*/
 
 /// Draw an instance of a DebugModel.
 /// For example, you might want to render 3 enemies of the same type.
@@ -523,7 +513,7 @@ void LoadVBO(const char* fpath, VBOData* model) {
 
 /// Load a debug model with the name.
 /// Debug models are assumed to be VBO (.vbo) files.
-u32 CRenderer::LoadDebugModel(const char* name, XMVECTORF32 color) {
+u32 CRenderer::LoadDebugModel(const char* name, Vec4 color) {
     std::string fpath = XMLFindItem(m_pXmlSettings, "models", "model", name);
     ABORT_EQ_FORMAT(fpath, "", "Unable to find \"%s\\%s\\%s\"", "models", "model", name);
 
@@ -553,23 +543,23 @@ u32 CRenderer::LoadDebugModel(const char* name, XMVECTORF32 color) {
 
 template <class T>
 void CreateBufferAndView(u8* data, isize size, GraphicsResource& resource, std::shared_ptr<D3D12_VERTEX_BUFFER_VIEW>& view) {
-        resource = GraphicsMemory::Get().Allocate(size);
-        memcpy(resource.Memory(), data, size); // i like this function
+    resource = GraphicsMemory::Get().Allocate(size);
+    memcpy(resource.Memory(), data, size); // i like this function
 
-        view = std::make_shared<D3D12_VERTEX_BUFFER_VIEW>();
-        view->BufferLocation = resource.GpuAddress();
-        view->StrideInBytes = sizeof(T);
-        view->SizeInBytes = (u32)resource.Size();
+    view = std::make_shared<D3D12_VERTEX_BUFFER_VIEW>();
+    view->BufferLocation = resource.GpuAddress();
+    view->StrideInBytes = sizeof(T);
+    view->SizeInBytes = (u32)resource.Size();
 }
 
 void CreateBufferAndView(u8* data, isize size, GraphicsResource& resource, std::shared_ptr<D3D12_INDEX_BUFFER_VIEW>& view) {
-        resource = GraphicsMemory::Get().Allocate(size);
-        memcpy(resource.Memory(), data, size);
-
-        view = std::make_shared<D3D12_INDEX_BUFFER_VIEW>();
-        view->BufferLocation = resource.GpuAddress();
-        view->SizeInBytes = (u32)resource.Size();
-        view->Format = DXGI_FORMAT_R32_UINT;
+    resource = GraphicsMemory::Get().Allocate(size);
+    memcpy(resource.Memory(), data, size);
+    
+    view = std::make_shared<D3D12_INDEX_BUFFER_VIEW>();
+    view->BufferLocation = resource.GpuAddress();
+    view->SizeInBytes = (u32)resource.Size();
+    view->Format = DXGI_FORMAT_R32_UINT;
 }
 
 /// Load a model.
@@ -605,7 +595,7 @@ void CRenderer::LoadModel(const char* name, ModelType model_type) {
     delete[] indices;
 }
 
-void CRenderer::RenderInstance(ModelInstance* instance) {
+void CRenderer::DrawModelInstance(ModelInstance* instance) {
     m_pGameEffect->SetWorld(instance->m_worldMatrix);
     m_pGameEffect->SetView(XMLoadFloat4x4(&m_view));
 

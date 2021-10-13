@@ -8,6 +8,7 @@
 #include "SpriteRenderer.h"
 #include "ComponentIncludes.h"
 #include "ProjectileManager.h"
+#include "Helpers.h"
 #include "shellapi.h"
 #include <vector>
 #include <iostream>
@@ -441,26 +442,7 @@ void CGame::RenderFrame() {
 
     m_pRenderer->BeginFrame();
     {
-        //NOTE(sean): these need to be in separate batches because each instance has to be rendered with its own world matrix,
-        //this allows us to position, rotate, and scale models without having to *actually* calculate the translations
-        //this api should be pretty similar to how we'll render actual models in the near-future 
         {
-            {
-                const Vector3 pos = { 0.0, 0.0, 0.0 };
-                const Vector3 scl = { 100.0, 100.0, 100.0 };
-                model_instance.m_modelIndex = 0;
-                model_instance.m_worldMatrix = MoveScaleMatrix(pos, scl);
-                m_pRenderer->DrawDebugModelInstance(&model_instance);
-            }
-    
-            {
-                const Vector3 pos = { 200.0, 0.0, 0.0 };
-                const Vector3 scl = { 50.0, 50.0, 50.0 };
-                model_instance.m_modelIndex = 0;
-                model_instance.m_worldMatrix = MoveScaleMatrix(pos, scl);
-                m_pRenderer->DrawDebugModelInstance(&model_instance);
-            }
-
             for every(j, m_pDynamicsWorld->getNumCollisionObjects()) {
                 btCollisionObject* obj = m_pDynamicsWorld->getCollisionObjectArray()[j];
                 btCollisionShape* shape = obj->getCollisionShape();
@@ -473,20 +455,16 @@ void CGame::RenderFrame() {
                     trans = obj->getWorldTransform();
                 }
 
-
-                //TODO(sean): figure out how i want to format switch statements so that they dont drift to the right forever and ever and ever and ever and ever and ever ..........
                 switch(shape->getShapeType()) {
                 case(BT_SHAPE_TYPE_BOX): {} break;
 
                 case(BT_SHAPE_TYPE_CAPSULE): {} break;
 
-                //FIXME(sean): figure out why rotation isnt working, it could be a bullet thing or the math could be wrong
                 default: {
-                    const Vector3 pos = *(Vector3*)&trans.getOrigin();
-                    const Vector3 scl = { 10.0, 10.0, 10.0 };
-                    const Quaternion rot = *(Quaternion*)&trans.getRotation();
-                    model_instance.m_worldMatrix = MoveRotateScaleMatrix(pos, rot, scl);
-                    m_pRenderer->DrawDebugModelInstance(&model_instance);
+                    ModelInstance instance = {};
+                    instance.m_modelIndex = (u32)ModelType::Cube;
+                    instance.m_worldMatrix = MoveScaleMatrix(trans.getOrigin(), Vector3(10.0f, 10.0f, 10.0f));
+                    m_pRenderer->DrawModelInstance(&instance);
                 } break;
                 }
             }
@@ -548,7 +526,7 @@ void CGame::RenderFrame() {
             ModelInstance instance = {};
             instance.m_modelIndex = (u32)ModelType::Cube;
             instance.m_worldMatrix = MoveScaleMatrix(Vector3(0.0f, 0.0f, 0.0f), Vector3(100.0f, 100.0f, 100.0f));
-            m_pRenderer->RenderInstance(&instance);
+            m_pRenderer->DrawModelInstance(&instance);
         }
     }
     m_pRenderer->EndFrame();

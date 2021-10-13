@@ -28,7 +28,7 @@
 
 */
 
-void ProjectileManager::GenerateSimProjectile(Vector3 startPos, Vector3 lookDirection, f32 projectileVelocity, i32 projectileCount, i32 projectileAccuracy, XMVECTORF32 projectileColor) {
+void ProjectileManager::GenerateSimProjectile(Vec3 startPos, Vec3 lookDirection, f32 projectileVelocity, i32 projectileCount, i32 projectileAccuracy, Vec4 projectileColor) {
     /* Note(Ethan) :
        currently includes :
        Vector3 for position, Vector3 for lookvector (direction), requested velocity, color.
@@ -51,7 +51,7 @@ void ProjectileManager::GenerateSimProjectile(Vector3 startPos, Vector3 lookDire
             randomSeed = 0;
         }
 
-        lookDirection = JitterVector3(lookDirection, negativeAccuracy, range);
+        lookDirection = JitterVec3(lookDirection, negativeAccuracy, range);
 
         // Push back a collision shape into the array.
         btCollisionShape* projectile = new btSphereShape(btScalar(50.f));
@@ -60,14 +60,14 @@ void ProjectileManager::GenerateSimProjectile(Vector3 startPos, Vector3 lookDire
         // Implicating projectile as a dynamic object.
         btTransform startTransform;
         startTransform.setIdentity();
-        btScalar mass(0.1f); //NOTE(sean): for things that the player might be able to interact with, we want the mass to be smaller
-        btScalar friction(0.5f);
+        f32 mass = 0.1f; //NOTE(sean): for things that the player might be able to interact with, we want the mass to be smaller
+        f32 friction = 0.5f;
         bool isDynamic = (mass != 0.0f);
-        btVector3 localInertia(lookDirection.x * 500.0f, lookDirection.y * 500.0f, lookDirection.z * 500.);
+        Vec3 localInertia(lookDirection * 500.0f);
         if (isDynamic) {
             projectile->calculateLocalInertia(mass, localInertia);
         }
-        startTransform.setOrigin(convert(startPos) + btVector3(lookDirection.x * 250., lookDirection.y * 250., lookDirection.z * 250.));
+        startTransform.setOrigin(Vec3(startPos + lookDirection * 250.0f));
 
         // std::cout << "{"  << lookdir.x << ", " << lookdir.y << ", " << lookdir.z << "}" << std::endl;
         // Motionstate again.
@@ -75,37 +75,37 @@ void ProjectileManager::GenerateSimProjectile(Vector3 startPos, Vector3 lookDire
         btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, projectile, localInertia);
         rbInfo.m_friction = friction;
         btRigidBody* body = new btRigidBody(rbInfo);
-        body->setAngularFactor(btVector3(0., 0., 0.));
+        body->setAngularFactor(Vec3(0., 0., 0.));
         currentWorld->addRigidBody(body);
 
         projectileVelocity = projectileVelocity * 250.0f;
-        body->applyForce(btVector3(projectileVelocity * lookDirection.x, projectileVelocity * lookDirection.y, projectileVelocity * lookDirection.z), convert(startPos));
+        body->applyForce(Vec3(projectileVelocity * lookDirection), startPos);
     }
 }
 
-void ProjectileManager::CalculateRay(RayProjectile& newRay, Vector3 Pos1, btVector3 btStartPos, btVector3 btLookDirection, i32 rayBounces, XMVECTORF32 color) {
+void ProjectileManager::CalculateRay(RayProjectile& newRay, Vec3 Pos1, Vec3 btStartPos, Vec3 btLookDirection, i32 rayBounces, Vec4 color) {
     newRay.Pos1 = Pos1;
 
-    btCollisionWorld::ClosestRayResultCallback rayResults(btStartPos + btLookDirection * 500., btStartPos + btLookDirection * 5000.);
-    currentWorld->rayTest(btStartPos + btLookDirection * 500., btStartPos + btLookDirection * 5000., rayResults);
+    btCollisionWorld::ClosestRayResultCallback rayResults(Vec3(btStartPos + btLookDirection * 500.), Vec3(btStartPos + btLookDirection * 5000.));
+    currentWorld->rayTest(Vec3(btStartPos + btLookDirection * 500.), Vec3(btStartPos + btLookDirection * 5000.), rayResults);
 
     if (rayResults.hasHit()) {
-        btVector3 hitPosition = rayResults.m_hitPointWorld;
-        btScalar dotProduct = btStartPos.dot(rayResults.m_hitNormalWorld);
-        btVector3 incomingDirection = (hitPosition - btStartPos).normalize();
-        btVector3 reflectedDirection = btLookDirection - 2. * (btLookDirection * rayResults.m_hitNormalWorld) * rayResults.m_hitNormalWorld;
+        Vec3 hitPosition = rayResults.m_hitPointWorld;
+        f32 dotProduct = btStartPos.Dot(Vec3(rayResults.m_hitNormalWorld));
+        Vec3 incomingDirection = (hitPosition - btStartPos); incomingDirection.Normalize();
+        Vec3 reflectedDirection = btLookDirection - 2. * (btLookDirection * rayResults.m_hitNormalWorld) * rayResults.m_hitNormalWorld;
 
         if (rayBounces > 0) {
-            GenerateRayProjectile(convert(hitPosition), convert(reflectedDirection), 1, 1, rayBounces - 1, color, true);
+            GenerateRayProjectile(Vec3(hitPosition), Vec3(reflectedDirection), 1, 1, rayBounces - 1, color, true);
         }
 
-        newRay.Pos2 = convert(hitPosition);
+        newRay.Pos2 = Vec3(hitPosition);
     } else {
-        newRay.Pos2 = convert(btStartPos + btLookDirection * 5000.0);
+        newRay.Pos2 = Vec3(btStartPos + btLookDirection * 5000.0);
     }
 }
 
-void ProjectileManager::GenerateRayProjectile(Vector3 startPos, Vector3 lookDirection, i32 rayCount, i32 rayAccuracy, i32 rayBounces, XMVECTORF32 rayColor, b8 recursed) {
+void ProjectileManager::GenerateRayProjectile(Vec3 startPos, Vec3 lookDirection, i32 rayCount, i32 rayAccuracy, i32 rayBounces, Vec4 rayColor, b8 recursed) {
     /* Note(Ethan) :
        currently includes :
        Vector3 for position, Vector3 for lookvector (direction), color.
@@ -118,12 +118,12 @@ void ProjectileManager::GenerateRayProjectile(Vector3 startPos, Vector3 lookDire
     f32 range = (rayAccuracy - negativeAccuracy + 1.0f);
 
     RayProjectile newRay;
-    newRay.Pos1 = Vector3(startPos.x, startPos.y, startPos.z) + lookDirection * 500.;
-    newRay.Pos2 = Vector3(startPos.x, startPos.y, startPos.z) + lookDirection * 5000.;
+    newRay.Pos1 = Vec3(startPos.x, startPos.y, startPos.z) + lookDirection * 500.;
+    newRay.Pos2 = Vec3(startPos.x, startPos.y, startPos.z) + lookDirection * 5000.;
     newRay.Color = rayColor;
 
     if (recursed) {
-        CalculateRay(newRay, (startPos + lookDirection), convert(startPos), convert(lookDirection), rayBounces, Colors::PeachPuff);
+        CalculateRay(newRay, (startPos + lookDirection), startPos, lookDirection, rayBounces, Colors::PeachPuff);
 
         currentRayProjectiles->push_back(newRay);
     } else {
@@ -134,8 +134,8 @@ void ProjectileManager::GenerateRayProjectile(Vector3 startPos, Vector3 lookDire
                 randomSeed = 0;
             }
 
-            lookDirection = JitterVector3(lookDirection, negativeAccuracy, range);
-            CalculateRay(newRay, (startPos + lookDirection * 500.0f), convert(startPos), convert(lookDirection), rayBounces, Colors::Peru);
+            lookDirection = JitterVec3(lookDirection, negativeAccuracy, range);
+            CalculateRay(newRay, startPos + lookDirection * 500.0f, startPos, lookDirection, rayBounces, Colors::Peru);
 
             currentRayProjectiles->push_back(newRay);
         }

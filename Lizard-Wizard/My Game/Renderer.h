@@ -44,25 +44,24 @@ public:
 
     //TODO(sean): look into converting these into XMMVECTOR for simd performance?
     //NOTE(sean): Put these in between BeginDebugLineBatch() and EndDebugBatch()
-    void DrawDebugLine(const Vector3 A, const Vector3 B, const XMVECTORF32 color);
-    void DrawDebugTriangle(const Vector3 A, const Vector3 B, const Vector3 C, const XMVECTORF32 color);
-    void DrawDebugQuad(const Vector3 A, const Vector3 B, const Vector3 C, const Vector3 D, const XMVECTORF32 color);
-    void DrawDebugRay(const Vector3 origin, const Vector3 direction, const f32 length, const XMVECTORF32 color);
-    void DrawDebugRing(const Vector3 origin, const Vector3 orientation, const f32 radius, const u32 segments, const XMVECTORF32 color);
-    void DrawDebugRing2(FXMVECTOR origin, FXMVECTOR major, FXMVECTOR minor, const u32 segments, const XMVECTORF32 color);
-    void DrawDebugAABB(const BoundingBox box, const XMVECTORF32 color);
-    void DrawDebugOBB(const BoundingOrientedBox obb, const XMVECTORF32 color);
-    void DrawDebugSphere(const BoundingSphere sphere, const u32 segments, const XMVECTORF32 color);
+    void DrawDebugLine(const Vec3 A, const Vec3 B, const Vec4 color);
+    void DrawDebugTriangle(const Vec3 A, const Vec3 B, const Vec3 C, const Vec4 color);
+    void DrawDebugQuad(const Vec3 A, const Vec3 B, const Vec3 C, const Vec3 D, const Vec4 color);
+    void DrawDebugRay(const Vec3 origin, const Vec3 direction, const f32 length, const Vec4 color);
+    void DrawDebugRing(const Vec3 origin, const Vec3 orientation, const f32 radius, const u32 segments, const Vec4 color);
+    void DrawDebugRing2(Vec3 origin, Vec3 major, Vec3 minor, const u32 segments, const Vec4 color);
+    void DrawDebugAABB(const BoundingBox box, const Vec4 color);
+    void DrawDebugOBB(const BoundingOrientedBox obb, const Vec4 color);
+    void DrawDebugSphere(const BoundingSphere sphere, const u32 segments, const Vec4 color);
     //void DrawDebugCylinder(const BoundingSphere sphere, const XMVECTORF32 color);
-    //void DrawDebugCapsule(const BoundingSphere sphere, const XMVECTORF32 color);
-    //void DrawDebugGrid(const Vector3 center, const Vector3 orientation, const f32 length, const f32 width, const u32 length_segments, const u32 width_segments, const XMVECTORF32 color);
-    void DrawDebugCapsule(const Vector3 origin, const f32 radius, const f32 height, const u32 segments, const XMVECTORF32 color);
-    void DrawDebugGrid(const Vector3 x_axis, const Vector3 y_axis, const Vector3 origin, const u32 length_segments, const u32 width_segments, const XMVECTORF32 color);
+    //void DrawDebugGrid(const Vec3 center, const Vec3 orientation, const f32 length, const f32 width, const u32 length_segments, const u32 width_segments, const XMVECTORF32 color);
+    void DrawDebugCapsule(const Vec3 origin, const f32 radius, const f32 height, const u32 segments, const Vec4 color);
+    void DrawDebugGrid(const Vec3 x_axis, const Vec3 y_axis, const Vec3 origin, const u32 length_segments, const u32 width_segments, const Vec4 color);
 
-    void DrawDebugCubeInternal(const CXMMATRIX world, const XMVECTORF32 color);
+    void DrawDebugCubeInternal(const Mat4x4& world, const Vec4 color);
 
     //NOTE(sean): these are self-contained, no shimmying into a batch
-    u32 LoadDebugModel(const char* name, XMVECTORF32 color);
+    u32 LoadDebugModel(const char* name, Vec4 color);
     u32 AddDebugModel(DebugModel* model);
     void LoadAllModels();
 
@@ -77,8 +76,7 @@ public:
     u32 GetResolutionWidth();
     u32 GetResolutionHeight();
 
-    void GameEffectRenderTestCube();
-    void RenderInstance(ModelInstance* instance);
+    void DrawModelInstance(ModelInstance* instance);
     void LoadModel(const char* name, ModelType model_type);
 
     //TODO(sean): Implement this

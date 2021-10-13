@@ -1,5 +1,6 @@
 #include <cstdint>
 #include <Renderer3D.h>
+#include <btBulletCollisionCommon.h>
 
 //NOTE(sean): if you read this and youre wondering why on earth i would do this i just like the type names better
 
@@ -44,3 +45,64 @@ if((lhs) != (rhs)) { \
     sprintf(message, (format), __VA_ARGS__); \
     ABORT(message); \
 }
+
+#ifndef DEFINES_H
+#define DEFINES_H
+
+struct Mat4x4: XMMATRIX {
+    Mat4x4(const XMMATRIX& other) { *this = *(Mat4x4*)&other; }
+
+    operator XMMATRIX() const { return *(XMMATRIX*)this; }
+};
+
+struct Vec3 : public Vector3 {
+    Vec3(const f32 x, const f32 y, const f32 z) { this->x = x; this->y = y; this->z = z; }
+
+    Vec3(const Vector3& other) { *this = *(Vec3*)&other; }
+    Vec3(const btVector3& other) { *this = *(Vec3*)&other; }
+    Vec3(const XMVECTOR& other) { *this = *(Vec3*)&other; }
+    Vec3(const XMVECTORF32& other) { *this = *(Vec3*)&other; }
+    Vec3(const XMFLOAT3& other) { *this = *(Vec3*)&other; }
+
+    operator Vector3() const { return *(Vector3*)this; }
+    operator btVector3() const { return *(btVector3*)this; }
+    operator XMVECTOR() const { return *(XMVECTOR*)this; }
+    operator XMVECTORF32() const { return *(XMVECTORF32*)this; }
+    operator XMFLOAT3() const { return *(XMFLOAT3*)this; }
+
+    operator btVector3&() const { return *this; }
+};
+
+struct Vec4 : Vector4 {
+    Vec4(const f32 x, const f32 y, const f32 z, const f32 w) { this->x = x; this->y = y; this->z = z; this->w = w; }
+
+    Vec4(const Vector4& other) { *this = *(Vec4*)&other; }
+    Vec4(const btVector4& other) { *this = *(Vec4*)&other; } 
+    Vec4(const XMVECTOR& other) { *this = *(Vec4*)&other; }
+    Vec4(const XMVECTORF32& other) { *this = *(Vec4*)&other; }
+    Vec4(const XMFLOAT4& other) { *this = *(Vec4*)&other; }
+
+    operator Vector4() const { return *(Vector4*)this; }
+    operator btVector4() const { return *(btVector4*)this; }
+    operator XMVECTOR() const { return *(XMVECTOR*)this; }
+    operator XMVECTORF32() const { return *(XMVECTORF32*)this; }
+    operator XMFLOAT4() const { return *(XMFLOAT4*)this; }
+};
+
+struct Quat : Quaternion {
+    Quat(const f32 x, const f32 y, const f32 z, const f32 w) { this->x = x; this->y = y; this->z = z; this->w = w; }
+
+    Quat(const Vector4& other) { *this = *(Quat*)&other; }
+    Quat(const btVector4& other) { *this = *(Quat*)&other; } 
+    Quat(const XMVECTOR& other) { *this = *(Quat*)&other; }
+    Quat(const XMVECTORF32& other) { *this = *(Quat*)&other; }
+    Quat(const XMFLOAT4& other) { *this = *(Quat*)&other; }
+
+    operator Vector4() const { return *(Vector4*)this; }
+    operator btVector4() const { return *(btVector4*)this; }
+    operator XMVECTOR() const { return *(XMVECTOR*)this; }
+    operator XMVECTORF32() const { return *(XMVECTORF32*)this; }
+    operator XMFLOAT4() const { return *(XMFLOAT4*)this; }
+};
+
+#endif
