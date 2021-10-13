@@ -19,9 +19,9 @@
 
 // Respective Structs
 struct RayProjectile {
-    Vector3 Pos1;
-    Vector3 Pos2;
-    XMVECTORF32 Color;
+    Vec3 Pos1;
+    Vec3 Pos2;
+    Vec4 Color;
 };
 
 // Projectile Class (Can be either a Bullet3 ray or a Bullet3 simulated projectile.)

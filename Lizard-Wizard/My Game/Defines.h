@@ -50,12 +50,14 @@ if((lhs) != (rhs)) { \
 #define DEFINES_H
 
 struct Mat4x4: XMMATRIX {
+    Mat4x4() {}
     Mat4x4(const XMMATRIX& other) { *this = *(Mat4x4*)&other; }
 
     operator XMMATRIX() const { return *(XMMATRIX*)this; }
 };
 
 struct Vec3 : public Vector3 {
+    Vec3() {}
     Vec3(const f32 x, const f32 y, const f32 z) { this->x = x; this->y = y; this->z = z; }
 
     Vec3(const Vector3& other) { *this = *(Vec3*)&other; }
@@ -72,6 +74,7 @@ struct Vec3 : public Vector3 {
 };
 
 struct Vec4 : Vector4 {
+    Vec4() {}
     Vec4(const f32 x, const f32 y, const f32 z, const f32 w) { this->x = x; this->y = y; this->z = z; this->w = w; }
 
     Vec4(const Vector4& other) { *this = *(Vec4*)&other; }
@@ -88,6 +91,7 @@ struct Vec4 : Vector4 {
 };
 
 struct Quat : Quaternion {
+    Quat() {}
     Quat(const f32 x, const f32 y, const f32 z, const f32 w) { this->x = x; this->y = y; this->z = z; this->w = w; }
 
     Quat(const Vector4& other) { *this = *(Quat*)&other; }
