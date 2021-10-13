@@ -70,7 +70,7 @@ struct Vec3 : public Vector3 {
     operator XMVECTORF32() const { return *(XMVECTORF32*)this; }
     operator XMFLOAT3() const { return *(XMFLOAT3*)this; }
 
-    operator btVector3&() const { return *this; }
+    operator btVector3&() { return *(btVector3*)this; }
 };
 
 struct Vec4 : Vector4 {
