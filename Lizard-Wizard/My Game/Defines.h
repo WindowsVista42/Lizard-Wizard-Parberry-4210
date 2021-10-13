@@ -1,6 +1,7 @@
 #include <cstdint>
 #include <Renderer3D.h>
 #include <btBulletCollisionCommon.h>
+#include "Random.h"
 
 //NOTE(sean): if you read this and youre wondering why on earth i would do this i just like the type names better
 
@@ -33,30 +34,31 @@ typedef VertexPositionColor VertexPC;
 /// Formatted abort when (lhs == rhs)
 #define ABORT_EQ_FORMAT(lhs, rhs, format, ...) \
 if((lhs) == (rhs)) { \
-    char message[128]; \
-    sprintf(message, (format), __VA_ARGS__); \
-    ABORT(message); \
+    ABORT_INNER(lhs, rhs, format, __FILE__, __LINE__, __VA_ARGS__); \
 }
 
 /// Formatted abort when (lhs != rhs)
 #define ABORT_NE_FORMAT(lhs, rhs, format, ...) \
 if((lhs) != (rhs)) { \
-    char message[256]; \
-    sprintf(message, (format), __VA_ARGS__); \
-    ABORT(message); \
+    ABORT_INNER(lhs, rhs, format, __FILE__, __LINE__, __VA_ARGS__); \
 }
+
+#define ABORT_INNER(lhs, rhs, format, file, line, ...) \
+char message[1024]; \
+sprintf(message, "%s:%i aborted at message: \"%s\"", file, line, format, __VA_ARGS__); \
+ABORT(message); \
 
 #ifndef DEFINES_H
 #define DEFINES_H
 
-struct Mat4x4: XMMATRIX {
+struct Mat4x4 : XMMATRIX {
     Mat4x4() {}
     Mat4x4(const XMMATRIX& other) { *this = *(Mat4x4*)&other; }
 
     operator XMMATRIX() const { return *(XMMATRIX*)this; }
 };
 
-struct Vec3 : public Vector3 {
+struct Vec3 : Vector3 {
     Vec3() {}
     Vec3(const f32 x, const f32 y, const f32 z) { this->x = x; this->y = y; this->z = z; }
 
@@ -105,6 +107,18 @@ struct Quat : Quaternion {
     operator XMVECTOR() const { return *(XMVECTOR*)this; }
     operator XMVECTORF32() const { return *(XMVECTORF32*)this; }
     operator XMFLOAT4() const { return *(XMFLOAT4*)this; }
+};
+
+class GameRandom : public LRandom {
+public:
+    static GameRandom& Get() {
+        static GameRandom instance;
+        return instance;
+    }
+
+    static f32 Randf32() {
+        return Get().randf();
+    }
 };
 
 #endif

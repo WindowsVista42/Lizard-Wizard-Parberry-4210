@@ -6,12 +6,14 @@
 namespace {
     struct __declspec(align(16)) GameEffectConstants {
         XMMATRIX worldViewProjection;
+        XMMATRIX world;
     };
 
     static_assert((sizeof(GameEffectConstants) % 16) == 0, "Constant Buffer size alignment");
 
     constexpr u32 DirtyConstantBuffer = 0x1;
     constexpr u32 DirtyWorldViewProjectionMatrix = 0x2;
+    constexpr u32 DirtyWorldMatrix = 0x4;
     //NOTE(sean): other bit flags go here
 }
 
@@ -54,10 +56,18 @@ GameEffect::GameEffect(
 void GameEffect::Apply(ID3D12GraphicsCommandList* command_list) {
     //NOTE(sean): update dirty data
     if (m_dirtyFlags & DirtyWorldViewProjectionMatrix) {
-        XMMATRIX world_view = XMMatrixMultiply(m_world, m_view);
+        Mat4x4 world_view = XMMatrixMultiply(m_world, m_view);
         m_worldViewProjection = XMMatrixTranspose(XMMatrixMultiply(world_view, m_projection));
 
         m_dirtyFlags &= ~DirtyWorldViewProjectionMatrix;
+        m_dirtyFlags |= DirtyConstantBuffer;
+    }
+
+    if (m_dirtyFlags & DirtyWorldMatrix) {
+        Mat4x4 world = XMMatrixTranspose(m_world);
+        m_world = world;
+
+        m_dirtyFlags &= ~DirtyWorldMatrix;
         m_dirtyFlags |= DirtyConstantBuffer;
     }
 
@@ -66,6 +76,7 @@ void GameEffect::Apply(ID3D12GraphicsCommandList* command_list) {
 
         GameEffectConstants data = {};
         data.worldViewProjection = m_worldViewProjection;
+        data.world = m_world;
 
         memcpy(constant_buffer.Memory(), &data, constant_buffer.Size());
         std::swap(m_constantBuffer, constant_buffer);
@@ -87,7 +98,7 @@ void GameEffect::Apply(ID3D12GraphicsCommandList* command_list) {
 
 void XM_CALLCONV GameEffect::SetWorld(DirectX::FXMMATRIX world) {
     m_world = world;
-    m_dirtyFlags |= DirtyWorldViewProjectionMatrix;
+    m_dirtyFlags |= DirtyWorldViewProjectionMatrix | DirtyWorldMatrix;
 }
 
 void XM_CALLCONV GameEffect::SetView(DirectX::FXMMATRIX view) {

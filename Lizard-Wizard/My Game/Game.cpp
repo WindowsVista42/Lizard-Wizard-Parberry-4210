@@ -21,10 +21,10 @@
 //TODO(sean): move these out of globals
 static f32 yaw = 0.0f;
 static f32 pitch = 0.0f;
-const f32 sensitivity = 0.0333;
+const f32 sensitivity = 0.0333f;
 
 static Vector3 player_pos = { 0.0f, 1500.0f, -2500.0f };
-const f32 move_speed = 20.0;
+const f32 move_speed = 10.0f;
 
 static ModelInstance model_instance;
 
@@ -525,7 +525,9 @@ void CGame::RenderFrame() {
         {
             ModelInstance instance = {};
             instance.m_modelIndex = (u32)ModelType::Cube;
-            instance.m_worldMatrix = MoveScaleMatrix(Vector3(0.0f, 0.0f, 0.0f), Vector3(100.0f, 100.0f, 100.0f));
+            f32 xoff = 400.0f * cosf(m_pTimer->GetTime());
+            f32 zoff = 400.0f * sinf(m_pTimer->GetTime());
+            instance.m_worldMatrix = MoveScaleMatrix(Vector3(xoff, 100.0f, zoff), Vector3(100.0f, 100.0f, 100.0f));
             m_pRenderer->DrawModelInstance(&instance);
         }
     }

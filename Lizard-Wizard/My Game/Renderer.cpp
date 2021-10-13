@@ -3,6 +3,7 @@
 #include "Helpers.h"
 #include <Model.h>
 #include <iostream>
+#include "Keyboard.h"
 
 CRenderer::CRenderer():
     LRenderer3D(),
@@ -36,8 +37,70 @@ CRenderer::~CRenderer() {
     m_pDeviceResources->WaitForGpu();
 }
 
+void CheckDeviceFormatSupport(ID3D12Device* device, DXGI_FORMAT format) {
+    D3D12_FEATURE_DATA_FORMAT_SUPPORT formatSupport = { format, D3D12_FORMAT_SUPPORT1_NONE, D3D12_FORMAT_SUPPORT2_NONE };
+    if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &formatSupport, sizeof(formatSupport)))) {
+        ABORT_EQ_FORMAT(0, 0, "Check Feature Support");
+    }
+
+    u32 required = D3D12_FORMAT_SUPPORT1_TEXTURE2D | D3D12_FORMAT_SUPPORT1_RENDER_TARGET;
+    if ((formatSupport.Support1 & required) != required) {
+        ABORT_EQ_FORMAT(0, 0, "Format not supported as a Render Texture");
+    }
+}
+
 void CRenderer::Initialize() {
-    LRenderer3D::Initialize();
+    LRenderer3D::Initialize(true);
+
+    //TODO(sean): resource cleanup
+    {
+        m_pDeferredResourceDescs = std::make_unique<DescriptorHeap>(
+            m_pD3DDevice, (u32)OutputAttachment::Count
+        );
+
+        m_pDeferredRenderDescs = std::make_unique<DescriptorHeap>(
+            m_pD3DDevice,
+            D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
+            D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+            (u32)OutputAttachment::Count
+        );
+
+        m_deferredPassTextures.resize((u32)OutputAttachment::Count);
+        m_deferredPassTextures[(u32)OutputAttachment::Diffuse] = RenderTexture(DXGI_FORMAT_R8G8B8A8_UNORM, Colors::Black);
+        m_deferredPassTextures[(u32)OutputAttachment::Normal] = RenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, Colors::Black);
+        m_deferredPassTextures[(u32)OutputAttachment::Position] = RenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, Colors::Black);
+
+        CheckDeviceFormatSupport(m_pD3DDevice, m_deferredPassTextures[(u32)OutputAttachment::Diffuse].m_format);
+        CheckDeviceFormatSupport(m_pD3DDevice, m_deferredPassTextures[(u32)OutputAttachment::Normal].m_format);
+        CheckDeviceFormatSupport(m_pD3DDevice, m_deferredPassTextures[(u32)OutputAttachment::Position].m_format);
+
+        m_deferredPassTextures[(u32)OutputAttachment::Diffuse].UpdateDescriptors(
+            m_pDeferredResourceDescs->GetCpuHandle((u32)OutputAttachment::Diffuse),
+            m_pDeferredRenderDescs->GetCpuHandle((u32)OutputAttachment::Diffuse)
+        );
+
+        m_deferredPassTextures[(u32)OutputAttachment::Normal].UpdateDescriptors(
+            m_pDeferredResourceDescs->GetCpuHandle((u32)OutputAttachment::Normal),
+            m_pDeferredRenderDescs->GetCpuHandle((u32)OutputAttachment::Normal)
+        );
+
+        m_deferredPassTextures[(u32)OutputAttachment::Position].UpdateDescriptors(
+            m_pDeferredResourceDescs->GetCpuHandle((u32)OutputAttachment::Position),
+            m_pDeferredRenderDescs->GetCpuHandle((u32)OutputAttachment::Position)
+        );
+
+        m_deferredPassTextures[(u32)OutputAttachment::Diffuse].UpdateResources(
+            m_pD3DDevice, m_nWinWidth, m_nWinHeight
+        );
+
+        m_deferredPassTextures[(u32)OutputAttachment::Normal].UpdateResources(
+            m_pD3DDevice, m_nWinWidth, m_nWinHeight
+        );
+
+        m_deferredPassTextures[(u32)OutputAttachment::Position].UpdateResources(
+            m_pD3DDevice, m_nWinWidth, m_nWinHeight
+        );
+    }
 
     // This is very similar to vulkan :)
     {
@@ -71,12 +134,34 @@ void CRenderer::Initialize() {
     }
 
     {
+        //NOTE(sean): these will need to be self-defined in the future
+        const u32 GAME_EFFECT_INPUT_LAYOUT_COUNT = 3;
+        const D3D12_INPUT_ELEMENT_DESC GAME_EFFECT_INPUT_ELEMENTS[GAME_EFFECT_INPUT_LAYOUT_COUNT] = {
+            { "SV_Position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            { "NORMAL",      0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            { "TEXCOORD",    0, DXGI_FORMAT_R32G32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        };
+        const D3D12_INPUT_LAYOUT_DESC GAME_EFFECT_INPUT_LAYOUT_DESC = {
+            GAME_EFFECT_INPUT_ELEMENTS,
+            GAME_EFFECT_INPUT_LAYOUT_COUNT
+        };
+
+        RenderTargetState render_target_state(
+            m_pDeviceResources->GetBackBufferFormat(),
+            m_pDeviceResources->GetDepthBufferFormat()
+        );
+
+        render_target_state.numRenderTargets = (u32)OutputAttachment::Count;
+        render_target_state.rtvFormats[(u32)OutputAttachment::Diffuse];
+        render_target_state.rtvFormats[(u32)OutputAttachment::Normal];
+        render_target_state.rtvFormats[(u32)OutputAttachment::Position];
+
         EffectPipelineStateDescription pipeline_state_desc(
-            &VertexPNT::InputLayout,
+            &GAME_EFFECT_INPUT_LAYOUT_DESC,
             CommonStates::NonPremultiplied,
             CommonStates::DepthDefault,
             CommonStates::CullNone,
-            m_RenderTargetState
+            render_target_state
         );
 
         m_pGameEffect = std::make_unique<GameEffect>(m_pD3DDevice, pipeline_state_desc);
@@ -87,13 +172,41 @@ void CRenderer::Initialize() {
 /// Begin Rendering a frame.
 /// Put all DrawXYZ() or other functions in between this and EndFrame()
 void CRenderer::BeginFrame() {
-    LRenderer3D::BeginFrame();
+    //LRenderer3D::BeginFrame();
+
+    m_pDeviceResources->Prepare();
+
+    m_pCommandList = m_pDeviceResources->GetCommandList();
+    m_pHeaps[0] = m_pDescriptorHeap->Heap();
+    m_pHeaps[1] = m_pStates->Heap();
+    m_pCommandList->SetDescriptorHeaps(_countof(m_pHeaps), m_pHeaps);
+
+    auto rtvDescriptorBackBuffer = m_pDeviceResources->GetRenderTargetView();
+    auto dsvDescriptorBackBuffer = m_pDeviceResources->GetDepthStencilView();
+
+    m_pCommandList->OMSetRenderTargets(1, &rtvDescriptorBackBuffer, FALSE, &dsvDescriptorBackBuffer);
+    m_pCommandList->ClearRenderTargetView(rtvDescriptorBackBuffer, m_f32BgColor, 0, nullptr);
+    m_pCommandList->ClearDepthStencilView(dsvDescriptorBackBuffer, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
+    auto viewport = m_pDeviceResources->GetScreenViewport();
+    auto scissorRect = m_pDeviceResources->GetScissorRect();
+
+    m_pCommandList->RSSetViewports(1, &viewport);
+    m_pCommandList->RSSetScissorRects(1, &scissorRect);
 }
 
 /// End Rendering a frame.
 /// Put all DrawXYZ() or other functions in between this and BeginFrame()
 void CRenderer::EndFrame() {
-    LRenderer3D::EndFrame();
+    //LRenderer3D::EndFrame();
+    if (m_screenShot) {
+        SaveScreenShot();
+        m_screenShot = false;
+    } //if
+
+    m_pDeviceResources->Present(); //show the new frame
+    m_pGraphicsMemory->Commit(m_pDeviceResources->GetCommandQueue());
+
     m_frameNumber += 1;
 }
 
@@ -407,7 +520,7 @@ u32 CRenderer::AddDebugModel(DebugModel* model) {
 
 void CRenderer::LoadAllModels() {
     LoadDebugModel("untitled", Colors::Peru);
-    LoadModel("untitled", ModelType::Cube);
+    LoadModel("suzanne", ModelType::Cube);
 }
 
 /// Draw an instance of a DebugModel.
@@ -495,18 +608,18 @@ struct VBOData {
 
 //NOTE(sean): VBO file format: https://github.com/microsoft/DirectXMesh/blob/master/Meshconvert/Mesh.cpp
 void LoadVBO(const char* fpath, VBOData* model) {
-    // TODO(sean): error checking?
+    #define CHECK(value) ABORT_EQ_FORMAT((value), 0, "Corrupt VBO file!", value)
 
-    FILE* fp = fopen(fpath, "rb");
+    FILE* fp = fopen(fpath, "rb"); CHECK(fp);
 
-    fread(&model->vertex_count, sizeof(u32), 1, fp);
-    fread(&model->index_count, sizeof(u32), 1, fp);
+    CHECK(fread(&model->vertex_count, sizeof(u32), 1, fp));
+    CHECK(fread(&model->index_count, sizeof(u32), 1, fp));
 
-    model->vertices = new VertexPNT[model->vertex_count];
-    model->indices = new u16[model->index_count];
+    model->vertices = new VertexPNT[model->vertex_count]; CHECK(model->vertices); 
+    model->indices = new u16[model->index_count]; CHECK(model->indices);
 
-    fread(model->vertices, sizeof(VertexPNT), model->vertex_count, fp);
-    fread(model->indices, sizeof(u16), model->index_count, fp);
+    CHECK(fread(model->vertices, sizeof(VertexPNT), model->vertex_count, fp));
+    CHECK(fread(model->indices, sizeof(u16), model->index_count, fp));
 
     fclose(fp);
 }

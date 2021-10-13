@@ -10,22 +10,32 @@
 "CBV(b0)"
 
 cbuffer GameEffectConstants : register(b0) {
-	float4x4 WorldViewProjection;
+    float4x4 WorldViewProjection;
+    float4x4 World;
 }
 
-struct VSInput {
-	float3 PositionVS : SV_POSITION;
-	float3 NormalVS : NORMAL;
-	float2 TextureVS : TEXCOORD;
+struct VertexInput {
+    float3 Position : SV_POSITION;
+    float3 Normal : NORMAL;
+    float2 Texture : TEXCOORD;
 };
 
-struct VSOutput {
-	float4 PositionPS : SV_Position;
-	float3 NormalPS : NORMAL0;
+struct VertexOutput {
+    float4 VertexPosition : SV_Position;
+    float4 Position : Position0;
+    float3 Normal : NORMAL0;
+    float2 Texture : TEXCOORD0;
 };
 
-struct PSOutput {
-	float4 Diffuse : SV_TARGET0;
+struct PixelOutput {
+    float4 Diffuse : SV_TARGET0;
+    //float4 Normal : SV_TARGET1;
+    //float4 Position : SV_TARGET2;
+};
+
+struct Light {
+    float3 Position;
+    float3 Color;
 };
 
 #endif

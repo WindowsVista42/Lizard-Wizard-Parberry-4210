@@ -1,6 +1,5 @@
 * Main Renderer
-	+ Add Model type
-	+ Add triangle rendering effect with colors and normals
-	+ Figure out diffuse lighting
-	+ Figure out texture mapping
-	+ Figure out deferred rendering
+    + Render to multiple render targets
+    + Figure out diffuse lighting
+    + Figure out texture mapping
+    + Figure out deferred rendering

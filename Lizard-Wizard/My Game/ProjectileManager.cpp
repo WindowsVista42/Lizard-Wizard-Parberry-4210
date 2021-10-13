@@ -45,13 +45,14 @@ void ProjectileManager::GenerateSimProjectile(Vec3 startPos, Vec3 lookDirection,
     // fix this lag, but it may not be enough. Find a way to optimize the rendering and physics pipeline somehow.
     for (i32 i = 0; i < projectileCount; i++) {
         // Note(Ethan) : This randomizes the spread of all projectiles, it looks really ugly, I bet there is a better way to do this.
-        srand(randomSeed);
-        randomSeed++;
-        if (randomSeed > 999) {
-            randomSeed = 0;
-        }
+        //srand(randomSeed);
+        //randomSeed++;
+        //if (randomSeed > 999) {
+        //    randomSeed = 0;
+        //}
 
-        lookDirection = JitterVec3(lookDirection, negativeAccuracy, range);
+        Vec3 newDirection = JitterVec3(lookDirection, negativeAccuracy, range);
+        newDirection.Normalize();
 
         // Push back a collision shape into the array.
         btCollisionShape* projectile = new btSphereShape(btScalar(50.f));
@@ -63,11 +64,12 @@ void ProjectileManager::GenerateSimProjectile(Vec3 startPos, Vec3 lookDirection,
         f32 mass = 0.1f; //NOTE(sean): for things that the player might be able to interact with, we want the mass to be smaller
         f32 friction = 0.5f;
         bool isDynamic = (mass != 0.0f);
-        Vec3 localInertia(lookDirection * 500.0f);
+        Vec3 localInertia(newDirection);// * 500.0f);
         if (isDynamic) {
-            projectile->calculateLocalInertia(mass, btVector3(localInertia));
+            projectile->calculateLocalInertia(mass, btVector3(0.0f, 0.0f, 0.0f));
         }
-        startTransform.setOrigin(Vec3(startPos + lookDirection * 250.0f));
+        Vec3 projectilePos = Vec3(startPos + newDirection * 250.0f);
+        startTransform.setOrigin(projectilePos);
 
         // std::cout << "{"  << lookdir.x << ", " << lookdir.y << ", " << lookdir.z << "}" << std::endl;
         // Motionstate again.
@@ -78,8 +80,8 @@ void ProjectileManager::GenerateSimProjectile(Vec3 startPos, Vec3 lookDirection,
         body->setAngularFactor(Vec3(0., 0., 0.));
         currentWorld->addRigidBody(body);
 
-        projectileVelocity = projectileVelocity * 250.0f;
-        body->applyForce(Vec3(projectileVelocity * lookDirection), startPos);
+        f32 newVelocity = projectileVelocity * 25000.0f;
+        body->applyForce(Vec3(newVelocity * newDirection), projectilePos);
     }
 }
 
@@ -92,7 +94,7 @@ void ProjectileManager::CalculateRay(RayProjectile& newRay, Vec3 Pos1, Vec3 btSt
     if (rayResults.hasHit()) {
         Vec3 hitPosition = rayResults.m_hitPointWorld;
         f32 dotProduct = btStartPos.Dot(Vec3(rayResults.m_hitNormalWorld));
-        Vec3 incomingDirection = (hitPosition - btStartPos); incomingDirection.Normalize();
+        Vec3 incomingDirection = XMVector3Normalize(hitPosition - btStartPos);
         Vec3 reflectedDirection = btLookDirection - 2. * (btLookDirection * rayResults.m_hitNormalWorld) * rayResults.m_hitNormalWorld;
 
         if (rayBounces > 0) {
@@ -128,14 +130,16 @@ void ProjectileManager::GenerateRayProjectile(Vec3 startPos, Vec3 lookDirection,
         currentRayProjectiles->push_back(newRay);
     } else {
         for (i32 i = 0; i < rayCount; i++) {
-            srand(randomSeed);
-            randomSeed++;
-            if (randomSeed > 999) {
-                randomSeed = 0;
-            }
+            //srand(randomSeed);
+            //randomSeed++;
+            //if (randomSeed > 999) {
+            //    randomSeed = 0;
+            //}
 
-            lookDirection = JitterVec3(lookDirection, negativeAccuracy, range);
-            CalculateRay(newRay, startPos + lookDirection * 500.0f, startPos, lookDirection, rayBounces, Colors::Peru);
+            Vec3 newDirection = JitterVec3(lookDirection, negativeAccuracy, range);
+            newDirection.Normalize();
+
+            CalculateRay(newRay, startPos + newDirection * 500.0f, startPos, newDirection, rayBounces, Colors::Peru);
 
             currentRayProjectiles->push_back(newRay);
         }

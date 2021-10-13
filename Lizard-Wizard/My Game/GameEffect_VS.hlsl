@@ -1,11 +1,14 @@
 #include "GameEffect_Common.hlsli"
 
 [RootSignature(GameEffectRS)]
-VSOutput main(VSInput vin) {
-	VSOutput vout;
+VertexOutput main(VertexInput input) {
+	VertexOutput output;
 
-	vout.PositionPS = mul(float4(vin.PositionVS, 1.0), WorldViewProjection);
-	vout.NormalPS = vin.NormalVS;
+	output.VertexPosition = mul(float4(input.Position, 1.0), WorldViewProjection);
 
-	return vout;
+	output.Normal = input.Normal;
+	output.Position = mul(float4(input.Position, 1.0), World);
+	output.Texture = input.Texture;
+
+	return output;
 }
