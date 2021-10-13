@@ -65,7 +65,7 @@ void ProjectileManager::GenerateSimProjectile(Vec3 startPos, Vec3 lookDirection,
         bool isDynamic = (mass != 0.0f);
         Vec3 localInertia(lookDirection * 500.0f);
         if (isDynamic) {
-            projectile->calculateLocalInertia(mass, localInertia);
+            projectile->calculateLocalInertia(mass, btVector3(localInertia));
         }
         startTransform.setOrigin(Vec3(startPos + lookDirection * 250.0f));
 
