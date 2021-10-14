@@ -31,10 +31,10 @@
 void ProjectileManager::GenerateSimProjectile(btCollisionObject* caster, Vec3 startPos, Vec3 lookDirection, i32 projectileCount, f32 projectileVelocity, f32 projectileAccuracy, Vec4 projectileColor, b8 ignoreCaster) {
     /* Note(Ethan) :
        currently includes :
-       Vector3 for position, Vector3 for lookvector (direction), requested velocity, color.
+       Vector3 for position, Vector3 for lookvector (direction), requested velocity, accuracy, # of projectiles, # of bounces, color.
 
        will expand to include :
-       accuracy, # of projectiles, # of bounces, model, texture, and color.
+       model, texture.
     */
     auto batch = std::make_unique<btRigidBody* []>(projectileCount);
 
@@ -109,10 +109,10 @@ void ProjectileManager::CalculateRay(btCollisionObject* caster, RayProjectile& n
 void ProjectileManager::GenerateRayProjectile(btCollisionObject* caster, Vec3 startPos, Vec3 lookDirection, i32 rayCount, i32 rayBounces, f32 rayAccuracy, Vec4 rayColor, b8 recursed, b8 ignoreCaster) {
     /* Note(Ethan) :
        currently includes :
-       Vector3 for position, Vector3 for lookvector (direction), color.
+       Vector3 for position, Vector3 for lookvector (direction), color,  accuracy, # of projectiles.
 
        will expand to include :
-       accuracy, # of projectiles, # of bounces, texture.
+       # of bounces and texture.
     */
     RayProjectile newRay;
     newRay.Pos1 = Vec3(startPos.x, startPos.y, startPos.z) + lookDirection * 500.;
