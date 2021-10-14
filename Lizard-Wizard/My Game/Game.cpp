@@ -60,6 +60,7 @@ void CGame::Initialize(){
         m_pCollisionShapes = btAlignedObjectArray<btCollisionShape*>();
         m_currentRayProjectiles = std::vector<RayProjectile>();
         m_pProjectileManager->InitializeProjectiles(m_pCollisionShapes, &m_currentRayProjectiles, m_pDynamicsWorld);
+        randomSeed = 0;
         //m_physicsScratch = StagedBuffer(16 * 1024);   
 
         // Ground Collider
@@ -369,11 +370,12 @@ void CGame::InputHandler() {
         m_rightClick.UpdateState();
 
         if (m_leftClick.pressed) {
-            m_pProjectileManager->GenerateSimProjectile(m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), 5, 4, 5, Colors::IndianRed);
+            m_pProjectileManager->GenerateSimProjectile(m_pDynamicsWorld->getCollisionObjectArray()[1], m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), 3, 4.0, 5.0, Colors::IndianRed, true);
         }
 
-        if (m_rightClick.pressed)
-            m_pProjectileManager->GenerateRayProjectile(m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), 10, 3, 3, Colors::IndianRed, false);
+        if (m_rightClick.pressed) {
+            m_pProjectileManager->GenerateRayProjectile(m_pDynamicsWorld->getCollisionObjectArray()[1], m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), 3, 3, 5.0, Colors::IndianRed, false, true);
+        }
 
         Vector2 delta = { (f32)(cursor_pos.x - center.x), (f32)(cursor_pos.y - center.y) };
         delta *= mouse_sensitivity;
@@ -541,7 +543,6 @@ void CGame::RenderFrame() {
 void CGame::ProcessFrame(){
     InputHandler(); //handle keyboard input
     m_pAudio->BeginFrame(); //notify audio player that frame has begun
-
     m_pTimer->Tick([&]() { //all time-dependent function calls should go here
         m_pObjectManager->move(); //move all objects
         m_pDynamicsWorld->stepSimulation(m_pTimer->GetFrameTime(), 10); // Step Physics
