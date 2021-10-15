@@ -90,6 +90,7 @@ struct Vec4 : Vector4 {
     operator XMVECTOR() const { return *(XMVECTOR*)this; }
     operator XMVECTORF32() const { return *(XMVECTORF32*)this; }
     operator XMFLOAT4() const { return *(XMFLOAT4*)this; }
+    operator FLOAT*() const { return (FLOAT*)this; }
 };
 
 struct Quat : Quaternion {

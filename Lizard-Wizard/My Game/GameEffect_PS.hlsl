@@ -1,5 +1,6 @@
 #include "GameEffect_Common.hlsli"
 
+// Passthrough to G-Buffer
 [RootSignature(GameEffectRS)]
 PixelOutput main(VertexOutput input) {
     PixelOutput output;
@@ -13,11 +14,12 @@ PixelOutput main(VertexOutput input) {
     float3 light_direction = normalize(GLOBAL_LIGHT.Position - pixel_position);
     float light_strength = (dot(pixel_normal, light_direction) + 1.0f) * 0.5f;
 
-    output.Diffuse = float4(light_strength, light_strength, light_strength, 1.0f);
+    //output.Diffuse = float4(light_strength, light_strength, light_strength, 1.0f);
 
-    //output.Diffuse = float4(input.Texture, 1.0, 1.0);
-    //output.Diffuse = float4(((input.Position.xyz / 100.0f) + 1.0f) * 0.5f, 1.0f);
-    //output.Diffuse = float4((input.Normal + 1.0f) * 0.5f, 1.0f);
+    //output.Diffuse = float4(Texture.Sample(Sampler, input.Texture));
+    output.Diffuse = float4(input.Texture, 1.0f, 1.0f);
+    output.Normal = float4(input.Normal.xyz, 1.0f);
+    output.Position = input.Position;
 
     return output;
 }

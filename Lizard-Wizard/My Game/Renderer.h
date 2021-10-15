@@ -86,6 +86,14 @@ struct RenderTexture {
         this->m_height = height;
     }
 
+    void TransitionTo(
+        ID3D12GraphicsCommandList* command_list,
+        D3D12_RESOURCE_STATES after_state
+    ) {
+        TransitionResource(command_list, m_resource.Get(), m_state, after_state);
+        m_state = after_state;
+    }
+
     Microsoft::WRL::ComPtr<ID3D12Resource> m_resource;
     D3D12_RESOURCE_STATES m_state;
     D3D12_CPU_DESCRIPTOR_HANDLE m_srvDescriptor;
@@ -118,7 +126,7 @@ private:
 
     enum class OutputAttachment: u32 {
         Diffuse, Normal, Position,
-        Count
+        Count, AllCount
     };
 
 public:

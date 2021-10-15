@@ -66,7 +66,7 @@ void CRenderer::Initialize() {
         );
 
         m_deferredPassTextures.resize((u32)OutputAttachment::Count);
-        m_deferredPassTextures[(u32)OutputAttachment::Diffuse] = RenderTexture(DXGI_FORMAT_R8G8B8A8_UNORM, Colors::Black);
+        m_deferredPassTextures[(u32)OutputAttachment::Diffuse] = RenderTexture(DXGI_FORMAT_B8G8R8A8_UNORM, Colors::Black);
         m_deferredPassTextures[(u32)OutputAttachment::Normal] = RenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, Colors::Black);
         m_deferredPassTextures[(u32)OutputAttachment::Position] = RenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, Colors::Black);
 
@@ -147,14 +147,18 @@ void CRenderer::Initialize() {
         };
 
         RenderTargetState render_target_state(
-            m_pDeviceResources->GetBackBufferFormat(),
+            //m_pDeviceResources->GetBackBufferFormat(),
+            m_deferredPassTextures[(u32)OutputAttachment::Diffuse].m_format,
             m_pDeviceResources->GetDepthBufferFormat()
         );
 
         render_target_state.numRenderTargets = (u32)OutputAttachment::Count;
-        render_target_state.rtvFormats[(u32)OutputAttachment::Diffuse];
-        render_target_state.rtvFormats[(u32)OutputAttachment::Normal];
-        render_target_state.rtvFormats[(u32)OutputAttachment::Position];
+        render_target_state.rtvFormats[(u32)OutputAttachment::Diffuse] =
+            m_deferredPassTextures[(u32)OutputAttachment::Diffuse].m_format;
+        render_target_state.rtvFormats[(u32)OutputAttachment::Normal] =
+            m_deferredPassTextures[(u32)OutputAttachment::Normal].m_format;
+        render_target_state.rtvFormats[(u32)OutputAttachment::Position] =
+            m_deferredPassTextures[(u32)OutputAttachment::Position].m_format;
 
         EffectPipelineStateDescription pipeline_state_desc(
             &GAME_EFFECT_INPUT_LAYOUT_DESC,
@@ -177,16 +181,44 @@ void CRenderer::BeginFrame() {
     m_pDeviceResources->Prepare();
 
     m_pCommandList = m_pDeviceResources->GetCommandList();
-    m_pHeaps[0] = m_pDescriptorHeap->Heap();
-    m_pHeaps[1] = m_pStates->Heap();
-    m_pCommandList->SetDescriptorHeaps(_countof(m_pHeaps), m_pHeaps);
 
-    auto rtvDescriptorBackBuffer = m_pDeviceResources->GetRenderTargetView();
+    //m_pHeaps[0] = m_pDescriptorHeap->Heap();
+    //m_pHeaps[1] = m_pStates->Heap();
+
+    ID3D12DescriptorHeap* pHeaps[] = {
+        m_pDeferredResourceDescs->Heap(),
+        m_pStates->Heap()
+    };
+
+    //m_pCommandList->SetDescriptorHeaps(_countof(m_pHeaps), m_pHeaps);
+    m_pCommandList->SetDescriptorHeaps(_countof(pHeaps), pHeaps);
+
+    //auto rtvDescriptorBackBuffer = m_pDeviceResources->GetRenderTargetView();
     auto dsvDescriptorBackBuffer = m_pDeviceResources->GetDepthStencilView();
 
-    m_pCommandList->OMSetRenderTargets(1, &rtvDescriptorBackBuffer, FALSE, &dsvDescriptorBackBuffer);
-    m_pCommandList->ClearRenderTargetView(rtvDescriptorBackBuffer, m_f32BgColor, 0, nullptr);
-    m_pCommandList->ClearDepthStencilView(dsvDescriptorBackBuffer, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+    auto rtvDescriptorDiffuse = m_pDeferredRenderDescs->GetCpuHandle((u32)OutputAttachment::Diffuse);
+    auto diffuseClearColor = m_deferredPassTextures[(u32)OutputAttachment::Diffuse].m_clearColor;
+
+    auto rtvDescriptorNormal = m_pDeferredRenderDescs->GetCpuHandle((u32)OutputAttachment::Normal);
+    auto normalClearColor = m_deferredPassTextures[(u32)OutputAttachment::Normal].m_clearColor;
+
+    auto rtvDescriptorPosition = m_pDeferredRenderDescs->GetCpuHandle((u32)OutputAttachment::Position);
+    auto positionClearColor = m_deferredPassTextures[(u32)OutputAttachment::Position].m_clearColor;
+
+    D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptors[(u32)OutputAttachment::Count] = {
+        //rtvDescriptorBackBuffer,
+        rtvDescriptorDiffuse,
+        rtvDescriptorNormal,
+        rtvDescriptorPosition
+    };
+
+    //m_pCommandList->OMSetRenderTargets(1, &rtvDescriptorBackBuffer, FALSE, &dsvDescriptorBackBuffer);
+    m_pCommandList->OMSetRenderTargets((u32)OutputAttachment::Count, rtvDescriptors, FALSE, &dsvDescriptorBackBuffer);
+    //m_pCommandList->ClearRenderTargetView(rtvDescriptorBackBuffer, m_f32BgColor, 0, 0);
+    m_pCommandList->ClearRenderTargetView(rtvDescriptorDiffuse, diffuseClearColor, 0, 0);
+    m_pCommandList->ClearRenderTargetView(rtvDescriptorNormal, normalClearColor, 0, 0);
+    m_pCommandList->ClearRenderTargetView(rtvDescriptorPosition, positionClearColor, 0, 0);
+    m_pCommandList->ClearDepthStencilView(dsvDescriptorBackBuffer, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, 0);
 
     auto viewport = m_pDeviceResources->GetScreenViewport();
     auto scissorRect = m_pDeviceResources->GetScissorRect();
@@ -198,6 +230,19 @@ void CRenderer::BeginFrame() {
 /// End Rendering a frame.
 /// Put all DrawXYZ() or other functions in between this and BeginFrame()
 void CRenderer::EndFrame() {
+    // Copy MRT output to BackBuffer
+    {
+        RenderTexture* diffuse = &m_deferredPassTextures[(u32)OutputAttachment::Diffuse];
+
+        diffuse->TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+        TransitionResource(m_pCommandList, m_pDeviceResources->GetRenderTarget(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_DEST);
+
+        m_pCommandList->CopyResource(m_pDeviceResources->GetRenderTarget(), diffuse->m_resource.Get());
+
+        diffuse->TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        TransitionResource(m_pCommandList, m_pDeviceResources->GetRenderTarget(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    }
+
     //LRenderer3D::EndFrame();
     if (m_screenShot) {
         SaveScreenShot();
