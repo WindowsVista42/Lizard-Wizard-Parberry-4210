@@ -49,6 +49,7 @@ private:
     //std::vector<Projectile> m_currentProjectiles;
     //std::vector<RayProjectile> m_currentRayProjectiles;
 
+    i32 randomSeed;
 
     bool m_bDrawFrameRate = false; ///< Draw the frame rate.
     

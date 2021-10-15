@@ -18,14 +18,10 @@ Mat4x4 MoveScaleMatrix(Vec3 position, Vec3 scale) {
 }
 
 Vec3 JitterVec3(Vec3 input, f32 negativeAccuracy, f32 range) {
-    range = 0.03;
-
-    // Generate random value between -1 and +1
     f32 xnoise = range * (GameRandom::Randf32() - 0.5f) * 2.0f;
     f32 ynoise = range * (GameRandom::Randf32() - 0.5f) * 2.0f;
     f32 znoise = range * (GameRandom::Randf32() - 0.5f) * 2.0f;
 
-    // Convert angles to Vec3
     return Vec3(
         input.x + xnoise,
         input.y + ynoise,
