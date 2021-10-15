@@ -41,19 +41,12 @@ void ProjectileManager::GenerateSimProjectile(btCollisionObject* caster, const V
     // Note(Ethan) : This will spawn n-projectiles based on projectileCount, it gets really laggy though. Projectile cache will help
     // fix this lag, but it may not be enough. Find a way to optimize the rendering and physics pipeline somehow.
     for (i32 i = 0; i < projectileCount; i++) {
-        // Note(Ethan) : This randomizes the spread of all projectiles, it looks really ugly, I bet there is a better way to do this.
-        //srand(randomSeed);
-        //randomSeed++;
-        //if (randomSeed > 999) {
-        //    randomSeed = 0;
-        //}
-
-        //Vec3 newDirection = JitterVec3(lookDirection, 0.0, 0.03);
-        //newDirection.Normalize();
 
         // Push back a collision shape into the array.
         btCollisionShape* projectile = new btSphereShape(btScalar(50.f));
         currentSimProjectiles.push_back(projectile);
+
+        Vec3 newDirection = JitterVec3(lookDirection, -0.3, 0.3);
 
         // Implicating projectile as a dynamic object.
         btTransform startTransform;
@@ -65,7 +58,7 @@ void ProjectileManager::GenerateSimProjectile(btCollisionObject* caster, const V
         if (isDynamic) {
             projectile->calculateLocalInertia(mass, btVector3(0.0f, 0.0f, 0.0f));
         }
-        Vec3 projectilePos = Vec3(startPos + lookDirection * 250.0f);
+        Vec3 projectilePos = Vec3(startPos + newDirection * 250.0f);
         startTransform.setOrigin(projectilePos);
 
         // std::cout << "{"  << lookdir.x << ", " << lookdir.y << ", " << lookdir.z << "}" << std::endl;
@@ -75,9 +68,8 @@ void ProjectileManager::GenerateSimProjectile(btCollisionObject* caster, const V
         rbInfo.m_friction = friction;
         btRigidBody* body = new btRigidBody(rbInfo);
         body->setAngularFactor(Vec3(0., 0., 0.));
-        Vec3 newDirection = JitterVec3(lookDirection, -projectileAccuracy, projectileAccuracy);
-        f32 newVelocity = projectileVelocity * 150.0f;
-        body->applyForce(Vec3(newDirection * newVelocity), startPos);
+        f32 newVelocity = projectileVelocity * 15000.0f;
+        body->applyForce(Vec3(lookDirection * newVelocity), startPos);
         body->setIgnoreCollisionCheck(caster, ignoreCaster);
         batch[i] = body;
     }
