@@ -135,19 +135,7 @@ void CRenderer::Initialize() {
 
     {
         //NOTE(sean): these will need to be self-defined in the future
-        const u32 GAME_EFFECT_INPUT_LAYOUT_COUNT = 3;
-        const D3D12_INPUT_ELEMENT_DESC GAME_EFFECT_INPUT_ELEMENTS[GAME_EFFECT_INPUT_LAYOUT_COUNT] = {
-            { "SV_Position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-            { "NORMAL",      0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-            { "TEXCOORD",    0, DXGI_FORMAT_R32G32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        };
-        const D3D12_INPUT_LAYOUT_DESC GAME_EFFECT_INPUT_LAYOUT_DESC = {
-            GAME_EFFECT_INPUT_ELEMENTS,
-            GAME_EFFECT_INPUT_LAYOUT_COUNT
-        };
-
         RenderTargetState render_target_state(
-            //m_pDeviceResources->GetBackBufferFormat(),
             m_deferredPassTextures[(u32)OutputAttachment::Diffuse].m_format,
             m_pDeviceResources->GetDepthBufferFormat()
         );
@@ -161,15 +149,27 @@ void CRenderer::Initialize() {
             m_deferredPassTextures[(u32)OutputAttachment::Position].m_format;
 
         EffectPipelineStateDescription pipeline_state_desc(
-            &GAME_EFFECT_INPUT_LAYOUT_DESC,
-            CommonStates::NonPremultiplied,
+            &VertexPNT::InputLayout,
+            CommonStates::Opaque,
             CommonStates::DepthDefault,
-            CommonStates::CullNone,
+            CommonStates::CullCounterClockwise,
             render_target_state
         );
 
         m_pGameEffect = std::make_unique<GameEffect>(m_pD3DDevice, pipeline_state_desc);
         m_pGameEffect->SetProjection(XMLoadFloat4x4(&m_projection));
+    }
+
+    {
+        EffectPipelineStateDescription pipeline_state_desc(
+            0,
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
+            CommonStates::CullNone,
+            m_RenderTargetState
+        );
+
+        m_pPostProcessEffect = std::make_unique<PostProcessEffect>(m_pD3DDevice, pipeline_state_desc);
     }
 }
 
@@ -187,7 +187,7 @@ void CRenderer::BeginFrame() {
 
     ID3D12DescriptorHeap* pHeaps[] = {
         m_pDeferredResourceDescs->Heap(),
-        m_pStates->Heap()
+        //m_pStates->Heap()
     };
 
     //m_pCommandList->SetDescriptorHeaps(_countof(m_pHeaps), m_pHeaps);
@@ -233,6 +233,8 @@ void CRenderer::EndFrame() {
     // Copy MRT output to BackBuffer
     {
         RenderTexture* diffuse = &m_deferredPassTextures[(u32)OutputAttachment::Diffuse];
+        RenderTexture* normal = &m_deferredPassTextures[(u32)OutputAttachment::Normal];
+        RenderTexture* position = &m_deferredPassTextures[(u32)OutputAttachment::Position];
 
         diffuse->TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
         TransitionResource(m_pCommandList, m_pDeviceResources->GetRenderTarget(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_DEST);
@@ -241,6 +243,11 @@ void CRenderer::EndFrame() {
 
         diffuse->TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
         TransitionResource(m_pCommandList, m_pDeviceResources->GetRenderTarget(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    }
+
+    // Render Post Process Effect
+    {
+
     }
 
     //LRenderer3D::EndFrame();

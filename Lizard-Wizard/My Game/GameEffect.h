@@ -23,6 +23,7 @@ public:
     void XM_CALLCONV SetMatrices(DirectX::FXMMATRIX world, DirectX::CXMMATRIX view, DirectX::CXMMATRIX projection) override;
 
     //TODO(sean): state setting functions
+    //Something to set textures, idk
 
 private:
     enum Descriptors {

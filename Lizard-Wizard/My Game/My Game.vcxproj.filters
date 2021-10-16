@@ -14,6 +14,7 @@
     <ClCompile Include="StagedBuffer.cpp" />
     <ClCompile Include="GameEffect.cpp" />
     <ClCompile Include="Helpers.cpp" />
+    <ClCompile Include="PostProcessEffect.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h" />
@@ -30,6 +31,7 @@
     <ClInclude Include="StagedBuffer.h" />
     <ClInclude Include="GameEffect.h" />
     <ClInclude Include="Helpers.h" />
+    <ClInclude Include="PostProcessEffect.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="My Game.rc" />
@@ -46,12 +48,21 @@
     <None Include="GameEffect_Common.hlsli">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="PostProcessEffect_Common.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="GameEffect_VS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="GameEffect_PS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="PostProcessEffect_PS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="PostProcessEffect_VS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

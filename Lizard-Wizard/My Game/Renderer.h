@@ -5,6 +5,7 @@
 #include "Model.h"
 #include "StagedBuffer.h"
 #include "GameEffect.h"
+#include "PostProcessEffect.h"
 #include <Renderer3D.h>
 #include <Model.h>
 
@@ -117,6 +118,7 @@ private:
     std::vector<ModelInstance> m_debugModelInstances;
 
     std::unique_ptr<GameEffect> m_pGameEffect;
+    std::unique_ptr<PostProcessEffect> m_pPostProcessEffect;
     std::vector<GameModel> m_models;
     std::vector<ModelInstance> m_modelInstances;
 
