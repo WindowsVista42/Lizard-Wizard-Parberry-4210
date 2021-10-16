@@ -26,9 +26,6 @@ sampler Sampler : register(s0);
 
 cbuffer GameEffectConstants : register(b0) {}
 
-// Shader generated vertices
-struct VertexInput {};
-
 struct VertexOutput {
     float4 VertexPosition : SV_Position;
     float2 Texture : TEXCOORD0;

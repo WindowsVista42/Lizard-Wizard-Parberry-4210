@@ -5,12 +5,12 @@
 #include <Renderer3D.h>
 
 //NOTE(sean): Reference --> https://github.com/microsoft/DirectXTK12/wiki/Authoring-an-Effect
-class GameEffect:
+class DeferredEffect:
     public DirectX::IEffect,
     public DirectX::IEffectMatrices
 {
 public:
-    GameEffect(
+    DeferredEffect(
         ID3D12Device* device,
         const DirectX::EffectPipelineStateDescription& pipeline_state_desc
     );

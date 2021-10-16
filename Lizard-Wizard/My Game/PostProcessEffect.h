@@ -3,6 +3,12 @@
 
 #include <Effects.h>
 #include <Renderer3D.h>
+#include <vector>
+
+namespace PPDescriptors { enum e {
+    InputSRVs, ConstantBuffer,
+    Count
+};}
 
 class PostProcessEffect: public DirectX::IEffect {
 public:
@@ -12,13 +18,13 @@ public:
     );
 
     void Apply(ID3D12GraphicsCommandList* command_list) override;
+    void SetTextures(
+        D3D12_GPU_DESCRIPTOR_HANDLE color_texture,
+        D3D12_GPU_DESCRIPTOR_HANDLE normal_texture,
+        D3D12_GPU_DESCRIPTOR_HANDLE position_texture
+    );
 
 private:
-    enum Descriptors {
-        ConstantBuffer,
-        Count
-    };
-
     Microsoft::WRL::ComPtr<ID3D12Device> m_device;
     Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature;
     Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pso;
@@ -26,7 +32,9 @@ private:
     u32 m_dirtyFlags;
     DirectX::GraphicsResource m_constantBuffer;
 
-    //TODO(sean): other state
+    D3D12_GPU_DESCRIPTOR_HANDLE m_colorTexture;
+    D3D12_GPU_DESCRIPTOR_HANDLE m_normalTexture;
+    D3D12_GPU_DESCRIPTOR_HANDLE m_positionTexture;
 };
 
 #endif

@@ -55,49 +55,49 @@ void CRenderer::Initialize() {
     //TODO(sean): resource cleanup
     {
         m_pDeferredResourceDescs = std::make_unique<DescriptorHeap>(
-            m_pD3DDevice, (u32)OutputAttachment::Count
+            m_pD3DDevice, DeferredPass::Count
         );
 
         m_pDeferredRenderDescs = std::make_unique<DescriptorHeap>(
             m_pD3DDevice,
             D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
             D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
-            (u32)OutputAttachment::Count
+            DeferredPass::Count
         );
 
-        m_deferredPassTextures.resize((u32)OutputAttachment::Count);
-        m_deferredPassTextures[(u32)OutputAttachment::Diffuse] = RenderTexture(DXGI_FORMAT_B8G8R8A8_UNORM, Colors::Black);
-        m_deferredPassTextures[(u32)OutputAttachment::Normal] = RenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, Colors::Black);
-        m_deferredPassTextures[(u32)OutputAttachment::Position] = RenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, Colors::Black);
+        m_deferredPassTextures.resize(DeferredPass::Count);
+        m_deferredPassTextures[DeferredPass::Diffuse] = RenderTexture(DXGI_FORMAT_B8G8R8A8_UNORM, Colors::Black);
+        m_deferredPassTextures[DeferredPass::Normal] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
+        m_deferredPassTextures[DeferredPass::Position] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
 
-        CheckDeviceFormatSupport(m_pD3DDevice, m_deferredPassTextures[(u32)OutputAttachment::Diffuse].m_format);
-        CheckDeviceFormatSupport(m_pD3DDevice, m_deferredPassTextures[(u32)OutputAttachment::Normal].m_format);
-        CheckDeviceFormatSupport(m_pD3DDevice, m_deferredPassTextures[(u32)OutputAttachment::Position].m_format);
+        CheckDeviceFormatSupport(m_pD3DDevice, m_deferredPassTextures[DeferredPass::Diffuse].m_format);
+        CheckDeviceFormatSupport(m_pD3DDevice, m_deferredPassTextures[DeferredPass::Normal].m_format);
+        CheckDeviceFormatSupport(m_pD3DDevice, m_deferredPassTextures[DeferredPass::Position].m_format);
 
-        m_deferredPassTextures[(u32)OutputAttachment::Diffuse].UpdateDescriptors(
-            m_pDeferredResourceDescs->GetCpuHandle((u32)OutputAttachment::Diffuse),
-            m_pDeferredRenderDescs->GetCpuHandle((u32)OutputAttachment::Diffuse)
+        m_deferredPassTextures[DeferredPass::Diffuse].UpdateDescriptors(
+            m_pDeferredResourceDescs->GetCpuHandle(DeferredPass::Diffuse),
+            m_pDeferredRenderDescs->GetCpuHandle(DeferredPass::Diffuse)
         );
 
-        m_deferredPassTextures[(u32)OutputAttachment::Normal].UpdateDescriptors(
-            m_pDeferredResourceDescs->GetCpuHandle((u32)OutputAttachment::Normal),
-            m_pDeferredRenderDescs->GetCpuHandle((u32)OutputAttachment::Normal)
+        m_deferredPassTextures[DeferredPass::Normal].UpdateDescriptors(
+            m_pDeferredResourceDescs->GetCpuHandle(DeferredPass::Normal),
+            m_pDeferredRenderDescs->GetCpuHandle(DeferredPass::Normal)
         );
 
-        m_deferredPassTextures[(u32)OutputAttachment::Position].UpdateDescriptors(
-            m_pDeferredResourceDescs->GetCpuHandle((u32)OutputAttachment::Position),
-            m_pDeferredRenderDescs->GetCpuHandle((u32)OutputAttachment::Position)
+        m_deferredPassTextures[DeferredPass::Position].UpdateDescriptors(
+            m_pDeferredResourceDescs->GetCpuHandle(DeferredPass::Position),
+            m_pDeferredRenderDescs->GetCpuHandle(DeferredPass::Position)
         );
 
-        m_deferredPassTextures[(u32)OutputAttachment::Diffuse].UpdateResources(
+        m_deferredPassTextures[DeferredPass::Diffuse].UpdateResources(
             m_pD3DDevice, m_nWinWidth, m_nWinHeight
         );
 
-        m_deferredPassTextures[(u32)OutputAttachment::Normal].UpdateResources(
+        m_deferredPassTextures[DeferredPass::Normal].UpdateResources(
             m_pD3DDevice, m_nWinWidth, m_nWinHeight
         );
 
-        m_deferredPassTextures[(u32)OutputAttachment::Position].UpdateResources(
+        m_deferredPassTextures[DeferredPass::Position].UpdateResources(
             m_pD3DDevice, m_nWinWidth, m_nWinHeight
         );
     }
@@ -113,7 +113,6 @@ void CRenderer::Initialize() {
             D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE
         );
 
-        //TODO(sean): Figure out what the extra fields for this *can* do
         m_pDebugLineEffect = std::make_unique<BasicEffect>(m_pD3DDevice, EffectFlags::VertexColor, pipeline_state_desc);
         m_pDebugLineEffect->SetProjection(XMLoadFloat4x4(&m_projection));
     }
@@ -128,7 +127,6 @@ void CRenderer::Initialize() {
             D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
         );
 
-        //TODO(sean): Figure out what the extra fields for this *can* do
         m_pDebugTriangleEffect = std::make_unique<BasicEffect>(m_pD3DDevice, EffectFlags::VertexColor, pipeline_state_desc);
         m_pDebugTriangleEffect->SetProjection(XMLoadFloat4x4(&m_projection));
     }
@@ -136,17 +134,17 @@ void CRenderer::Initialize() {
     {
         //NOTE(sean): these will need to be self-defined in the future
         RenderTargetState render_target_state(
-            m_deferredPassTextures[(u32)OutputAttachment::Diffuse].m_format,
+            m_deferredPassTextures[DeferredPass::Diffuse].m_format,
             m_pDeviceResources->GetDepthBufferFormat()
         );
 
-        render_target_state.numRenderTargets = (u32)OutputAttachment::Count;
-        render_target_state.rtvFormats[(u32)OutputAttachment::Diffuse] =
-            m_deferredPassTextures[(u32)OutputAttachment::Diffuse].m_format;
-        render_target_state.rtvFormats[(u32)OutputAttachment::Normal] =
-            m_deferredPassTextures[(u32)OutputAttachment::Normal].m_format;
-        render_target_state.rtvFormats[(u32)OutputAttachment::Position] =
-            m_deferredPassTextures[(u32)OutputAttachment::Position].m_format;
+        render_target_state.numRenderTargets = DeferredPass::Count;
+        render_target_state.rtvFormats[DeferredPass::Diffuse] =
+            m_deferredPassTextures[DeferredPass::Diffuse].m_format;
+        render_target_state.rtvFormats[DeferredPass::Normal] =
+            m_deferredPassTextures[DeferredPass::Normal].m_format;
+        render_target_state.rtvFormats[DeferredPass::Position] =
+            m_deferredPassTextures[DeferredPass::Position].m_format;
 
         EffectPipelineStateDescription pipeline_state_desc(
             &VertexPNT::InputLayout,
@@ -156,15 +154,15 @@ void CRenderer::Initialize() {
             render_target_state
         );
 
-        m_pGameEffect = std::make_unique<GameEffect>(m_pD3DDevice, pipeline_state_desc);
-        m_pGameEffect->SetProjection(XMLoadFloat4x4(&m_projection));
+        m_pDeferredEffect = std::make_unique<DeferredEffect>(m_pD3DDevice, pipeline_state_desc);
+        m_pDeferredEffect->SetProjection(XMLoadFloat4x4(&m_projection));
     }
 
     {
         EffectPipelineStateDescription pipeline_state_desc(
             0,
             CommonStates::Opaque,
-            CommonStates::DepthDefault,
+            CommonStates::DepthNone,
             CommonStates::CullNone,
             m_RenderTargetState
         );
@@ -196,16 +194,16 @@ void CRenderer::BeginFrame() {
     //auto rtvDescriptorBackBuffer = m_pDeviceResources->GetRenderTargetView();
     auto dsvDescriptorBackBuffer = m_pDeviceResources->GetDepthStencilView();
 
-    auto rtvDescriptorDiffuse = m_pDeferredRenderDescs->GetCpuHandle((u32)OutputAttachment::Diffuse);
-    auto diffuseClearColor = m_deferredPassTextures[(u32)OutputAttachment::Diffuse].m_clearColor;
+    auto rtvDescriptorDiffuse = m_pDeferredRenderDescs->GetCpuHandle(DeferredPass::Diffuse);
+    auto diffuseClearColor = m_deferredPassTextures[DeferredPass::Diffuse].m_clearColor;
 
-    auto rtvDescriptorNormal = m_pDeferredRenderDescs->GetCpuHandle((u32)OutputAttachment::Normal);
-    auto normalClearColor = m_deferredPassTextures[(u32)OutputAttachment::Normal].m_clearColor;
+    auto rtvDescriptorNormal = m_pDeferredRenderDescs->GetCpuHandle(DeferredPass::Normal);
+    auto normalClearColor = m_deferredPassTextures[DeferredPass::Normal].m_clearColor;
 
-    auto rtvDescriptorPosition = m_pDeferredRenderDescs->GetCpuHandle((u32)OutputAttachment::Position);
-    auto positionClearColor = m_deferredPassTextures[(u32)OutputAttachment::Position].m_clearColor;
+    auto rtvDescriptorPosition = m_pDeferredRenderDescs->GetCpuHandle(DeferredPass::Position);
+    auto positionClearColor = m_deferredPassTextures[DeferredPass::Position].m_clearColor;
 
-    D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptors[(u32)OutputAttachment::Count] = {
+    D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptors[DeferredPass::Count] = {
         //rtvDescriptorBackBuffer,
         rtvDescriptorDiffuse,
         rtvDescriptorNormal,
@@ -213,7 +211,7 @@ void CRenderer::BeginFrame() {
     };
 
     //m_pCommandList->OMSetRenderTargets(1, &rtvDescriptorBackBuffer, FALSE, &dsvDescriptorBackBuffer);
-    m_pCommandList->OMSetRenderTargets((u32)OutputAttachment::Count, rtvDescriptors, FALSE, &dsvDescriptorBackBuffer);
+    m_pCommandList->OMSetRenderTargets(DeferredPass::Count, rtvDescriptors, FALSE, &dsvDescriptorBackBuffer);
     //m_pCommandList->ClearRenderTargetView(rtvDescriptorBackBuffer, m_f32BgColor, 0, 0);
     m_pCommandList->ClearRenderTargetView(rtvDescriptorDiffuse, diffuseClearColor, 0, 0);
     m_pCommandList->ClearRenderTargetView(rtvDescriptorNormal, normalClearColor, 0, 0);
@@ -230,24 +228,43 @@ void CRenderer::BeginFrame() {
 /// End Rendering a frame.
 /// Put all DrawXYZ() or other functions in between this and BeginFrame()
 void CRenderer::EndFrame() {
+    /*
     // Copy MRT output to BackBuffer
     {
-        RenderTexture* diffuse = &m_deferredPassTextures[(u32)OutputAttachment::Diffuse];
-        RenderTexture* normal = &m_deferredPassTextures[(u32)OutputAttachment::Normal];
-        RenderTexture* position = &m_deferredPassTextures[(u32)OutputAttachment::Position];
+        RenderTexture* diffuse = &m_deferredPassTextures[DeferredPass::Diffuse];
+        RenderTexture* normal = &m_deferredPassTextures[DeferredPass::Normal];
+        RenderTexture* position = &m_deferredPassTextures[DeferredPass::Position];
+        ID3D12Resource* back_buffer = m_pDeviceResources->GetRenderTarget();
 
         diffuse->TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
-        TransitionResource(m_pCommandList, m_pDeviceResources->GetRenderTarget(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_DEST);
+        TransitionResource(m_pCommandList, back_buffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_DEST);
 
-        m_pCommandList->CopyResource(m_pDeviceResources->GetRenderTarget(), diffuse->m_resource.Get());
+        m_pCommandList->CopyResource(back_buffer, diffuse->m_resource.Get());
 
         diffuse->TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
-        TransitionResource(m_pCommandList, m_pDeviceResources->GetRenderTarget(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        TransitionResource(m_pCommandList, back_buffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
     }
+    */
 
     // Render Post Process Effect
     {
+        auto rtvDescriptorBackBuffer = m_pDeviceResources->GetRenderTargetView();
+        auto dsvDescriptorBackBuffer = m_pDeviceResources->GetDepthStencilView();
 
+        m_pCommandList->OMSetRenderTargets(1, &rtvDescriptorBackBuffer, FALSE, 0);
+        m_pCommandList->ClearRenderTargetView(rtvDescriptorBackBuffer, m_f32BgColor, 0, 0);
+
+        m_pPostProcessEffect->SetTextures(
+            m_pDeferredResourceDescs->GetGpuHandle(DeferredPass::Diffuse),
+            m_pDeferredResourceDescs->GetGpuHandle(DeferredPass::Normal),
+            m_pDeferredResourceDescs->GetGpuHandle(DeferredPass::Position)
+        );
+
+        m_pPostProcessEffect->Apply(m_pCommandList);
+    
+        m_pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        //m_pCommandList->DrawIndexedInstanced(pmodel->index_count, 1, 0, 0, 0);
+        m_pCommandList->DrawInstanced(3, 1, 0, 0);
     }
 
     //LRenderer3D::EndFrame();
@@ -567,7 +584,7 @@ void CRenderer::DrawDebugCubeInternal(
 /// This function will return a handle to the index in the list.
 u32 CRenderer::AddDebugModel(DebugModel* model) {
     m_debugModels.push_back(*model);
-    return m_debugModels.size() - 1;
+    return (u32)m_debugModels.size() - 1;
 }
 
 void CRenderer::LoadAllModels() {
@@ -660,7 +677,7 @@ struct VBOData {
 
 //NOTE(sean): VBO file format: https://github.com/microsoft/DirectXMesh/blob/master/Meshconvert/Mesh.cpp
 void LoadVBO(const char* fpath, VBOData* model) {
-    #define CHECK(value) ABORT_EQ_FORMAT((value), 0, "Corrupt VBO file!", value)
+    #define CHECK(value) ABORT_EQ_FORMAT((value), 0, "Corrupt VBO file!")
 
     FILE* fp = fopen(fpath, "rb"); CHECK(fp);
 
@@ -761,10 +778,10 @@ void CRenderer::LoadModel(const char* name, ModelType model_type) {
 }
 
 void CRenderer::DrawModelInstance(ModelInstance* instance) {
-    m_pGameEffect->SetWorld(instance->m_worldMatrix);
-    m_pGameEffect->SetView(XMLoadFloat4x4(&m_view));
+    m_pDeferredEffect->SetWorld(instance->m_worldMatrix);
+    m_pDeferredEffect->SetView(XMLoadFloat4x4(&m_view));
 
-    m_pGameEffect->Apply(m_pCommandList);
+    m_pDeferredEffect->Apply(m_pCommandList);
 
     GameModel* pmodel = &m_models[instance->m_modelIndex];
     m_pCommandList->IASetVertexBuffers(0, 1, pmodel->vertex_view.get());

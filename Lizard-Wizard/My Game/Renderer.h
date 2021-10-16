@@ -4,7 +4,7 @@
 #include "Defines.h"
 #include "Model.h"
 #include "StagedBuffer.h"
-#include "GameEffect.h"
+#include "DeferredEffect.h"
 #include "PostProcessEffect.h"
 #include <Renderer3D.h>
 #include <Model.h>
@@ -105,6 +105,17 @@ struct RenderTexture {
     usize m_height;
 };
 
+// All the benefits of enum class, without having to cast to the type :)
+namespace DeferredPass { enum e : u32 {
+    Diffuse, Normal, Position,
+    Count
+};}
+
+namespace PostProcessPass { enum e : u32 {
+    BackBuffer,
+    Count
+};}
+
 //NOTE(sean): A lot of this implementation is reverse-engineered based on what LSpriteRenderer does
 //The DirectXTK12 docs are super helpful for all of this as well :)
 class CRenderer: public LRenderer3D {
@@ -117,7 +128,7 @@ private:
     std::vector<DebugModel> m_debugModels;
     std::vector<ModelInstance> m_debugModelInstances;
 
-    std::unique_ptr<GameEffect> m_pGameEffect;
+    std::unique_ptr<DeferredEffect> m_pDeferredEffect;
     std::unique_ptr<PostProcessEffect> m_pPostProcessEffect;
     std::vector<GameModel> m_models;
     std::vector<ModelInstance> m_modelInstances;
@@ -125,11 +136,6 @@ private:
     std::unique_ptr<DescriptorHeap> m_pDeferredResourceDescs;
     std::unique_ptr<DescriptorHeap> m_pDeferredRenderDescs;
     std::vector<RenderTexture> m_deferredPassTextures;
-
-    enum class OutputAttachment: u32 {
-        Diffuse, Normal, Position,
-        Count, AllCount
-    };
 
 public:
     bool m_screenShot = false; // TODO(sean): implement

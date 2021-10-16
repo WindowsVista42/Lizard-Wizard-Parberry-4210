@@ -1,4 +1,5 @@
 #include "PostProcessEffect.h"
+#include "Renderer.h"
 #include <ReadData.h>
 
 //NOTE(sean): this is actually a really nice way to do a bitset,
@@ -27,11 +28,21 @@ PostProcessEffect::PostProcessEffect(
         D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
         D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
 
-    CD3DX12_ROOT_PARAMETER root_parameters[Descriptors::Count] = {};
-    root_parameters[Descriptors::ConstantBuffer].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL);
+    CD3DX12_DESCRIPTOR_RANGE texture_range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0);
+
+    CD3DX12_ROOT_PARAMETER root_parameters[PPDescriptors::Count] = {};
+    root_parameters[PPDescriptors::InputSRVs].InitAsDescriptorTable(1, &texture_range, D3D12_SHADER_VISIBILITY_PIXEL);
+    root_parameters[PPDescriptors::ConstantBuffer].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+
+    D3D12_STATIC_SAMPLER_DESC static_sampler_desc = {};
+    static_sampler_desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+    static_sampler_desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+    static_sampler_desc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+    static_sampler_desc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+    static_sampler_desc.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
     CD3DX12_ROOT_SIGNATURE_DESC root_signature_desc = {};
-    root_signature_desc.Init(Descriptors::Count, root_parameters, 0, 0, root_signature_flags);
+    root_signature_desc.Init(PPDescriptors::Count, root_parameters, 1, &static_sampler_desc, root_signature_flags);
 
     DX::ThrowIfFailed(
         CreateRootSignature(device, &root_signature_desc, m_rootSignature.ReleaseAndGetAddressOf())
@@ -44,6 +55,16 @@ PostProcessEffect::PostProcessEffect(
     D3D12_SHADER_BYTECODE ps = { ps_blob.data(), ps_blob.size() };
 
     pipeline_state_desc.CreatePipelineState(device, m_rootSignature.Get(), vs, ps, m_pso.ReleaseAndGetAddressOf());
+}
+
+void PostProcessEffect::SetTextures(
+    D3D12_GPU_DESCRIPTOR_HANDLE color_texture,
+    D3D12_GPU_DESCRIPTOR_HANDLE normal_texture,
+    D3D12_GPU_DESCRIPTOR_HANDLE position_texture
+) {
+    m_colorTexture = color_texture;
+    m_normalTexture = normal_texture;
+    m_positionTexture = position_texture;
 }
 
 //TODO(sean): update this to the right implementation
@@ -63,10 +84,13 @@ void PostProcessEffect::Apply(ID3D12GraphicsCommandList* command_list) {
     //NOTE(sean): set root signature and parameters
     command_list->SetGraphicsRootSignature(m_rootSignature.Get());
 
-    //NOTE(sean): validate some members here
+    //NOTE(sean): set render resources
+    command_list->SetGraphicsRootDescriptorTable(0, m_positionTexture);
+    command_list->SetGraphicsRootDescriptorTable(0, m_normalTexture);
+    command_list->SetGraphicsRootDescriptorTable(0, m_colorTexture);
 
     //NOTE(sean): set render constants
-    command_list->SetGraphicsRootConstantBufferView(Descriptors::ConstantBuffer, m_constantBuffer.GpuAddress());
+    command_list->SetGraphicsRootConstantBufferView(1, m_constantBuffer.GpuAddress());
 
     //NOTE(sean): set pipeline state
     command_list->SetPipelineState(m_pso.Get());

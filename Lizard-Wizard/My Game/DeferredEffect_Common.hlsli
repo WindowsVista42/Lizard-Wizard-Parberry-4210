@@ -1,7 +1,7 @@
 #ifndef GAMEEFFECT_COMMON_HLSLI
 #define GAMEEFFECT_COMMON_HLSLI
 
-#define GameEffectRS \
+#define DeferredEffectRS \
 "RootFlags ("\
 "    ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |"\
 "    DENY_DOMAIN_SHADER_ROOT_ACCESS |"\

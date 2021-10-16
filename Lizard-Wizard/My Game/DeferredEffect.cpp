@@ -1,4 +1,4 @@
-#include "GameEffect.h"
+#include "DeferredEffect.h"
 #include <ReadData.h>
 
 //NOTE(sean): this is actually a really nice way to do a bitset,
@@ -17,7 +17,7 @@ namespace {
     //NOTE(sean): other bit flags go here
 }
 
-GameEffect::GameEffect(
+DeferredEffect::DeferredEffect(
     ID3D12Device* device,
     const DirectX::EffectPipelineStateDescription& pipeline_state_desc
 ):
@@ -44,16 +44,16 @@ GameEffect::GameEffect(
         CreateRootSignature(device, &root_signature_desc, m_rootSignature.ReleaseAndGetAddressOf())
     );
 
-    auto vs_blob = DX::ReadData(L"GameEffect_VS.cso");
+    auto vs_blob = DX::ReadData(L"DeferredEffect_VS.cso");
     D3D12_SHADER_BYTECODE vs = { vs_blob.data(), vs_blob.size() };
 
-    auto ps_blob = DX::ReadData(L"GameEffect_PS.cso");
+    auto ps_blob = DX::ReadData(L"DeferredEffect_PS.cso");
     D3D12_SHADER_BYTECODE ps = { ps_blob.data(), ps_blob.size() };
 
     pipeline_state_desc.CreatePipelineState(device, m_rootSignature.Get(), vs, ps, m_pso.ReleaseAndGetAddressOf());
 }
 
-void GameEffect::Apply(ID3D12GraphicsCommandList* command_list) {
+void DeferredEffect::Apply(ID3D12GraphicsCommandList* command_list) {
     //NOTE(sean): update dirty data
     if (m_dirtyFlags & DirtyWorldViewProjectionMatrix) {
         Mat4x4 world_view = XMMatrixMultiply(m_world, m_view);
@@ -96,22 +96,22 @@ void GameEffect::Apply(ID3D12GraphicsCommandList* command_list) {
     command_list->SetPipelineState(m_pso.Get());
 }
 
-void XM_CALLCONV GameEffect::SetWorld(DirectX::FXMMATRIX world) {
+void XM_CALLCONV DeferredEffect::SetWorld(DirectX::FXMMATRIX world) {
     m_world = world;
     m_dirtyFlags |= DirtyWorldViewProjectionMatrix | DirtyWorldMatrix;
 }
 
-void XM_CALLCONV GameEffect::SetView(DirectX::FXMMATRIX view) {
+void XM_CALLCONV DeferredEffect::SetView(DirectX::FXMMATRIX view) {
     m_view = view;
     m_dirtyFlags |= DirtyWorldViewProjectionMatrix;
 }
 
-void XM_CALLCONV GameEffect::SetProjection(DirectX::FXMMATRIX projection) {
+void XM_CALLCONV DeferredEffect::SetProjection(DirectX::FXMMATRIX projection) {
     m_projection = projection;
     m_dirtyFlags |= DirtyWorldViewProjectionMatrix;
 }
 
-void XM_CALLCONV GameEffect::SetMatrices(DirectX::FXMMATRIX world, DirectX::CXMMATRIX view, DirectX::CXMMATRIX projection) {
+void XM_CALLCONV DeferredEffect::SetMatrices(DirectX::FXMMATRIX world, DirectX::CXMMATRIX view, DirectX::CXMMATRIX projection) {
     m_world = world;
     m_view = view;
     m_projection = projection;

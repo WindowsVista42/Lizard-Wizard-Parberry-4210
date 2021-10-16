@@ -12,9 +12,9 @@
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="ObjectManager.cpp" />
     <ClCompile Include="StagedBuffer.cpp" />
-    <ClCompile Include="GameEffect.cpp" />
     <ClCompile Include="Helpers.cpp" />
     <ClCompile Include="PostProcessEffect.cpp" />
+    <ClCompile Include="DeferredEffect.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h" />
@@ -29,9 +29,9 @@
     <ClInclude Include="Object.h" />
     <ClInclude Include="ObjectManager.h" />
     <ClInclude Include="StagedBuffer.h" />
-    <ClInclude Include="GameEffect.h" />
     <ClInclude Include="Helpers.h" />
     <ClInclude Include="PostProcessEffect.h" />
+    <ClInclude Include="DeferredEffect.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="My Game.rc" />
@@ -45,24 +45,24 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="GameEffect_Common.hlsli">
+    <None Include="PostProcessEffect_Common.hlsli">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="PostProcessEffect_Common.hlsli">
+    <None Include="DeferredEffect_Common.hlsli">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="GameEffect_VS.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="GameEffect_PS.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
     <FxCompile Include="PostProcessEffect_PS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="PostProcessEffect_VS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="DeferredEffect_PS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="DeferredEffect_VS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

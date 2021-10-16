@@ -1,6 +1,6 @@
-#include "GameEffect_Common.hlsli"
+#include "DeferredEffect_Common.hlsli"
 
-[RootSignature(GameEffectRS)]
+[RootSignature(DeferredEffectRS)]
 VertexOutput main(VertexInput input) {
 	VertexOutput output;
 
