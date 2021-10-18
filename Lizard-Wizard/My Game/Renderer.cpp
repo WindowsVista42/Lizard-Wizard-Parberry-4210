@@ -228,31 +228,17 @@ void CRenderer::BeginFrame() {
 /// End Rendering a frame.
 /// Put all DrawXYZ() or other functions in between this and BeginFrame()
 void CRenderer::EndFrame() {
-    /*
-    // Copy MRT output to BackBuffer
-    {
-        RenderTexture* diffuse = &m_deferredPassTextures[DeferredPass::Diffuse];
-        RenderTexture* normal = &m_deferredPassTextures[DeferredPass::Normal];
-        RenderTexture* position = &m_deferredPassTextures[DeferredPass::Position];
-        ID3D12Resource* back_buffer = m_pDeviceResources->GetRenderTarget();
-
-        diffuse->TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
-        TransitionResource(m_pCommandList, back_buffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_DEST);
-
-        m_pCommandList->CopyResource(back_buffer, diffuse->m_resource.Get());
-
-        diffuse->TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
-        TransitionResource(m_pCommandList, back_buffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    }
-    */
+    //HACK(sean): we force synchronization here, figure out the proper way to do this
+    m_deferredPassTextures[DeferredPass::Diffuse].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+    m_deferredPassTextures[DeferredPass::Normal].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+    m_deferredPassTextures[DeferredPass::Position].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
 
     // Render Post Process Effect
     {
-        auto rtvDescriptorBackBuffer = m_pDeviceResources->GetRenderTargetView();
-        auto dsvDescriptorBackBuffer = m_pDeviceResources->GetDepthStencilView();
+        //auto rtv = &forcibly_clear.m_rtvDescriptor;
+        auto rtv = m_pDeviceResources->GetRenderTargetView();
 
-        m_pCommandList->OMSetRenderTargets(1, &rtvDescriptorBackBuffer, FALSE, 0);
-        m_pCommandList->ClearRenderTargetView(rtvDescriptorBackBuffer, m_f32BgColor, 0, 0);
+        m_pCommandList->OMSetRenderTargets(1, &rtv, FALSE, 0);
 
         m_pPostProcessEffect->SetTextures(
             m_pDeferredResourceDescs->GetGpuHandle(DeferredPass::Diffuse),
@@ -262,10 +248,13 @@ void CRenderer::EndFrame() {
 
         m_pPostProcessEffect->Apply(m_pCommandList);
     
-        m_pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        //m_pCommandList->DrawIndexedInstanced(pmodel->index_count, 1, 0, 0, 0);
         m_pCommandList->DrawInstanced(3, 1, 0, 0);
     }
+
+    //HACK(sean): we force synchronization here, figure out the proper way to do this
+    m_deferredPassTextures[DeferredPass::Diffuse].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    m_deferredPassTextures[DeferredPass::Normal].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    m_deferredPassTextures[DeferredPass::Position].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
     //LRenderer3D::EndFrame();
     if (m_screenShot) {
@@ -588,7 +577,7 @@ u32 CRenderer::AddDebugModel(DebugModel* model) {
 }
 
 void CRenderer::LoadAllModels() {
-    LoadDebugModel("untitled", Colors::Peru);
+    LoadDebugModel("suzanne", Colors::Peru);
     LoadModel("suzanne", ModelType::Cube);
 }
 
@@ -790,4 +779,4 @@ void CRenderer::DrawModelInstance(ModelInstance* instance) {
     m_pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     m_pCommandList->DrawIndexedInstanced(pmodel->index_count, 1, 0, 0, 0);
-}
+} 
