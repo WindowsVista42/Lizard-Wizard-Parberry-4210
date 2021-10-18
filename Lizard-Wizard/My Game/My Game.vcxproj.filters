@@ -13,8 +13,9 @@
     <ClCompile Include="ObjectManager.cpp" />
     <ClCompile Include="StagedBuffer.cpp" />
     <ClCompile Include="Helpers.cpp" />
-    <ClCompile Include="PostProcessEffect.cpp" />
     <ClCompile Include="DeferredEffect.cpp" />
+    <ClCompile Include="LightingEffect.cpp" />
+    <ClCompile Include="TonemapEffect.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h" />
@@ -30,8 +31,9 @@
     <ClInclude Include="ObjectManager.h" />
     <ClInclude Include="StagedBuffer.h" />
     <ClInclude Include="Helpers.h" />
-    <ClInclude Include="PostProcessEffect.h" />
     <ClInclude Include="DeferredEffect.h" />
+    <ClInclude Include="LightingEffect.h" />
+    <ClInclude Include="TonemapEffect.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="My Game.rc" />
@@ -45,24 +47,33 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="PostProcessEffect_Common.hlsli">
+    <None Include="DeferredEffect_Common.hlsli">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="DeferredEffect_Common.hlsli">
+    <None Include="LightingEffect_Common.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="PostProcess_Common.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="TonemapEffect_Common.hlsli">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="PostProcessEffect_PS.hlsl">
+    <FxCompile Include="DeferredEffect_PS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="DeferredEffect_VS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="LightingEffect_PS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="PostProcessEffect_VS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="DeferredEffect_PS.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="DeferredEffect_VS.hlsl">
+    <FxCompile Include="TonemapEffect_PS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

@@ -171,7 +171,7 @@
     <ClCompile Include="DeferredEffect.cpp" />
     <ClCompile Include="Math.cpp" />
     <ClCompile Include="Model.cpp" />
-    <ClCompile Include="PostProcessEffect.cpp" />
+    <ClCompile Include="LightingEffect.cpp" />
     <ClCompile Include="ProjectileManager.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Game.cpp" />
@@ -179,6 +179,7 @@
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="ObjectManager.cpp" />
     <ClCompile Include="StagedBuffer.cpp" />
+    <ClCompile Include="TonemapEffect.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h" />
@@ -187,7 +188,7 @@
     <ClInclude Include="DeferredEffect.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="Model.h" />
-    <ClInclude Include="PostProcessEffect.h" />
+    <ClInclude Include="LightingEffect.h" />
     <ClInclude Include="ProjectileManager.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Defines.h" />
@@ -196,6 +197,7 @@
     <ClInclude Include="Object.h" />
     <ClInclude Include="ObjectManager.h" />
     <ClInclude Include="StagedBuffer.h" />
+    <ClInclude Include="TonemapEffect.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="My Game.rc" />
@@ -204,8 +206,10 @@
     <Text Include="SeanTodo.txt" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="PostProcess_Common.hlsli" />
     <None Include="DeferredEffect_Common.hlsli" />
-    <None Include="PostProcessEffect_Common.hlsli" />
+    <None Include="LightingEffect_Common.hlsli" />
+    <None Include="TonemapEffect_Common.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="DeferredEffect_PS.hlsl">
@@ -220,7 +224,7 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
     </FxCompile>
-    <FxCompile Include="PostProcessEffect_PS.hlsl">
+    <FxCompile Include="LightingEffect_PS.hlsl">
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
@@ -231,6 +235,12 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="TonemapEffect_PS.hlsl">
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -66,17 +66,17 @@ void CRenderer::Initialize() {
         );
 
         m_deferredPassTextures.resize(DeferredPass::Count);
-        m_deferredPassTextures[DeferredPass::Diffuse] = RenderTexture(DXGI_FORMAT_B8G8R8A8_UNORM, Colors::Black);
+        m_deferredPassTextures[DeferredPass::Color] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
         m_deferredPassTextures[DeferredPass::Normal] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
         m_deferredPassTextures[DeferredPass::Position] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
 
-        CheckDeviceFormatSupport(m_pD3DDevice, m_deferredPassTextures[DeferredPass::Diffuse].m_format);
+        CheckDeviceFormatSupport(m_pD3DDevice, m_deferredPassTextures[DeferredPass::Color].m_format);
         CheckDeviceFormatSupport(m_pD3DDevice, m_deferredPassTextures[DeferredPass::Normal].m_format);
         CheckDeviceFormatSupport(m_pD3DDevice, m_deferredPassTextures[DeferredPass::Position].m_format);
 
-        m_deferredPassTextures[DeferredPass::Diffuse].UpdateDescriptors(
-            m_pDeferredResourceDescs->GetCpuHandle(DeferredPass::Diffuse),
-            m_pDeferredRenderDescs->GetCpuHandle(DeferredPass::Diffuse)
+        m_deferredPassTextures[DeferredPass::Color].UpdateDescriptors(
+            m_pDeferredResourceDescs->GetCpuHandle(DeferredPass::Color),
+            m_pDeferredRenderDescs->GetCpuHandle(DeferredPass::Color)
         );
 
         m_deferredPassTextures[DeferredPass::Normal].UpdateDescriptors(
@@ -89,7 +89,7 @@ void CRenderer::Initialize() {
             m_pDeferredRenderDescs->GetCpuHandle(DeferredPass::Position)
         );
 
-        m_deferredPassTextures[DeferredPass::Diffuse].UpdateResources(
+        m_deferredPassTextures[DeferredPass::Color].UpdateResources(
             m_pD3DDevice, m_nWinWidth, m_nWinHeight
         );
 
@@ -102,14 +102,46 @@ void CRenderer::Initialize() {
         );
     }
 
+    {
+        m_pTonemapResourceDescs = std::make_unique<DescriptorHeap>(
+            m_pD3DDevice, TonemapPass::Count
+        );
+
+        m_pTonemapRenderDescs = std::make_unique<DescriptorHeap>(
+            m_pD3DDevice,
+            D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
+            D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+            TonemapPass::Count
+        );
+
+        m_tonemapPassTextures.resize(TonemapPass::Count);
+        m_tonemapPassTextures[TonemapPass::Color] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
+
+        CheckDeviceFormatSupport(m_pD3DDevice, m_tonemapPassTextures[TonemapPass::Color].m_format);
+
+        m_tonemapPassTextures[TonemapPass::Color].UpdateDescriptors(
+            m_pTonemapResourceDescs->GetCpuHandle(TonemapPass::Color),
+            m_pTonemapRenderDescs->GetCpuHandle(TonemapPass::Color)
+        );
+
+        m_tonemapPassTextures[TonemapPass::Color].UpdateResources(
+            m_pD3DDevice, m_nWinWidth, m_nWinHeight
+        );
+    }
+
     // This is very similar to vulkan :)
     {
+        RenderTargetState render_target_state(
+            m_deferredPassTextures[DeferredPass::Color].m_format,
+            m_pDeviceResources->GetDepthBufferFormat()
+        );
+
         EffectPipelineStateDescription pipeline_state_desc(
             &VertexPC::InputLayout,
             CommonStates::Opaque,
             CommonStates::DepthDefault,
             CommonStates::CullNone,
-            m_RenderTargetState,
+            render_target_state,
             D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE
         );
 
@@ -118,12 +150,17 @@ void CRenderer::Initialize() {
     }
 
     {
+        RenderTargetState render_target_state(
+            m_deferredPassTextures[DeferredPass::Color].m_format,
+            m_pDeviceResources->GetDepthBufferFormat()
+        );
+
         EffectPipelineStateDescription pipeline_state_desc(
             &VertexPC::InputLayout,
             CommonStates::Opaque,
             CommonStates::DepthDefault,
             CommonStates::CullNone,
-            m_RenderTargetState,
+            render_target_state,
             D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
         );
 
@@ -134,13 +171,13 @@ void CRenderer::Initialize() {
     {
         //NOTE(sean): these will need to be self-defined in the future
         RenderTargetState render_target_state(
-            m_deferredPassTextures[DeferredPass::Diffuse].m_format,
+            m_deferredPassTextures[DeferredPass::Color].m_format,
             m_pDeviceResources->GetDepthBufferFormat()
         );
 
         render_target_state.numRenderTargets = DeferredPass::Count;
-        render_target_state.rtvFormats[DeferredPass::Diffuse] =
-            m_deferredPassTextures[DeferredPass::Diffuse].m_format;
+        render_target_state.rtvFormats[DeferredPass::Color] =
+            m_deferredPassTextures[DeferredPass::Color].m_format;
         render_target_state.rtvFormats[DeferredPass::Normal] =
             m_deferredPassTextures[DeferredPass::Normal].m_format;
         render_target_state.rtvFormats[DeferredPass::Position] =
@@ -159,6 +196,24 @@ void CRenderer::Initialize() {
     }
 
     {
+        //NOTE(sean): these will need to be self-defined in the future
+        RenderTargetState render_target_state(
+            m_tonemapPassTextures[DeferredPass::Color].m_format,
+            m_pDeviceResources->GetDepthBufferFormat()
+        );
+
+        EffectPipelineStateDescription pipeline_state_desc(
+            0,
+            CommonStates::Opaque,
+            CommonStates::DepthNone,
+            CommonStates::CullNone,
+            render_target_state
+        );
+
+        m_pLightingEffect = std::make_unique<LightingEffect>(m_pD3DDevice, pipeline_state_desc);
+    }
+
+    {
         EffectPipelineStateDescription pipeline_state_desc(
             0,
             CommonStates::Opaque,
@@ -167,7 +222,7 @@ void CRenderer::Initialize() {
             m_RenderTargetState
         );
 
-        m_pPostProcessEffect = std::make_unique<PostProcessEffect>(m_pD3DDevice, pipeline_state_desc);
+        m_pTonemapEffect = std::make_unique<TonemapEffect>(m_pD3DDevice, pipeline_state_desc);
     }
 }
 
@@ -194,8 +249,8 @@ void CRenderer::BeginFrame() {
     //auto rtvDescriptorBackBuffer = m_pDeviceResources->GetRenderTargetView();
     auto dsvDescriptorBackBuffer = m_pDeviceResources->GetDepthStencilView();
 
-    auto rtvDescriptorDiffuse = m_pDeferredRenderDescs->GetCpuHandle(DeferredPass::Diffuse);
-    auto diffuseClearColor = m_deferredPassTextures[DeferredPass::Diffuse].m_clearColor;
+    auto rtvDescriptorDiffuse = m_pDeferredRenderDescs->GetCpuHandle(DeferredPass::Color);
+    auto diffuseClearColor = m_deferredPassTextures[DeferredPass::Color].m_clearColor;
 
     auto rtvDescriptorNormal = m_pDeferredRenderDescs->GetCpuHandle(DeferredPass::Normal);
     auto normalClearColor = m_deferredPassTextures[DeferredPass::Normal].m_clearColor;
@@ -228,33 +283,58 @@ void CRenderer::BeginFrame() {
 /// End Rendering a frame.
 /// Put all DrawXYZ() or other functions in between this and BeginFrame()
 void CRenderer::EndFrame() {
-    //HACK(sean): we force synchronization here, figure out the proper way to do this
-    m_deferredPassTextures[DeferredPass::Diffuse].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    m_deferredPassTextures[DeferredPass::Normal].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    m_deferredPassTextures[DeferredPass::Position].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
-
-    // Render Post Process Effect
+    // Render Lighting Effect
     {
-        //auto rtv = &forcibly_clear.m_rtvDescriptor;
-        auto rtv = m_pDeviceResources->GetRenderTargetView();
+    	//HACK(sean): we force synchronization here, figure out the proper way to do this
+    	m_deferredPassTextures[DeferredPass::Color].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+    	m_deferredPassTextures[DeferredPass::Normal].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+    	m_deferredPassTextures[DeferredPass::Position].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
 
-        m_pCommandList->OMSetRenderTargets(1, &rtv, FALSE, 0);
+        auto rtvDescriptorColor = m_pTonemapRenderDescs->GetCpuHandle(TonemapPass::Color);
+        m_pCommandList->OMSetRenderTargets(1, &rtvDescriptorColor, FALSE, 0);
 
-        m_pPostProcessEffect->SetTextures(
-            m_pDeferredResourceDescs->GetGpuHandle(DeferredPass::Diffuse),
+        m_pLightingEffect->SetTextures(
+            m_pDeferredResourceDescs->GetGpuHandle(DeferredPass::Color),
             m_pDeferredResourceDescs->GetGpuHandle(DeferredPass::Normal),
             m_pDeferredResourceDescs->GetGpuHandle(DeferredPass::Position)
         );
 
-        m_pPostProcessEffect->Apply(m_pCommandList);
+        m_pLightingEffect->Apply(m_pCommandList);
     
         m_pCommandList->DrawInstanced(3, 1, 0, 0);
+
+    	//HACK(sean): we force synchronization here, figure out the proper way to do this
+    	m_deferredPassTextures[DeferredPass::Color].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    	m_deferredPassTextures[DeferredPass::Normal].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    	m_deferredPassTextures[DeferredPass::Position].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
     }
 
-    //HACK(sean): we force synchronization here, figure out the proper way to do this
-    m_deferredPassTextures[DeferredPass::Diffuse].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    m_deferredPassTextures[DeferredPass::Normal].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    m_deferredPassTextures[DeferredPass::Position].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    // Render Tonemap Effect
+    {
+    	ID3D12DescriptorHeap* pHeaps[] = {
+    	    m_pTonemapResourceDescs->Heap(),
+    	    //m_pStates->Heap()
+    	};
+	
+    	//m_pCommandList->SetDescriptorHeaps(_countof(m_pHeaps), m_pHeaps);
+    	m_pCommandList->SetDescriptorHeaps(_countof(pHeaps), pHeaps);
+
+    	//HACK(sean): we force synchronization here, figure out the proper way to do this
+    	m_tonemapPassTextures[TonemapPass::Color].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+
+        m_pCommandList->OMSetRenderTargets(1, &m_pDeviceResources->GetRenderTargetView(), FALSE, 0);
+
+        m_pTonemapEffect->SetTextures(
+            m_pTonemapResourceDescs->GetGpuHandle(TonemapPass::Color)
+        );
+
+        m_pTonemapEffect->Apply(m_pCommandList);
+    
+        m_pCommandList->DrawInstanced(3, 1, 0, 0);
+
+    	//HACK(sean): we force synchronization here, figure out the proper way to do this
+    	m_tonemapPassTextures[TonemapPass::Color].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    }
 
     //LRenderer3D::EndFrame();
     if (m_screenShot) {

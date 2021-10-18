@@ -1,6 +1,5 @@
-#include "PostProcessEffect_Common.hlsli"
+#include "PostProcess_Common.hlsli"
 
-[RootSignature(PostProcessEffectRS)]
 VertexOutput main(uint vertex_index : SV_VertexId) {
     VertexOutput output;
 

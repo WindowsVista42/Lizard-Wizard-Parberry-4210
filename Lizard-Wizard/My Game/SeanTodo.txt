@@ -1,5 +1,6 @@
 * Main Renderer
-    + Render to multiple render targets
-    + Figure out diffuse lighting
     + Figure out texture mapping
-    + Figure out deferred rendering
+    + Move Post Process pass to Lighting pass
+    + Create Tonemapping pass
+    + Create Ambient Occlusion pass
+    + Create Bloom pass

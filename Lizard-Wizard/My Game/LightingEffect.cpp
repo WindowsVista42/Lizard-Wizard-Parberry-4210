@@ -1,4 +1,4 @@
-#include "PostProcessEffect.h"
+#include "LightingEffect.h"
 #include "Renderer.h"
 #include <ReadData.h>
 
@@ -14,7 +14,7 @@ namespace {
 }
 
 //TODO(sean): update this to the right implementation
-PostProcessEffect::PostProcessEffect(
+LightingEffect::LightingEffect(
     ID3D12Device* device,
     const DirectX::EffectPipelineStateDescription& pipeline_state_desc
 ) :
@@ -23,7 +23,6 @@ PostProcessEffect::PostProcessEffect(
 {
     //NOTE(sean): Create root signature for HLSL stuff
     D3D12_ROOT_SIGNATURE_FLAGS root_signature_flags =
-        D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
         D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
         D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
         D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
@@ -51,13 +50,13 @@ PostProcessEffect::PostProcessEffect(
     auto vs_blob = DX::ReadData(L"PostProcessEffect_VS.cso");
     D3D12_SHADER_BYTECODE vs = { vs_blob.data(), vs_blob.size() };
 
-    auto ps_blob = DX::ReadData(L"PostProcessEffect_PS.cso");
+    auto ps_blob = DX::ReadData(L"LightingEffect_PS.cso");
     D3D12_SHADER_BYTECODE ps = { ps_blob.data(), ps_blob.size() };
 
     pipeline_state_desc.CreatePipelineState(device, m_rootSignature.Get(), vs, ps, m_pso.ReleaseAndGetAddressOf());
 }
 
-void PostProcessEffect::SetTextures(
+void LightingEffect::SetTextures(
     D3D12_GPU_DESCRIPTOR_HANDLE color_texture,
     D3D12_GPU_DESCRIPTOR_HANDLE normal_texture,
     D3D12_GPU_DESCRIPTOR_HANDLE position_texture
@@ -68,7 +67,7 @@ void PostProcessEffect::SetTextures(
 }
 
 //TODO(sean): update this to the right implementation
-void PostProcessEffect::Apply(ID3D12GraphicsCommandList* command_list) {
+void LightingEffect::Apply(ID3D12GraphicsCommandList* command_list) {
     //NOTE(sean): update dirty data
     if (m_dirtyFlags & DirtyConstantBuffer) {
         auto constant_buffer = GraphicsMemory::Get(m_device.Get()).AllocateConstant<GameEffectConstants>();

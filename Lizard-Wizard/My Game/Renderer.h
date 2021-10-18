@@ -5,7 +5,8 @@
 #include "Model.h"
 #include "StagedBuffer.h"
 #include "DeferredEffect.h"
-#include "PostProcessEffect.h"
+#include "LightingEffect.h"
+#include "TonemapEffect.h"
 #include <Renderer3D.h>
 #include <Model.h>
 
@@ -107,12 +108,12 @@ struct RenderTexture {
 
 // All the benefits of enum class, without having to cast to the type :)
 namespace DeferredPass { enum e : u32 {
-    Diffuse, Normal, Position,
+    Color, Normal, Position,
     Count
 };}
 
-namespace PostProcessPass { enum e : u32 {
-    BackBuffer,
+namespace TonemapPass { enum e : u32 {
+    Color,
     Count
 };}
 
@@ -129,13 +130,19 @@ private:
     std::vector<ModelInstance> m_debugModelInstances;
 
     std::unique_ptr<DeferredEffect> m_pDeferredEffect;
-    std::unique_ptr<PostProcessEffect> m_pPostProcessEffect;
+    std::unique_ptr<LightingEffect> m_pLightingEffect;
+    std::unique_ptr<TonemapEffect> m_pTonemapEffect;
+
     std::vector<GameModel> m_models;
     std::vector<ModelInstance> m_modelInstances;
 
     std::unique_ptr<DescriptorHeap> m_pDeferredResourceDescs;
     std::unique_ptr<DescriptorHeap> m_pDeferredRenderDescs;
     std::vector<RenderTexture> m_deferredPassTextures;
+
+    std::unique_ptr<DescriptorHeap> m_pTonemapResourceDescs;
+    std::unique_ptr<DescriptorHeap> m_pTonemapRenderDescs;
+    std::vector<RenderTexture> m_tonemapPassTextures;
 
 public:
     bool m_screenShot = false; // TODO(sean): implement

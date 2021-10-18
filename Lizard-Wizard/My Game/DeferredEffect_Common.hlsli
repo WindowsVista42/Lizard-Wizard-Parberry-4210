@@ -1,5 +1,5 @@
-#ifndef GAMEEFFECT_COMMON_HLSLI
-#define GAMEEFFECT_COMMON_HLSLI
+#ifndef DEFERREDEFFECT_COMMON_HLSLI
+#define DEFERREDEFFECT_COMMON_HLSLI
 
 #define DeferredEffectRS \
 "RootFlags ("\
@@ -7,7 +7,7 @@
 "    DENY_DOMAIN_SHADER_ROOT_ACCESS |"\
 "    DENY_GEOMETRY_SHADER_ROOT_ACCESS |"\
 "    DENY_HULL_SHADER_ROOT_ACCESS ),"\
-"CBV(b0)"
+"CBV(b0)" \
 
 cbuffer GameEffectConstants : register(b0) {
     float4x4 WorldViewProjection;
