@@ -25,7 +25,7 @@ static f32 pitch = 0.0f;
 const f32 sensitivity = 0.0333f;
 
 static Vector3 player_pos = { 0.0f, 1500.0f, -2500.0f };
-const f32 move_speed = 10.0f;
+const f32 move_speed = 50.0f;
 
 static ModelInstance model_instance;
 
@@ -49,6 +49,7 @@ void CGame::Initialize(){
     m_pObjectManager = new CObjectManager; //set up the object manager
     m_pPhysicsManager = new PhysicsManager();
     m_pProjectileManager = new ProjectileManager(); // set up projectile manager
+    m_pGenerationManager = new GenerationManager(); // sEts up the generation manager
     LoadSounds(); //load the sounds for this game
 
     // Create Tables
@@ -57,10 +58,11 @@ void CGame::Initialize(){
     // Initialize Managers
     m_pPhysicsManager->InitializePhysics(&m_pDynamicsWorld, &m_pCollisionShapes);
     m_pProjectileManager->InitializeProjectiles(m_pCollisionShapes, &m_currentRayProjectiles, m_pDynamicsWorld);
+    m_pGenerationManager->InitializeGeneration(m_pPhysicsManager);
 
     // Ground Collider
     {
-        m_pPhysicsManager->CreateBoxObject(Vec3(3000.0f, 50.0f, 3000.0f), Vec3(0.0f, 200.0f, 0.0f), 0.0f, 1.5f, -1);
+        m_pPhysicsManager->CreateBoxObject(Vec3(3000.0f, 50.0f, 3000.0f), Vec3(0.0f, -10000.0f, 0.0f), 0.0f, 1.5f, -1);
     }
 
     // Player Rigidbody | (Note) : Create this second, as the player is currently indexed as [1] in the collision table.
@@ -70,7 +72,17 @@ void CGame::Initialize(){
 
     // Wall Collider
     {
-        m_pPhysicsManager->CreateBoxObject(Vec3(150.0f, 3000.0f, 3000.0f), Vec3(-3000.0f, 2800.0f, 0.0f), 0.0f, 1.5f, -1);
+       // m_pPhysicsManager->CreateBoxObject(Vec3(150.0f, 3000.0f, 3000.0f), Vec3(-3000.0f, 2800.0f, 0.0f), 0.0f, 1.5f, -1);
+    }
+
+    // Room Collider
+    {
+        Vec3 roomPos = Vec3(0, 0, 0);
+        for (int i = 0; i < 3; ++i)
+        {
+            m_pGenerationManager->GenerateRoom(roomPos);
+            roomPos.x = roomPos.x + 3000.0f;
+        }
     }
 
     //NOTE(sean): testing debug model loading

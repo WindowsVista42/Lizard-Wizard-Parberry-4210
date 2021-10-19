@@ -9,6 +9,7 @@
 #include "ObjectManager.h"
 #include "PhysicsManager.h"
 #include "ProjectileManager.h"
+#include "GenerationManager.h"
 #include "Settings.h"
 #include "CustomBind.h"
 #include <vector>
@@ -40,6 +41,7 @@ private:
     // Managers
     ProjectileManager* m_pProjectileManager;
     PhysicsManager* m_pPhysicsManager;
+    GenerationManager* m_pGenerationManager;
 
 
     //StagedBuffer m_physicsScratch;
