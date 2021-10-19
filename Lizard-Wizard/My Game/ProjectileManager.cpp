@@ -63,7 +63,7 @@ void ProjectileManager::GenerateSimProjectile(btCollisionObject* caster, const V
         f32 newVelocity = projectileVelocity * 15000.0f;
         body->applyForce(Vec3(lookDirection * newVelocity), startPos);
         body->setIgnoreCollisionCheck(caster, ignoreCaster);
-        currentWorld->addRigidBody(body, 1, 2);
+        currentWorld->addRigidBody(body, 1, 1);
     }
 }
 

@@ -27,9 +27,64 @@
 
 */
 
-void PhysicsManager::CreatePhysicsObject() {
-    // Note(Ethan) : This lets us create a new objects much easier than before.
+// Note(Ethan) : These functions help in the creation of Bullet3 physics objects.
+btTransform PhysicsManager::NewTransform(btCollisionShape* shape, Vec3 origin) {
+    btTransform startTransform;
+    startTransform.setIdentity();
+    f32 mass = 0.1f; //NOTE(sean): for things that the player might be able to interact with, we want the mass to be smaller
+    f32 friction = 0.5f;
+    bool isDynamic = (mass != 0.0f);
+    if (isDynamic) {
+        shape->calculateLocalInertia(mass, btVector3(0.0f, 0.0f, 0.0f));
+    }
+    startTransform.setOrigin(origin);
+    return startTransform;
 }
+
+btRigidBody PhysicsManager::NewRigidBody(btCollisionShape* shape, btTransform startTransform, f32 mass, f32 friction, i32 mask) {
+    btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
+    Vec3 localInertia(Vec3(0, 0, 0));
+    btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, shape, localInertia);
+    rbInfo.m_friction = friction;
+    btRigidBody* body = new btRigidBody(rbInfo);
+    body->setAngularFactor(Vec3(0., 0., 0.));
+    CurrentWorld->addRigidBody(body, 1, mask);
+    return *body;
+}
+
+// Note(Ethan) : Will speed up the creation of commonly used shapes.
+btRigidBody* PhysicsManager::CreateSphereObject(btScalar radius, Vec3 origin, f32 mass, f32 friction, i32 mask) {
+    // Push to the collision array.
+    btCollisionShape* shape = new btSphereShape(radius);
+    CurrentShapes.push_back(shape);
+
+    // Create object and return the pointer so further adjustments can be made.
+    return &NewRigidBody(shape, NewTransform(shape, origin), mass, friction, mask);
+}
+
+btRigidBody* PhysicsManager::CreateBoxObject(Vec3 size, Vec3 origin, f32 mass, f32 friction, i32 mask) {
+    // Push to the collision array.
+    btCollisionShape* shape = new btBoxShape(size);
+    CurrentShapes.push_back(shape);
+
+    // Create object and return the pointer so further adjustments can be made.
+    return &NewRigidBody(shape, NewTransform(shape, origin), mass, friction, mask);
+}
+
+
+btRigidBody* PhysicsManager::CreateCapsuleObject(btScalar radius, btScalar height, Vec3 origin, f32 mass, f32 friction, i32 mask) {
+    // Push to the collision array.
+    btCollisionShape* shape = new btCapsuleShape(radius, height);
+    CurrentShapes.push_back(shape);
+
+    // Create object and return the pointer so further adjustments can be made.
+    return &NewRigidBody(shape, NewTransform(shape, origin), mass, friction, mask);
+}
+
+btRigidBody* PhysicsManager::CreateConvexObject(f32 mass, f32 friction, i32 mask) {
+    return 0;
+}
+
 
 void PhysicsManager::DestroyPhysicsObject() {
     // Note(Ethan) : This lets us destroy objects much easier than before.

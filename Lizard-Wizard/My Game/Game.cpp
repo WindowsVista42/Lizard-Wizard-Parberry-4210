@@ -53,18 +53,7 @@ void CGame::Initialize(){
     //TODO(ethan): Move this into its own init function
     // Bullet3 Initialize
     {
-        /*
-        m_pCollisionConfiguration = new btDefaultCollisionConfiguration();
-        m_pDispatcher = new btCollisionDispatcher(m_pCollisionConfiguration);
-        m_pBroadphaseChache = new btDbvtBroadphase();
-        m_pSolver = new btSequentialImpulseConstraintSolver;
-        m_pDynamicsWorld = new btDiscreteDynamicsWorld(m_pDispatcher, m_pBroadphaseChache, m_pSolver, m_pCollisionConfiguration);
-        m_pDynamicsWorld->setGravity(btVector3(0.0, -5000.0, 0.0));
-        m_pCollisionShapes = btAlignedObjectArray<btCollisionShape*>();
         m_currentRayProjectiles = std::vector<RayProjectile>();
-        */
-        m_currentRayProjectiles = std::vector<RayProjectile>();
-
         m_pPhysicsManager->InitializePhysics(&m_pDynamicsWorld, &m_pCollisionShapes);
         m_pProjectileManager->InitializeProjectiles(m_pCollisionShapes, &m_currentRayProjectiles, m_pDynamicsWorld);
         //m_physicsScratch = StagedBuffer(16 * 1024);   
@@ -72,104 +61,17 @@ void CGame::Initialize(){
 
         // Ground Collider
         {
-            // Ground
-            //btCollisionShape* collisionShape = m_physicsScratch.Alloc(sizeof(btBoxShape));
-            btCollisionShape* collisionShape = new btBoxShape(btVector3(3000., 50., 3000.));
-            m_pCollisionShapes.push_back(collisionShape);
-
-            // Transforms
-            btTransform collisionTransform;
-            collisionTransform.setIdentity();
-            collisionTransform.setOrigin(btVector3(0, -200, 0));
-
-            // Mass
-            btScalar mass(0.);
-            btScalar restitution(0.f);
-            btScalar friction(1.5);
-
-            // Rigidbody is dynamic if and only if mass is non zero, otherwise static
-            bool isDynamic = (mass != 0.f);
-
-            btVector3 localInertia(0, 0, 0);
-            if (isDynamic)
-                collisionShape->calculateLocalInertia(mass, localInertia);
-
-            // Motion state, is optional.
-            btDefaultMotionState* myMotionState = new btDefaultMotionState(collisionTransform);
-            btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, collisionShape, localInertia);
-            rbInfo.m_restitution = restitution;
-            rbInfo.m_friction = friction;
-            btRigidBody* body = new btRigidBody(rbInfo);
-
-
-            // Adds body to the dynamic world.
-            m_pDynamicsWorld->addRigidBody(body);
+            m_pPhysicsManager->CreateBoxObject(Vec3(3000.0f, 50.0f, 3000.0f), Vec3(0.0f, 200.0f, 0.0f), 0.0f, 1.5f, -1);
          }
 
         // Player Rigidbody
-        // NOTE(ethan): This ideally will act as the players physical presence in the world, has the shape of a capsule.
         {
-            // Creates our players body / hitbox.
-            btCollisionShape* playerShape = new btCapsuleShape(btScalar(100.), btScalar(250.));
-            m_pCollisionShapes.push_back(playerShape);
-
-            // Implicating playerShape as a dynamic object.
-            btTransform startTransform;
-            startTransform.setIdentity();
-            btScalar mass(2.);
-            btScalar friction(0.5);
-            bool isDynamic = (mass != 0.f);
-            btVector3 localInertia(0, 0, 0);
-            if (isDynamic)
-               playerShape->calculateLocalInertia(mass, localInertia);
-            startTransform.setOrigin(btVector3(0, 1500, 0));
-
-
-            // Motionstate again.
-            btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
-            btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, playerShape, localInertia);
-            rbInfo.m_friction = friction;
-            btRigidBody* body = new btRigidBody(rbInfo);
-            body->setAngularFactor(btVector3(0, 0, 0));
-
-            m_pDynamicsWorld->addRigidBody(body, 1, 3);
+            m_pPhysicsManager->CreateCapsuleObject(100.0f, 250.0f, Vec3(0, 1500, 0), 1.0f, 0.5f, 3);
         }
         
-
         // Wall Collider
         {
-            // Wall
-            //btCollisionShape* collisionShape = m_physicsScratch.Alloc(sizeof(btBoxShape));
-            btCollisionShape* collisionShape = new btBoxShape(btVector3(150., 3000., 3000.));
-            m_pCollisionShapes.push_back(collisionShape);
-
-            // Transforms
-            btTransform collisionTransform;
-            collisionTransform.setIdentity();
-            collisionTransform.setOrigin(btVector3(-3000, 2800, 0));
-
-            // Mass
-            btScalar mass(0.);
-            btScalar restitution(0.f);
-            btScalar friction(1.5);
-
-            // Rigidbody is dynamic if and only if mass is non zero, otherwise static
-            bool isDynamic = (mass != 0.f);
-
-            btVector3 localInertia(0, 0, 0);
-            if (isDynamic)
-                collisionShape->calculateLocalInertia(mass, localInertia);
-
-            // Motion state, is optional.
-            btDefaultMotionState* myMotionState = new btDefaultMotionState(collisionTransform);
-            btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, collisionShape, localInertia);
-            rbInfo.m_restitution = restitution;
-            rbInfo.m_friction = friction;
-            btRigidBody* body = new btRigidBody(rbInfo);
-
-
-            // Adds body to the dynamic world.
-            m_pDynamicsWorld->addRigidBody(body);
+            m_pPhysicsManager->CreateBoxObject(Vec3(150.0f, 3000.0f, 3000.0f), Vec3(-3000.0f, 2800.0f, 0.0f), 0.0f, 1.5f, -1);
         }
     }
 

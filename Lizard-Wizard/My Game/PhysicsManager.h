@@ -33,7 +33,12 @@ struct ProjectileCollisionFilter : public btOverlapFilterCallback
 class PhysicsManager {
 
 public:
-    void CreatePhysicsObject();
+    btTransform NewTransform(btCollisionShape*, Vec3);
+    btRigidBody NewRigidBody(btCollisionShape*, btTransform, f32, f32, i32);
+    btRigidBody* CreateSphereObject(btScalar, Vec3, f32, f32, i32);
+    btRigidBody* CreateBoxObject(Vec3, Vec3, f32, f32, i32);
+    btRigidBody* CreateCapsuleObject(btScalar, btScalar, Vec3, f32, f32, i32);
+    btRigidBody* CreateConvexObject(f32, f32, i32);
     void DestroyPhysicsObject();
     void InitializePhysics(btDiscreteDynamicsWorld**, btAlignedObjectArray<btCollisionShape*>*);
 
