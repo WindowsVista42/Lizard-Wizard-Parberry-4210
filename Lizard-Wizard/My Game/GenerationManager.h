@@ -31,7 +31,7 @@ public:
 
 private:
     PhysicsManager* currentPhysicsManager;
-    std::vector<Room*>* currentRooms;
+    std::vector<Room> currentRooms;
 };
 
 
