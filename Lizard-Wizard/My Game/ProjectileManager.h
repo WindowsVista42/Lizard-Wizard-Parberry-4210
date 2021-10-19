@@ -42,4 +42,4 @@ class ProjectileManager {
 };
 
 
-#endif // !PROJECTILES_H
+#endif

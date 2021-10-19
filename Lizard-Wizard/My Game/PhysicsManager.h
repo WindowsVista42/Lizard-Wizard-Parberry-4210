@@ -29,11 +29,12 @@ struct ProjectileCollisionFilter : public btOverlapFilterCallback
     }
 };
 
-// Projectile Class (Can be either a Bullet3 ray or a Bullet3 simulated projectile.)
+// Physics Class
 class PhysicsManager {
 
 public:
     void CreatePhysicsObject();
+    void DestroyPhysicsObject();
     void InitializePhysics(btDiscreteDynamicsWorld**, btAlignedObjectArray<btCollisionShape*>*);
 
 private:
@@ -46,4 +47,4 @@ private:
 };
 
 
-#endif // !PROJECTILES_H
+#endif

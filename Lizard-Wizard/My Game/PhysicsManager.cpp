@@ -31,6 +31,11 @@ void PhysicsManager::CreatePhysicsObject() {
     // Note(Ethan) : This lets us create a new objects much easier than before.
 }
 
+void PhysicsManager::DestroyPhysicsObject() {
+    // Note(Ethan) : This lets us destroy objects much easier than before.
+
+}
+
 void PhysicsManager::InitializePhysics(btDiscreteDynamicsWorld** GameWorld, btAlignedObjectArray<btCollisionShape*>* GameShapes) {
     // Note(Ethan) : Effectively works the same as before, just call this function and it will handle the initialization.
     CurrentConfiguration = new btDefaultCollisionConfiguration();
@@ -42,8 +47,8 @@ void PhysicsManager::InitializePhysics(btDiscreteDynamicsWorld** GameWorld, btAl
     CurrentWorld = *GameWorld;
     CurrentShapes = *GameShapes;
     CurrentWorld->setGravity(btVector3(0.0, -5000.0, 0.0));
-    /*
+
+    // Collision Callback
     btOverlapFilterCallback* filterCallback = new ProjectileCollisionFilter();
-    GameWorld->getPairCache()->setOverlapFilterCallback(filterCallback);
-    */
+    CurrentWorld->getPairCache()->setOverlapFilterCallback(filterCallback);
 }
