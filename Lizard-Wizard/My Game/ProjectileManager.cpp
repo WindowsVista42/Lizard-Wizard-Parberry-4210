@@ -71,22 +71,25 @@ void ProjectileManager::CalculateRay(btCollisionObject* caster, RayProjectile& n
     newRay.Pos1 = Pos1;
 
     btCollisionWorld::ClosestRayResultCallback rayResults(Pos1, Vec3(Pos1 + btLookDirection * 5000.));
+    if (ignoreCaster) {
+        rayResults.m_collisionFilterGroup = 2;
+        rayResults.m_collisionFilterMask = 2;
+
+    }
     currentWorld->rayTest(Pos1, Vec3(Pos1 + btLookDirection * 5000.), rayResults);
 
     if (rayResults.hasHit()) {
         // Note (Ethan) : this is neccesary to get the object being hit, for some reason this pointer is const; this isn't problematic as long as we DO NOT EDIT at this pointer.
         btCollisionObject* hitObject = const_cast<btCollisionObject*>(rayResults.m_collisionObject);
-        if (!(ignoreCaster) || !(hitObject == caster)) {
-            Vec3 hitPosition = rayResults.m_hitPointWorld;
-            f32 dotProduct = Pos1.Dot(Vec3(rayResults.m_hitNormalWorld));
-            Vec3 incomingDirection = (hitPosition - Pos1); incomingDirection.Normalize();
-            Vec3 reflectedDirection = btLookDirection - 2. * (btLookDirection * rayResults.m_hitNormalWorld) * rayResults.m_hitNormalWorld;
-
-            if (rayBounces > 0) {
-                GenerateRayProjectile(caster, Vec3(hitPosition), Vec3(reflectedDirection), 1, 1, rayBounces - 1, color, true, ignoreCaster);
-            }
-
-            newRay.Pos2 = Vec3(hitPosition);
+        Vec3 hitPosition = rayResults.m_hitPointWorld;
+        f32 dotProduct = Pos1.Dot(Vec3(rayResults.m_hitNormalWorld));
+        Vec3 incomingDirection = (hitPosition - Pos1); incomingDirection.Normalize();
+        Vec3 reflectedDirection = btLookDirection - 2. * (btLookDirection * rayResults.m_hitNormalWorld) * rayResults.m_hitNormalWorld;
+        newRay.Pos2 = Vec3(hitPosition);
+        rayBounces = rayBounces - 1;
+        if (rayBounces > 0) {
+            printf("Raybounces : %d \n", rayBounces);
+            GenerateRayProjectile(caster, Vec3(hitPosition), Vec3(reflectedDirection), 1, 1, rayBounces, color, true, ignoreCaster);
         }
     } else {
         newRay.Pos2 = Vec3(Pos1 + btLookDirection * 5000.0);
@@ -103,17 +106,11 @@ void ProjectileManager::GenerateRayProjectile(btCollisionObject* caster, const V
     newRay.Pos2 = Vec3(startPos.x, startPos.y, startPos.z) + lookDirection * 5000.;
     newRay.Color = rayColor;
 
-    if (recursed) {
-        CalculateRay(caster, newRay, startPos, lookDirection, rayBounces, Colors::PeachPuff, ignoreCaster);
+    for (i32 i = 0; i < rayCount; i++) {
+        Vec3 newDirection = JitterVec3(lookDirection, -0.03, 0.03);
+        CalculateRay(caster, newRay, startPos, newDirection, rayBounces, Colors::Peru, ignoreCaster);
 
         currentRayProjectiles->push_back(newRay);
-    } else {
-        for (i32 i = 0; i < rayCount; i++) {
-            Vec3 newDirection = JitterVec3(lookDirection, -0.03, 0.03);
-            CalculateRay(caster, newRay, startPos, newDirection, rayBounces, Colors::Peru, ignoreCaster);
-
-            currentRayProjectiles->push_back(newRay);
-        }
     }
 }
 

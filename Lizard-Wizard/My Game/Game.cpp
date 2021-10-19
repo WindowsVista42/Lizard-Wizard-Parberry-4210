@@ -62,7 +62,7 @@ void CGame::Initialize(){
 
     // Ground Collider
     {
-        m_pPhysicsManager->CreateBoxObject(Vec3(3000.0f, 50.0f, 3000.0f), Vec3(0.0f, -10000.0f, 0.0f), 0.0f, 1.5f, -1);
+        m_pPhysicsManager->CreateBoxObject(Vec3(3000.0f, 50.0f, 3000.0f), Vec3(0.0f, -10000.0f, 0.0f), 0.0f, 1.5f, 1);
     }
 
     // Player Rigidbody | (Note) : Create this second, as the player is currently indexed as [1] in the collision table.
@@ -293,7 +293,7 @@ void CGame::InputHandler() {
         }
 
         if (m_rightClick.pressed) {
-            m_pProjectileManager->GenerateRayProjectile(m_pDynamicsWorld->getCollisionObjectArray()[1], m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), 3, 3, 5.0, Colors::IndianRed, false, true);
+            m_pProjectileManager->GenerateRayProjectile(m_pDynamicsWorld->getCollisionObjectArray()[1], m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), 3, 2, 5.0, Colors::IndianRed, false, true);
         }
 
         Vector2 delta = { (f32)(cursor_pos.x - center.x), (f32)(cursor_pos.y - center.y) };
