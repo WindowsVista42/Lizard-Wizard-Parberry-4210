@@ -73,14 +73,21 @@ void ProjectileManager::GenerateSimProjectile(btCollisionObject* caster, const V
         body->setIgnoreCollisionCheck(caster, ignoreCaster);
         batch[i] = body;
     }
+
+    // note(ethan) : old collision filter method.
+    /*
     for (i32 i = 0; i < projectileCount; i++) {
         for (i32 j = 0; j < projectileCount; j++) {
             batch[i]->setIgnoreCollisionCheck(batch[j], false);
         }
     }
+    */
     for (i32 i = 0; i < projectileCount; i++) {
-        currentWorld->addRigidBody(batch[i]);
+        currentWorld->addRigidBody(batch[i], 1, 2);
     }
+
+    // note(ethan) : new collision filter method.
+
 }
 
 void ProjectileManager::CalculateRay(btCollisionObject* caster, RayProjectile& newRay, Vec3 Pos1, Vec3 btLookDirection, i32 rayBounces, Vec4 color, b8 ignoreCaster) {
@@ -147,6 +154,8 @@ void ProjectileManager::InitializeProjectiles(btAlignedObjectArray<btCollisionSh
     currentRayProjectiles = gameRayProjectiles;
     currentWorld = gameWorld;
 
+    btOverlapFilterCallback* filterCallback = new ProjectileCollisionFilter();
+    currentWorld->getPairCache()->setOverlapFilterCallback(filterCallback);
 }
 
 void ProjectileManager::DestroyAllProjectiles() {

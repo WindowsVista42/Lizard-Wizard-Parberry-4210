@@ -63,6 +63,7 @@ void CGame::Initialize(){
         randomSeed = 0;
         //m_physicsScratch = StagedBuffer(16 * 1024);   
 
+
         // Ground Collider
         {
             // Ground
@@ -125,7 +126,7 @@ void CGame::Initialize(){
             btRigidBody* body = new btRigidBody(rbInfo);
             body->setAngularFactor(btVector3(0, 0, 0));
 
-            m_pDynamicsWorld->addRigidBody(body);
+            m_pDynamicsWorld->addRigidBody(body, 1, 3);
         }
         
 

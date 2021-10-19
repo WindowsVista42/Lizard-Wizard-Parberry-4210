@@ -7,7 +7,7 @@ PixelOutput main(VertexOutput input) {
 
     Light GLOBAL_LIGHT;
     GLOBAL_LIGHT.Position = float3(0.0f, 200.0f, 0.0f);
-    GLOBAL_LIGHT.Color = float3(100.0f, 1.0f, 1.0f);
+    GLOBAL_LIGHT.Color = float3(2.0f, 2.0f, 2.0f);
 
     float3 pixel_color = Color.Sample(Sampler, input.Texture).rgb;
     float3 pixel_normal = Normal.Sample(Sampler, input.Texture).xyz;
