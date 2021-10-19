@@ -13,9 +13,9 @@ void GenerationManager::GenerateRoom(Vec3 roomCenter) {
     currentPhysicsManager->CreateBoxObject(Vec3(3000.0f, 1000.0f, 50.0f), roomCenter + Vec3(0.0f, 1000.0f, -3000.0f), 0.0f, 1.5f, -1);
 
     Room newRoom;
-    newRoom.currentTag = NORMAL;
+    newRoom.currentTag = RoomTag::tag::NORMAL;
     newRoom.origin = roomCenter;
-    currentRooms->push_back();
+    currentRooms->push_back(&newRoom);
 }
 
 void GenerationManager::GenerateRooms(const i32 roomCount) {
