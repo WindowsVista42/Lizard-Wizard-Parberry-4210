@@ -24,31 +24,24 @@
             '   '
             _____
 
-     wachu looking at bud
+     wachu looking at bud 
 
 */
 
 void ProjectileManager::GenerateSimProjectile(btCollisionObject* caster, const Vec3 startPos, const Vec3 lookDirection, const i32 projectileCount, const f32 projectileVelocity, const f32 projectileAccuracy, const Vec4 projectileColor, const b8 ignoreCaster) {
     /* Note(Ethan) :
-       currently includes :
-       Vector3 for position, Vector3 for lookvector (direction), requested velocity, accuracy, # of projectiles, # of bounces, color.
-
        will expand to include :
        model, texture.
     */
     auto batch = std::make_unique<btRigidBody* []>(projectileCount);
-
-    // Note(Ethan) : This will spawn n-projectiles based on projectileCount, it gets really laggy though. Projectile cache will help
-    // fix this lag, but it may not be enough. Find a way to optimize the rendering and physics pipeline somehow.
     for (i32 i = 0; i < projectileCount; i++) {
 
-        // Push back a collision shape into the array.
+        // PUSH TO COLLISION ARRAY
         btCollisionShape* projectile = new btSphereShape(btScalar(50.f));
         currentSimProjectiles.push_back(projectile);
-
         Vec3 newDirection = JitterVec3(lookDirection, -0.3, 0.3);
 
-        // Implicating projectile as a dynamic object.
+        // CREATE DYNAMIC OBJECT
         btTransform startTransform;
         startTransform.setIdentity();
         f32 mass = 0.1f; //NOTE(sean): for things that the player might be able to interact with, we want the mass to be smaller
@@ -61,8 +54,7 @@ void ProjectileManager::GenerateSimProjectile(btCollisionObject* caster, const V
         Vec3 projectilePos = Vec3(startPos + newDirection * 250.0f);
         startTransform.setOrigin(projectilePos);
 
-        // std::cout << "{"  << lookdir.x << ", " << lookdir.y << ", " << lookdir.z << "}" << std::endl;
-        // Motionstate again.
+        // MOTIONSTATE AND RIGIDBODY
         btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
         btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, projectile, localInertia);
         rbInfo.m_friction = friction;
@@ -71,23 +63,8 @@ void ProjectileManager::GenerateSimProjectile(btCollisionObject* caster, const V
         f32 newVelocity = projectileVelocity * 15000.0f;
         body->applyForce(Vec3(lookDirection * newVelocity), startPos);
         body->setIgnoreCollisionCheck(caster, ignoreCaster);
-        batch[i] = body;
+        currentWorld->addRigidBody(body, 1, 2);
     }
-
-    // note(ethan) : old collision filter method.
-    /*
-    for (i32 i = 0; i < projectileCount; i++) {
-        for (i32 j = 0; j < projectileCount; j++) {
-            batch[i]->setIgnoreCollisionCheck(batch[j], false);
-        }
-    }
-    */
-    for (i32 i = 0; i < projectileCount; i++) {
-        currentWorld->addRigidBody(batch[i], 1, 2);
-    }
-
-    // note(ethan) : new collision filter method.
-
 }
 
 void ProjectileManager::CalculateRay(btCollisionObject* caster, RayProjectile& newRay, Vec3 Pos1, Vec3 btLookDirection, i32 rayBounces, Vec4 color, b8 ignoreCaster) {
@@ -118,11 +95,8 @@ void ProjectileManager::CalculateRay(btCollisionObject* caster, RayProjectile& n
 
 void ProjectileManager::GenerateRayProjectile(btCollisionObject* caster, const Vec3 startPos, const Vec3 lookDirection, const i32 rayCount, const i32 rayBounces, const f32 rayAccuracy, const Vec4 rayColor, const b8 recursed, const b8 ignoreCaster) {
     /* Note(Ethan) :
-       currently includes :
-       Vector3 for position, Vector3 for lookvector (direction), color,  accuracy, # of projectiles.
-
        will expand to include :
-       # of bounces and texture.
+       texture.
     */
     RayProjectile newRay;
     newRay.Pos1 = Vec3(startPos.x, startPos.y, startPos.z) + lookDirection * 500.;
@@ -144,23 +118,12 @@ void ProjectileManager::GenerateRayProjectile(btCollisionObject* caster, const V
 }
 
 void ProjectileManager::InitializeProjectiles(btAlignedObjectArray<btCollisionShape*> gameSimProjectiles, std::vector<RayProjectile>* gameRayProjectiles, btDiscreteDynamicsWorld* gameWorld) {
-    // Note(Ethan) : this simply connects the ProjectileManager.cpp storage arrays to the Game.cpp storage arrays.
-    /*
-    this->currentSimProjectiles;
-    this->currentRayProjectiles;
-    this->currentWorld;
-    */
     currentSimProjectiles = gameSimProjectiles;
     currentRayProjectiles = gameRayProjectiles;
     currentWorld = gameWorld;
-
-    btOverlapFilterCallback* filterCallback = new ProjectileCollisionFilter();
-    currentWorld->getPairCache()->setOverlapFilterCallback(filterCallback);
 }
 
 void ProjectileManager::DestroyAllProjectiles() {
-    // Note(Ethan) : might be extraneous, but we could use this to wipe an array of projectiles whenever needed.
-
 
 }
 

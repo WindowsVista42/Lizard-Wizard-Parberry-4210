@@ -7,6 +7,7 @@
 #include "Component.h"
 #include "Common.h"
 #include "ObjectManager.h"
+#include "PhysicsManager.h"
 #include "ProjectileManager.h"
 #include "Settings.h"
 #include "CustomBind.h"
@@ -36,8 +37,10 @@ private:
     CustomBind m_leftClick;
     CustomBind m_rightClick;
 
-    // Projectile Declarations
+    // Managers
     ProjectileManager* m_pProjectileManager;
+    PhysicsManager* m_pPhysicsManager;
+
 
     //StagedBuffer m_physicsScratch;
     
@@ -64,10 +67,6 @@ private:
 
 public:
     // Bullet3 Declarations
-    btDefaultCollisionConfiguration* m_pCollisionConfiguration;
-    btCollisionDispatcher* m_pDispatcher;
-    btDbvtBroadphase* m_pBroadphaseChache;
-    btSequentialImpulseConstraintSolver* m_pSolver;
     btAlignedObjectArray<btCollisionShape*> m_pCollisionShapes;
     btDiscreteDynamicsWorld* m_pDynamicsWorld;
     std::vector<RayProjectile> m_currentRayProjectiles;

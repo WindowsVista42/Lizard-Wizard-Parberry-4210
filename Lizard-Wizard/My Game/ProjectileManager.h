@@ -24,18 +24,6 @@ struct RayProjectile {
     Vec4 Color;
 };
 
-struct ProjectileCollisionFilter : public btOverlapFilterCallback
-{
-    // return true when pairs need collision.
-    virtual bool needBroadphaseCollision(btBroadphaseProxy* proxy0, btBroadphaseProxy* proxy1) const
-    {
-        bool collides = (proxy0->m_collisionFilterGroup & proxy1->m_collisionFilterMask) != 0;
-        collides = collides && (proxy1->m_collisionFilterGroup & proxy0->m_collisionFilterMask);
-
-        return collides;
-    }
-};
-
 // Projectile Class (Can be either a Bullet3 ray or a Bullet3 simulated projectile.)
 class ProjectileManager {
 

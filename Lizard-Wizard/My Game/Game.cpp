@@ -7,6 +7,7 @@
 #include "GameDefines.h"
 #include "SpriteRenderer.h"
 #include "ComponentIncludes.h"
+#include "PhysicsManager.h"
 #include "ProjectileManager.h"
 #include "Helpers.h"
 #include "shellapi.h"
@@ -45,12 +46,14 @@ void CGame::Initialize(){
     LoadModels(); //load models from xml file list
 
     m_pObjectManager = new CObjectManager; //set up the object manager
+    m_pPhysicsManager = new PhysicsManager();
     m_pProjectileManager = new ProjectileManager(); // set up projectile manager
     LoadSounds(); //load the sounds for this game
 
     //TODO(ethan): Move this into its own init function
     // Bullet3 Initialize
     {
+        /*
         m_pCollisionConfiguration = new btDefaultCollisionConfiguration();
         m_pDispatcher = new btCollisionDispatcher(m_pCollisionConfiguration);
         m_pBroadphaseChache = new btDbvtBroadphase();
@@ -59,8 +62,11 @@ void CGame::Initialize(){
         m_pDynamicsWorld->setGravity(btVector3(0.0, -5000.0, 0.0));
         m_pCollisionShapes = btAlignedObjectArray<btCollisionShape*>();
         m_currentRayProjectiles = std::vector<RayProjectile>();
+        */
+        m_currentRayProjectiles = std::vector<RayProjectile>();
+
+        m_pPhysicsManager->InitializePhysics(&m_pDynamicsWorld, &m_pCollisionShapes);
         m_pProjectileManager->InitializeProjectiles(m_pCollisionShapes, &m_currentRayProjectiles, m_pDynamicsWorld);
-        randomSeed = 0;
         //m_physicsScratch = StagedBuffer(16 * 1024);   
 
 
