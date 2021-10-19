@@ -45,34 +45,32 @@ void CGame::Initialize(){
     LoadImages(); //load images from xml file list
     LoadModels(); //load models from xml file list
 
+    // Create Managers
     m_pObjectManager = new CObjectManager; //set up the object manager
     m_pPhysicsManager = new PhysicsManager();
     m_pProjectileManager = new ProjectileManager(); // set up projectile manager
     LoadSounds(); //load the sounds for this game
 
-    //TODO(ethan): Move this into its own init function
-    // Bullet3 Initialize
+    // Create Tables
+    m_currentRayProjectiles = std::vector<RayProjectile>();
+
+    // Initialize Managers
+    m_pPhysicsManager->InitializePhysics(&m_pDynamicsWorld, &m_pCollisionShapes);
+    m_pProjectileManager->InitializeProjectiles(m_pCollisionShapes, &m_currentRayProjectiles, m_pDynamicsWorld);
+
+    // Ground Collider
     {
-        m_currentRayProjectiles = std::vector<RayProjectile>();
-        m_pPhysicsManager->InitializePhysics(&m_pDynamicsWorld, &m_pCollisionShapes);
-        m_pProjectileManager->InitializeProjectiles(m_pCollisionShapes, &m_currentRayProjectiles, m_pDynamicsWorld);
-        //m_physicsScratch = StagedBuffer(16 * 1024);   
+        m_pPhysicsManager->CreateBoxObject(Vec3(3000.0f, 50.0f, 3000.0f), Vec3(0.0f, 200.0f, 0.0f), 0.0f, 1.5f, -1);
+    }
 
+    // Player Rigidbody | (Note) : Create this second, as the player is currently indexed as [1] in the collision table.
+    {
+        m_pPhysicsManager->CreateCapsuleObject(100.0f, 250.0f, Vec3(0, 1500, 0), 1.0f, 0.5f, 3);
+    }
 
-        // Ground Collider
-        {
-            m_pPhysicsManager->CreateBoxObject(Vec3(3000.0f, 50.0f, 3000.0f), Vec3(0.0f, 200.0f, 0.0f), 0.0f, 1.5f, -1);
-         }
-
-        // Player Rigidbody
-        {
-            m_pPhysicsManager->CreateCapsuleObject(100.0f, 250.0f, Vec3(0, 1500, 0), 1.0f, 0.5f, 3);
-        }
-        
-        // Wall Collider
-        {
-            m_pPhysicsManager->CreateBoxObject(Vec3(150.0f, 3000.0f, 3000.0f), Vec3(-3000.0f, 2800.0f, 0.0f), 0.0f, 1.5f, -1);
-        }
+    // Wall Collider
+    {
+        m_pPhysicsManager->CreateBoxObject(Vec3(150.0f, 3000.0f, 3000.0f), Vec3(-3000.0f, 2800.0f, 0.0f), 0.0f, 1.5f, -1);
     }
 
     //NOTE(sean): testing debug model loading
