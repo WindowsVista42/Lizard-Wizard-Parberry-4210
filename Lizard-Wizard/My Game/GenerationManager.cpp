@@ -15,7 +15,11 @@ void GenerationManager::GenerateRoom(Vec3 roomCenter) {
     Room newRoom;
     newRoom.currentTag = RoomTag::tag::NORMAL;
     newRoom.origin = roomCenter;
+<<<<<<< HEAD
     currentRooms.push_back(newRoom);
+=======
+    currentRooms->push_back(&newRoom);
+>>>>>>> a0db107b91f79f59b316698ac23cf91aeb2a3b4e
 }
 
 void GenerationManager::GenerateRooms(const i32 roomCount) {
