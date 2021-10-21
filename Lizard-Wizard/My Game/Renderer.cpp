@@ -1,11 +1,11 @@
 #include "Renderer.h"
 #include "Math.h"
 #include "Helpers.h"
-#include <Model.h>
 #include <iostream>
 #include "Keyboard.h"
+#include "GraphicsHelpers.h"
 
-CRenderer::CRenderer():
+Renderer::Renderer():
     LRenderer3D(),
     m_pCamera(new LBaseCamera),
     m_debugScratch(16 * 1024), // 16k
@@ -26,42 +26,27 @@ CRenderer::CRenderer():
 
     const f32 near_clip = 0.1f;
     const f32 far_clip = 1000000.0f;
-
+    
     m_pCamera->SetPerspective(aspect, fov_radians, near_clip, far_clip);
     m_pCamera->MoveTo(Vector3(0.0f, 0.0f, 0.0f));
 
 }
 
-CRenderer::~CRenderer() {
+Renderer::~Renderer() {
     delete m_pCamera;
     m_pDeviceResources->WaitForGpu();
 }
 
-void CheckDeviceFormatSupport(ID3D12Device* device, DXGI_FORMAT format) {
-    D3D12_FEATURE_DATA_FORMAT_SUPPORT formatSupport = { format, D3D12_FORMAT_SUPPORT1_NONE, D3D12_FORMAT_SUPPORT2_NONE };
-    if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &formatSupport, sizeof(formatSupport)))) {
-        ABORT_EQ_FORMAT(0, 0, "Check Feature Support");
-    }
-
-    u32 required = D3D12_FORMAT_SUPPORT1_TEXTURE2D | D3D12_FORMAT_SUPPORT1_RENDER_TARGET;
-    if ((formatSupport.Support1 & required) != required) {
-        ABORT_EQ_FORMAT(0, 0, "Format not supported as a Render Texture");
-    }
-}
-
-void CRenderer::Initialize() {
+void Renderer::Initialize() {
     LRenderer3D::Initialize(true);
 
     //TODO(sean): resource cleanup
+    //NOTE(sean): Deferred Effect
     {
-        m_pDeferredResourceDescs = std::make_unique<DescriptorHeap>(
-            m_pD3DDevice, DeferredPass::Count
-        );
-
-        m_pDeferredRenderDescs = std::make_unique<DescriptorHeap>(
+        CreateRenderTextureHeaps(
             m_pD3DDevice,
-            D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
-            D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+            &m_pDeferredResourceDescs,
+            &m_pDeferredRenderDescs,
             DeferredPass::Count
         );
 
@@ -70,78 +55,60 @@ void CRenderer::Initialize() {
         m_deferredPassTextures[DeferredPass::Normal] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
         m_deferredPassTextures[DeferredPass::Position] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
 
-        CheckDeviceFormatSupport(m_pD3DDevice, m_deferredPassTextures[DeferredPass::Color].m_format);
-        CheckDeviceFormatSupport(m_pD3DDevice, m_deferredPassTextures[DeferredPass::Normal].m_format);
-        CheckDeviceFormatSupport(m_pD3DDevice, m_deferredPassTextures[DeferredPass::Position].m_format);
-
-        m_deferredPassTextures[DeferredPass::Color].UpdateDescriptors(
+        m_deferredPassTextures[DeferredPass::Color].Init(
+            m_pD3DDevice, 
             m_pDeferredResourceDescs->GetCpuHandle(DeferredPass::Color),
-            m_pDeferredRenderDescs->GetCpuHandle(DeferredPass::Color)
+            m_pDeferredRenderDescs->GetCpuHandle(DeferredPass::Color),
+            m_nWinWidth,
+            m_nWinHeight
         );
 
-        m_deferredPassTextures[DeferredPass::Normal].UpdateDescriptors(
+        m_deferredPassTextures[DeferredPass::Normal].Init(
+            m_pD3DDevice, 
             m_pDeferredResourceDescs->GetCpuHandle(DeferredPass::Normal),
-            m_pDeferredRenderDescs->GetCpuHandle(DeferredPass::Normal)
+            m_pDeferredRenderDescs->GetCpuHandle(DeferredPass::Normal),
+            m_nWinWidth,
+            m_nWinHeight
         );
 
-        m_deferredPassTextures[DeferredPass::Position].UpdateDescriptors(
+        m_deferredPassTextures[DeferredPass::Position].Init(
+            m_pD3DDevice, 
             m_pDeferredResourceDescs->GetCpuHandle(DeferredPass::Position),
-            m_pDeferredRenderDescs->GetCpuHandle(DeferredPass::Position)
-        );
-
-        m_deferredPassTextures[DeferredPass::Color].UpdateResources(
-            m_pD3DDevice, m_nWinWidth, m_nWinHeight
-        );
-
-        m_deferredPassTextures[DeferredPass::Normal].UpdateResources(
-            m_pD3DDevice, m_nWinWidth, m_nWinHeight
-        );
-
-        m_deferredPassTextures[DeferredPass::Position].UpdateResources(
-            m_pD3DDevice, m_nWinWidth, m_nWinHeight
+            m_pDeferredRenderDescs->GetCpuHandle(DeferredPass::Position),
+            m_nWinWidth,
+            m_nWinHeight
         );
     }
 
+    //NOTE(sean): Tonemap Effect
     {
-        m_pTonemapResourceDescs = std::make_unique<DescriptorHeap>(
-            m_pD3DDevice, TonemapPass::Count
-        );
-
-        m_pTonemapRenderDescs = std::make_unique<DescriptorHeap>(
+        CreateRenderTextureHeaps(
             m_pD3DDevice,
-            D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
-            D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+            &m_pTonemapResourceDescs,
+            &m_pTonemapRenderDescs,
             TonemapPass::Count
         );
 
         m_tonemapPassTextures.resize(TonemapPass::Count);
         m_tonemapPassTextures[TonemapPass::Color] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
 
-        CheckDeviceFormatSupport(m_pD3DDevice, m_tonemapPassTextures[TonemapPass::Color].m_format);
-
-        m_tonemapPassTextures[TonemapPass::Color].UpdateDescriptors(
+        m_tonemapPassTextures[TonemapPass::Color].Init(
+            m_pD3DDevice,
             m_pTonemapResourceDescs->GetCpuHandle(TonemapPass::Color),
-            m_pTonemapRenderDescs->GetCpuHandle(TonemapPass::Color)
-        );
-
-        m_tonemapPassTextures[TonemapPass::Color].UpdateResources(
-            m_pD3DDevice, m_nWinWidth, m_nWinHeight
+            m_pTonemapRenderDescs->GetCpuHandle(TonemapPass::Color),
+            m_nWinWidth,
+            m_nWinHeight
         );
     }
 
     // This is very similar to vulkan :)
     {
-        RenderTargetState render_target_state(
-            m_deferredPassTextures[DeferredPass::Color].m_format,
-            m_pDeviceResources->GetDepthBufferFormat()
-        );
-
         EffectPipelineStateDescription pipeline_state_desc(
             &VertexPC::InputLayout,
             CommonStates::Opaque,
             CommonStates::DepthDefault,
             CommonStates::CullNone,
-            render_target_state,
+            m_RenderTargetState,
             D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE
         );
 
@@ -150,17 +117,12 @@ void CRenderer::Initialize() {
     }
 
     {
-        RenderTargetState render_target_state(
-            m_deferredPassTextures[DeferredPass::Color].m_format,
-            m_pDeviceResources->GetDepthBufferFormat()
-        );
-
         EffectPipelineStateDescription pipeline_state_desc(
             &VertexPC::InputLayout,
             CommonStates::Opaque,
             CommonStates::DepthDefault,
             CommonStates::CullNone,
-            render_target_state,
+            m_RenderTargetState,
             D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
         );
 
@@ -169,19 +131,14 @@ void CRenderer::Initialize() {
     }
 
     {
-        //NOTE(sean): these will need to be self-defined in the future
-        RenderTargetState render_target_state(
-            m_deferredPassTextures[DeferredPass::Color].m_format,
-            m_pDeviceResources->GetDepthBufferFormat()
-        );
-
+        RenderTargetState render_target_state = {};
+        render_target_state.dsvFormat = m_pDeviceResources->GetDepthBufferFormat();
         render_target_state.numRenderTargets = DeferredPass::Count;
-        render_target_state.rtvFormats[DeferredPass::Color] =
-            m_deferredPassTextures[DeferredPass::Color].m_format;
-        render_target_state.rtvFormats[DeferredPass::Normal] =
-            m_deferredPassTextures[DeferredPass::Normal].m_format;
-        render_target_state.rtvFormats[DeferredPass::Position] =
-            m_deferredPassTextures[DeferredPass::Position].m_format;
+        render_target_state.rtvFormats[DeferredPass::Color] = m_deferredPassTextures[DeferredPass::Color].m_format;
+        render_target_state.rtvFormats[DeferredPass::Normal] = m_deferredPassTextures[DeferredPass::Normal].m_format;
+        render_target_state.rtvFormats[DeferredPass::Position] = m_deferredPassTextures[DeferredPass::Position].m_format;
+        render_target_state.sampleMask = ~0u;
+        render_target_state.sampleDesc.Count = 1;
 
         EffectPipelineStateDescription pipeline_state_desc(
             &VertexPNT::InputLayout,
@@ -196,11 +153,12 @@ void CRenderer::Initialize() {
     }
 
     {
-        //NOTE(sean): these will need to be self-defined in the future
-        RenderTargetState render_target_state(
-            m_tonemapPassTextures[DeferredPass::Color].m_format,
-            m_pDeviceResources->GetDepthBufferFormat()
-        );
+        RenderTargetState render_target_state = {};
+        render_target_state.dsvFormat = m_pDeviceResources->GetDepthBufferFormat();
+        render_target_state.numRenderTargets = TonemapPass::Count;
+        render_target_state.rtvFormats[TonemapPass::Color] = m_tonemapPassTextures[TonemapPass::Color].m_format;
+        render_target_state.sampleMask = ~0u;
+        render_target_state.sampleDesc.Count = 1;
 
         EffectPipelineStateDescription pipeline_state_desc(
             0,
@@ -226,53 +184,13 @@ void CRenderer::Initialize() {
     }
 }
 
-/// Begin Rendering a frame.
-/// Put all DrawXYZ() or other functions in between this and EndFrame()
-void CRenderer::BeginFrame() {
-    //LRenderer3D::BeginFrame();
-
+void Renderer::BeginFrame() {
+    //NOTE(sean): Tell DirectX that we want to create a CommandList for the GPU
     m_pDeviceResources->Prepare();
-
     m_pCommandList = m_pDeviceResources->GetCommandList();
 
-    //m_pHeaps[0] = m_pDescriptorHeap->Heap();
-    //m_pHeaps[1] = m_pStates->Heap();
-
-    ID3D12DescriptorHeap* pHeaps[] = {
-        m_pDeferredResourceDescs->Heap(),
-        //m_pStates->Heap()
-    };
-
-    //m_pCommandList->SetDescriptorHeaps(_countof(m_pHeaps), m_pHeaps);
-    m_pCommandList->SetDescriptorHeaps(_countof(pHeaps), pHeaps);
-
-    //auto rtvDescriptorBackBuffer = m_pDeviceResources->GetRenderTargetView();
-    auto dsvDescriptorBackBuffer = m_pDeviceResources->GetDepthStencilView();
-
-    auto rtvDescriptorDiffuse = m_pDeferredRenderDescs->GetCpuHandle(DeferredPass::Color);
-    auto diffuseClearColor = m_deferredPassTextures[DeferredPass::Color].m_clearColor;
-
-    auto rtvDescriptorNormal = m_pDeferredRenderDescs->GetCpuHandle(DeferredPass::Normal);
-    auto normalClearColor = m_deferredPassTextures[DeferredPass::Normal].m_clearColor;
-
-    auto rtvDescriptorPosition = m_pDeferredRenderDescs->GetCpuHandle(DeferredPass::Position);
-    auto positionClearColor = m_deferredPassTextures[DeferredPass::Position].m_clearColor;
-
-    D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptors[DeferredPass::Count] = {
-        //rtvDescriptorBackBuffer,
-        rtvDescriptorDiffuse,
-        rtvDescriptorNormal,
-        rtvDescriptorPosition
-    };
-
-    //m_pCommandList->OMSetRenderTargets(1, &rtvDescriptorBackBuffer, FALSE, &dsvDescriptorBackBuffer);
-    m_pCommandList->OMSetRenderTargets(DeferredPass::Count, rtvDescriptors, FALSE, &dsvDescriptorBackBuffer);
-    //m_pCommandList->ClearRenderTargetView(rtvDescriptorBackBuffer, m_f32BgColor, 0, 0);
-    m_pCommandList->ClearRenderTargetView(rtvDescriptorDiffuse, diffuseClearColor, 0, 0);
-    m_pCommandList->ClearRenderTargetView(rtvDescriptorNormal, normalClearColor, 0, 0);
-    m_pCommandList->ClearRenderTargetView(rtvDescriptorPosition, positionClearColor, 0, 0);
-    m_pCommandList->ClearDepthStencilView(dsvDescriptorBackBuffer, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, 0);
-
+    //NOTE(sean): This lets us render to a portion of the screen, we're not doing, but this is still mandatory.
+    // Can be ignored.
     auto viewport = m_pDeviceResources->GetScreenViewport();
     auto scissorRect = m_pDeviceResources->GetScissorRect();
 
@@ -280,47 +198,137 @@ void CRenderer::BeginFrame() {
     m_pCommandList->RSSetScissorRects(1, &scissorRect);
 }
 
+void Renderer::EndFrame() {
+    //NOTE(sean): some internal parberry code, I don't know what it does,
+    // but it just saves a screenshot and should work despite all of my changes.
+    if (m_screenShot) {
+        SaveScreenShot();
+        m_screenShot = false;
+    }
+
+    //NOTE(sean): Tell the GPU that we want to swap the Back Buffer with the Front Buffer.
+    m_pDeviceResources->Present();
+
+    //NOTE(sean): Upload commands to the GPU and tell it to execute them.
+    m_pGraphicsMemory->Commit(m_pDeviceResources->GetCommandQueue());
+
+    m_frameNumber += 1;
+}
+
+/// Begin rendering a debug frame.
+/// Put all DrawDebugXYZ() or other functions in between this and EndDebugFrame()
+void Renderer::BeginDebugDrawing() {
+    //NOTE(sean): Debug frames are a bit different than our normal frames
+    // because we only want to render the color to the output,
+    // without any intermittent processing
+
+    //ID3D12DescriptorHeap* pHeaps[] = {};
+    //m_pCommandList->SetDescriptorHeaps(_countof(pHeaps), pHeaps);
+
+    auto dsvDescBackBuffer = m_pDeviceResources->GetDepthStencilView();
+    auto rtvDescBackBuffer = m_pDeviceResources->GetRenderTargetView();
+
+    D3D12_CPU_DESCRIPTOR_HANDLE rtvDescs[1] = {
+        rtvDescBackBuffer
+    };
+
+    m_pCommandList->OMSetRenderTargets(_countof(rtvDescs), rtvDescs, FALSE, &dsvDescBackBuffer);
+
+    //NOTE(sean): we would normally clear here, but we don't want to do that,
+    // because we want the debug lines to be rendered-over like normal, and
+    // we want a proper depth test
+}
+
+/// Begin rendering a debug frame.
+/// Put all DrawDebugXYZ() or other functions in between this and EndDebugFrame()
+void Renderer::EndDebugDrawing() {
+    //NOTE(sean): Unless we need to do some actual post-processing,
+    // this is a stub for now
+}
+
+/// Begin rendering a frame.
+/// Put all DrawXYZ() or other functions in between this and EndFrame()
+void Renderer::BeginDrawing() {
+    ID3D12DescriptorHeap* pHeaps[] = {
+        m_pDeferredResourceDescs->Heap(),
+    };
+
+    //NOTE(sean): Set descriptors so DirectX knows where to look to find our data
+    m_pCommandList->SetDescriptorHeaps(_countof(pHeaps), pHeaps);
+
+    auto dsvDescBackBuffer = m_pDeviceResources->GetDepthStencilView();
+
+    auto rtvDescDiffuse = m_pDeferredRenderDescs->GetCpuHandle(DeferredPass::Color);
+    auto diffuseClearColor = m_deferredPassTextures[DeferredPass::Color].m_clearColor;
+
+    auto rtvDescNormal = m_pDeferredRenderDescs->GetCpuHandle(DeferredPass::Normal);
+    auto normalClearColor = m_deferredPassTextures[DeferredPass::Normal].m_clearColor;
+
+    auto rtvDescPosition = m_pDeferredRenderDescs->GetCpuHandle(DeferredPass::Position);
+    auto positionClearColor = m_deferredPassTextures[DeferredPass::Position].m_clearColor;
+
+    D3D12_CPU_DESCRIPTOR_HANDLE rtvDescs[DeferredPass::Count] = {
+        rtvDescDiffuse,
+        rtvDescNormal,
+        rtvDescPosition
+    };
+
+    //NOTE(sean): Tell the gpu where we want to render, ie a "target"
+    m_pCommandList->OMSetRenderTargets(DeferredPass::Count, rtvDescs, FALSE, &dsvDescBackBuffer);
+
+    //NOTE(sean): Tell the gpu to clear the targets
+    m_pCommandList->ClearRenderTargetView(rtvDescDiffuse, diffuseClearColor, 0, 0);
+    m_pCommandList->ClearRenderTargetView(rtvDescNormal, normalClearColor, 0, 0);
+    m_pCommandList->ClearRenderTargetView(rtvDescPosition, positionClearColor, 0, 0);
+    m_pCommandList->ClearDepthStencilView(dsvDescBackBuffer, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, 0);
+}
+
 /// End Rendering a frame.
 /// Put all DrawXYZ() or other functions in between this and BeginFrame()
-void CRenderer::EndFrame() {
+void Renderer::EndDrawing() {
     // Render Lighting Effect
     {
-    	//HACK(sean): we force synchronization here, figure out the proper way to do this
-    	m_deferredPassTextures[DeferredPass::Color].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    	m_deferredPassTextures[DeferredPass::Normal].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    	m_deferredPassTextures[DeferredPass::Position].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+    	//NOTE(sean): transition resources into the correct "read-only" state.
+        // The code will still technically run without these, but the gpu wont know
+        // that we want to wait until we're done writing to this.
+        // In short, we get a data race.
+    	m_deferredPassTextures[DeferredPass::Color].PushTransition(m_pCommandList, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    	m_deferredPassTextures[DeferredPass::Normal].PushTransition(m_pCommandList, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    	m_deferredPassTextures[DeferredPass::Position].PushTransition(m_pCommandList, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
+        //NOTE(sean): more of the same, we set the target
         auto rtvDescriptorColor = m_pTonemapRenderDescs->GetCpuHandle(TonemapPass::Color);
         m_pCommandList->OMSetRenderTargets(1, &rtvDescriptorColor, FALSE, 0);
 
+        //NOTE(sean): Set textures to read from.
+        // In the shader, these get sample from so we can properly build the output image.
         m_pLightingEffect->SetTextures(
             m_pDeferredResourceDescs->GetGpuHandle(DeferredPass::Color),
             m_pDeferredResourceDescs->GetGpuHandle(DeferredPass::Normal),
             m_pDeferredResourceDescs->GetGpuHandle(DeferredPass::Position)
         );
 
+        //NOTE(sean): This actally "applies" the effect, any subsequent draw calls will use this effect
         m_pLightingEffect->Apply(m_pCommandList);
-    
+
+        //NOTE(sean): Draw effect
         m_pCommandList->DrawInstanced(3, 1, 0, 0);
 
-    	//HACK(sean): we force synchronization here, figure out the proper way to do this
-    	m_deferredPassTextures[DeferredPass::Color].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    	m_deferredPassTextures[DeferredPass::Normal].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    	m_deferredPassTextures[DeferredPass::Position].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        //NOTE(sean): Transition resources back into their original state,
+        // allowing them to be written to again.
+        m_deferredPassTextures[DeferredPass::Color].PopTransition(m_pCommandList);
+    	m_deferredPassTextures[DeferredPass::Normal].PopTransition(m_pCommandList);
+    	m_deferredPassTextures[DeferredPass::Position].PopTransition(m_pCommandList);
     }
 
     // Render Tonemap Effect
     {
-    	ID3D12DescriptorHeap* pHeaps[] = {
-    	    m_pTonemapResourceDescs->Heap(),
-    	    //m_pStates->Heap()
-    	};
-	
-    	//m_pCommandList->SetDescriptorHeaps(_countof(m_pHeaps), m_pHeaps);
+        //NOTE(sean): This is an identical process to the previous block of code, so check that for details
+
+    	ID3D12DescriptorHeap* pHeaps[] = { m_pTonemapResourceDescs->Heap(), };
     	m_pCommandList->SetDescriptorHeaps(_countof(pHeaps), pHeaps);
 
-    	//HACK(sean): we force synchronization here, figure out the proper way to do this
-    	m_tonemapPassTextures[TonemapPass::Color].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+    	m_tonemapPassTextures[TonemapPass::Color].PushTransition(m_pCommandList, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
         m_pCommandList->OMSetRenderTargets(1, &m_pDeviceResources->GetRenderTargetView(), FALSE, 0);
 
@@ -329,29 +337,16 @@ void CRenderer::EndFrame() {
         );
 
         m_pTonemapEffect->Apply(m_pCommandList);
-    
         m_pCommandList->DrawInstanced(3, 1, 0, 0);
 
-    	//HACK(sean): we force synchronization here, figure out the proper way to do this
-    	m_tonemapPassTextures[TonemapPass::Color].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        m_tonemapPassTextures[TonemapPass::Color].PopTransition(m_pCommandList);
     }
-
-    //LRenderer3D::EndFrame();
-    if (m_screenShot) {
-        SaveScreenShot();
-        m_screenShot = false;
-    } //if
-
-    m_pDeviceResources->Present(); //show the new frame
-    m_pGraphicsMemory->Commit(m_pDeviceResources->GetCommandQueue());
-
-    m_frameNumber += 1;
 }
 
 /// Begins a debug line batch.
 /// Code that follows this will be batched into ONE draw call
 /// Needs to use compatable functions
-void CRenderer::BeginDebugLineBatch() {
+void Renderer::BeginDebugLineBatch() {
     m_pPrimitiveBatch->Begin(m_pCommandList);
 
     XMMATRIX world = XMMatrixTransformation( g_XMZero, Quaternion::Identity, g_XMOne, g_XMZero, Quaternion::Identity, g_XMZero);
@@ -364,7 +359,7 @@ void CRenderer::BeginDebugLineBatch() {
 /// Begins a debug triangle batch.
 /// Code that follows this will be batched into ONE draw call
 /// Needs to use compatable functions
-void CRenderer::BeginDebugTriangleBatch() {
+void Renderer::BeginDebugTriangleBatch() {
     m_pPrimitiveBatch->Begin(m_pCommandList);
 
     m_pDebugTriangleEffect->SetView(XMLoadFloat4x4(&m_view));
@@ -373,13 +368,13 @@ void CRenderer::BeginDebugTriangleBatch() {
 
 /// Ends any currently open batch
 /// Use this to "draw" the current batched items, however actual rendering is technically performed later
-void CRenderer::EndDebugBatch() {
+void Renderer::EndDebugBatch() {
     m_pPrimitiveBatch->End();
 }
 
 /// Draw a colored "Debug Line" from A to B
 /// A - B
-void CRenderer::DrawDebugLine(
+void Renderer::DrawDebugLine(
     const Vec3 A,
     const Vec3 B,
     const Vec4 color
@@ -391,7 +386,7 @@ void CRenderer::DrawDebugLine(
 ///   A
 ///  / \
 /// C - B
-void CRenderer::DrawDebugTriangle(
+void Renderer::DrawDebugTriangle(
     const Vec3 A,
     const Vec3 B,
     const Vec3 C,
@@ -405,7 +400,7 @@ void CRenderer::DrawDebugTriangle(
 /// A - B
 /// |   |
 /// D - C
-void CRenderer::DrawDebugQuad(
+void Renderer::DrawDebugQuad(
     const Vec3 A,
     const Vec3 B,
     const Vec3 C,
@@ -419,7 +414,7 @@ void CRenderer::DrawDebugQuad(
 /// Draw a colored "Debug Ray".
 /// A --->
 
-void CRenderer::DrawDebugRay(
+void Renderer::DrawDebugRay(
     const Vec3 origin,
     const Vec3 direction,
     const f32 length,
@@ -437,7 +432,7 @@ void CRenderer::DrawDebugRay(
 ///   G         D
 ///    \       /
 ///      F - E
-void CRenderer::DrawDebugRing(
+void Renderer::DrawDebugRing(
     const Vec3 origin,
     const Vec3 orientation,
     const f32 radius,
@@ -459,7 +454,7 @@ void CRenderer::DrawDebugRing(
 //TODO(sean): If performance ***really*** becomes a problem, make this nocopy
 /// Draw a colored "Debug Ring".
 /// This does the same thing as DrawDebugRing()
-void CRenderer::DrawDebugRing2(
+void Renderer::DrawDebugRing2(
     Vec3 origin,
     Vec3 majorAxis,
     Vec3 minorAxis,
@@ -501,7 +496,7 @@ void CRenderer::DrawDebugRing2(
 
 /// Draw a colored "Debug Sphere".
 /// I'm not drawing a diagram for this one
-void CRenderer::DrawDebugSphere(
+void Renderer::DrawDebugSphere(
     const BoundingSphere sphere,
     const u32 segments,
     const Vec4 color
@@ -518,7 +513,7 @@ void CRenderer::DrawDebugSphere(
 
 //NOTE(sean): https://github.com/Microsoft/DirectXTK/wiki/DebugDraw
 /// Draw a colored box
-void CRenderer::DrawDebugAABB(
+void Renderer::DrawDebugAABB(
     const BoundingBox box,
     const Vec4 color
 ) {
@@ -528,7 +523,7 @@ void CRenderer::DrawDebugAABB(
 
 //NOTE(sean): https://github.com/Microsoft/DirectXTK/wiki/DebugDraw
 /// Draw a colored box, but it's rotated
-void CRenderer::DrawDebugOBB(
+void Renderer::DrawDebugOBB(
     const BoundingOrientedBox obb,
     const Vec4 color
 ) {
@@ -537,7 +532,7 @@ void CRenderer::DrawDebugOBB(
 }
 
 /// Draw a colored "Debug Capsule"
-void CRenderer::DrawDebugCapsule(
+void Renderer::DrawDebugCapsule(
    const Vec3 origin, 
    const f32 radius, 
    const f32 height, 
@@ -574,7 +569,7 @@ void CRenderer::DrawDebugCapsule(
 /// D - E - F
 /// |   |   |
 /// G - H - I
-void CRenderer::DrawDebugGrid(
+void Renderer::DrawDebugGrid(
     const Vec3 x_axis,
     const Vec3 y_axis,
     const Vec3 origin,
@@ -609,7 +604,7 @@ void CRenderer::DrawDebugGrid(
 
 //NOTE(sean): https://github.com/Microsoft/DirectXTK/wiki/DebugDraw
 /// Internal function (ask sean if you want to know what it does)
-void CRenderer::DrawDebugCubeInternal(
+void Renderer::DrawDebugCubeInternal(
     const Mat4x4& world,
     const Vec4 color
 ) {
@@ -651,12 +646,12 @@ void CRenderer::DrawDebugCubeInternal(
 
 /// Add a DebugModel to the renderer's internal list.
 /// This function will return a handle to the index in the list.
-u32 CRenderer::AddDebugModel(DebugModel* model) {
+u32 Renderer::AddDebugModel(DebugModel* model) {
     m_debugModels.push_back(*model);
     return (u32)m_debugModels.size() - 1;
 }
 
-void CRenderer::LoadAllModels() {
+void Renderer::LoadAllModels() {
     LoadDebugModel("suzanne", Colors::Peru);
     LoadModel("suzanne", ModelType::Cube);
 }
@@ -666,7 +661,7 @@ void CRenderer::LoadAllModels() {
 /// Instead of storing an entire copy of the model in each enemy, we store the model once,
 /// then reference it with a "handle", in this case a bog-standard index into an array.
 /// To move, scasle, and rotate the model, change the world matrix in the instance.
-void CRenderer::DrawDebugModelInstance(ModelInstance* instance) {
+void Renderer::DrawDebugModelInstance(ModelInstance* instance) {
     DebugModel* pModel = &m_debugModels[instance->m_modelIndex];
 
     switch (pModel->m_modelType) {
@@ -693,7 +688,7 @@ void CRenderer::DrawDebugModelInstance(ModelInstance* instance) {
 }
 
 /// Resets the debug world matricies to zero, you probably dont need to touch this though.
-void CRenderer::ResetDebugWorldMatrix() {
+void Renderer::ResetDebugWorldMatrix() {
     //NOTE(sean): we might want to look into not making this happen on every draw call
     const XMMATRIX world = XMMatrixIdentity();
     m_pDebugLineEffect->SetWorld(world);
@@ -702,69 +697,39 @@ void CRenderer::ResetDebugWorldMatrix() {
 
 //NOTE(sean): if performance is required, this can be made nocopy
 /// Internal method to draw a DebugModel
-void CRenderer::DrawDebugLineModel(DebugModel* model) {
+void Renderer::DrawDebugLineModel(DebugModel* model) {
     m_pPrimitiveBatch->Draw(D3D_PRIMITIVE_TOPOLOGY_LINELIST, model->m_vertexList.data(), model->m_vertexList.size());
 }
 
 /// Internal method to draw a DebugModel
-void CRenderer::DrawDebugTriangleModel(DebugModel* model) {
+void Renderer::DrawDebugTriangleModel(DebugModel* model) {
     m_pPrimitiveBatch->Draw(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, model->m_vertexList.data(), model->m_vertexList.size());
 }
 
 /// Get the number of frames elapsed since the start of the program
-const usize CRenderer::GetNumFrames() const {
+const usize Renderer::GetNumFrames() const {
     return m_frameNumber;
 }
 
+
 /// Get the windows Hwnd (Window Handle)
-HWND CRenderer::GetHwnd() {
+HWND Renderer::GetHwnd() {
     return m_Hwnd;
 }
 
 /// Get the horizontal resolution
-u32 CRenderer::GetResolutionWidth() {
+u32 Renderer::GetResolutionWidth() {
     return m_nWinWidth;
 }
 
 /// Get the vertical resolution
-u32 CRenderer::GetResolutionHeight() {
+u32 Renderer::GetResolutionHeight() {
     return m_nWinHeight;
-}
-
-//NOTE(sean): VBO file format: https://github.com/microsoft/DirectXMesh/blob/master/Meshconvert/Mesh.cpp
-struct VBOData {
-    u32 vertex_count;
-    u32 index_count;
-    VertexPNT* vertices;
-    u16* indices;
-
-    void free() {
-        delete[] vertices;
-        delete[] indices;
-    }
-};
-
-//NOTE(sean): VBO file format: https://github.com/microsoft/DirectXMesh/blob/master/Meshconvert/Mesh.cpp
-void LoadVBO(const char* fpath, VBOData* model) {
-    #define CHECK(value) ABORT_EQ_FORMAT((value), 0, "Corrupt VBO file!")
-
-    FILE* fp = fopen(fpath, "rb"); CHECK(fp);
-
-    CHECK(fread(&model->vertex_count, sizeof(u32), 1, fp));
-    CHECK(fread(&model->index_count, sizeof(u32), 1, fp));
-
-    model->vertices = new VertexPNT[model->vertex_count]; CHECK(model->vertices); 
-    model->indices = new u16[model->index_count]; CHECK(model->indices);
-
-    CHECK(fread(model->vertices, sizeof(VertexPNT), model->vertex_count, fp));
-    CHECK(fread(model->indices, sizeof(u16), model->index_count, fp));
-
-    fclose(fp);
 }
 
 /// Load a debug model with the name.
 /// Debug models are assumed to be VBO (.vbo) files.
-u32 CRenderer::LoadDebugModel(const char* name, Vec4 color) {
+u32 Renderer::LoadDebugModel(const char* name, Vec4 color) {
     std::string fpath = XMLFindItem(m_pXmlSettings, "models", "model", name);
     ABORT_EQ_FORMAT(fpath, "", "Unable to find \"%s\\%s\\%s\"", "models", "model", name);
 
@@ -792,30 +757,9 @@ u32 CRenderer::LoadDebugModel(const char* name, Vec4 color) {
     return handle;
 }
 
-template <class T>
-void CreateBufferAndView(u8* data, isize size, GraphicsResource& resource, std::shared_ptr<D3D12_VERTEX_BUFFER_VIEW>& view) {
-    resource = GraphicsMemory::Get().Allocate(size);
-    memcpy(resource.Memory(), data, size); // i like this function
-
-    view = std::make_shared<D3D12_VERTEX_BUFFER_VIEW>();
-    view->BufferLocation = resource.GpuAddress();
-    view->StrideInBytes = sizeof(T);
-    view->SizeInBytes = (u32)resource.Size();
-}
-
-void CreateBufferAndView(u8* data, isize size, GraphicsResource& resource, std::shared_ptr<D3D12_INDEX_BUFFER_VIEW>& view) {
-    resource = GraphicsMemory::Get().Allocate(size);
-    memcpy(resource.Memory(), data, size);
-    
-    view = std::make_shared<D3D12_INDEX_BUFFER_VIEW>();
-    view->BufferLocation = resource.GpuAddress();
-    view->SizeInBytes = (u32)resource.Size();
-    view->Format = DXGI_FORMAT_R32_UINT;
-}
-
 /// Load a model.
 /// Models are assumed to be VBO (.vbo) files.
-void CRenderer::LoadModel(const char* name, ModelType model_type) {
+void Renderer::LoadModel(const char* name, ModelType model_type) {
     std::string fpath = XMLFindItem(m_pXmlSettings, "models", "model", name);
     ABORT_EQ_FORMAT(fpath, "", "Unable to find \"%s\\%s\\%s\"", "models", "model", name);
 
@@ -830,23 +774,15 @@ void CRenderer::LoadModel(const char* name, ModelType model_type) {
         indices[index] = vbo_data.indices[index];
     }
 
-    { //NOTE(sean): vertex buffer
-        auto data = (u8*)vbo_data.vertices;
-        const isize size = vbo_data.vertex_count * sizeof(VertexPNT);
-        CreateBufferAndView<VertexPNT>(data, size, pmodel->vertex_buffer, pmodel->vertex_view);
-    }
-
-    { //NOTE(sean): index buffer
-        auto data = (u8*)indices;
-        const isize size = vbo_data.index_count * sizeof(u32);
-        CreateBufferAndView(data, size, pmodel->index_buffer, pmodel->index_view);
-    }
+    CreateBufferAndView<VertexPNT>(vbo_data.vertices, vbo_data.vertex_count, pmodel->vertex_buffer, pmodel->vertex_view);
+    CreateBufferAndView<u32>(indices, vbo_data.index_count, pmodel->index_buffer, pmodel->index_view);
 
     vbo_data.free();
     delete[] indices;
 }
 
-void CRenderer::DrawModelInstance(ModelInstance* instance) {
+void Renderer::DrawModelInstance(ModelInstance* instance) {
+    //TODO(sean): check if this can be moved out when we finalize the debug and game drawing APIs
     m_pDeferredEffect->SetWorld(instance->m_worldMatrix);
     m_pDeferredEffect->SetView(XMLoadFloat4x4(&m_view));
 
@@ -859,4 +795,4 @@ void CRenderer::DrawModelInstance(ModelInstance* instance) {
     m_pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     m_pCommandList->DrawIndexedInstanced(pmodel->index_count, 1, 0, 0, 0);
-} 
+}

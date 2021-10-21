@@ -39,7 +39,7 @@ CGame::~CGame(){
 /// begin the game.
 /// 
 void CGame::Initialize(){
-    m_pRenderer = new CRenderer();
+    m_pRenderer = new Renderer();
     m_pRenderer->Initialize();
   
     LoadImages(); //load images from xml file list
@@ -362,7 +362,22 @@ void CGame::RenderFrame() {
     time += m_pTimer->GetFrameTime();
 
     m_pRenderer->BeginFrame();
+
+
+    m_pRenderer->BeginDrawing();
     {
+        //NOTE(sean): Model instance rendering test.
+        // You can use this as a baseline for how to render real 3d models.
+        {
+            ModelInstance instance = {};
+            instance.m_modelIndex = (u32)ModelType::Cube;
+            f32 xoff = 400.0f * cosf(m_pTimer->GetTime());
+            f32 zoff = 400.0f * sinf(m_pTimer->GetTime());
+            instance.m_worldMatrix = MoveScaleMatrix(Vector3(xoff, 100.0f, zoff), Vector3(100.0f, 100.0f, 100.0f));
+            m_pRenderer->DrawModelInstance(&instance);
+        }
+
+        //NOTE(sean): test for rendering model instances onto bullet objects
         {
             for every(j, m_pDynamicsWorld->getNumCollisionObjects()) {
                 btCollisionObject* obj = m_pDynamicsWorld->getCollisionObjectArray()[j];
@@ -372,11 +387,12 @@ void CGame::RenderFrame() {
 
                 if (body && body->getMotionState()) {
                     body->getMotionState()->getWorldTransform(trans);
-                } else {
+                }
+                else {
                     trans = obj->getWorldTransform();
                 }
 
-                switch(shape->getShapeType()) {
+                switch (shape->getShapeType()) {
                 case(BT_SHAPE_TYPE_BOX): {} break;
 
                 case(BT_SHAPE_TYPE_CAPSULE): {} break;
@@ -391,6 +407,11 @@ void CGame::RenderFrame() {
             }
         }
 
+    }
+    m_pRenderer->EndDrawing();
+
+    m_pRenderer->BeginDebugDrawing();
+    {
         //NOTE(sean): the reason batching all of this together works, is that we're doing all the vertex calculations on the cpu instead of the gpu
         m_pRenderer->BeginDebugLineBatch();
         {
@@ -402,11 +423,12 @@ void CGame::RenderFrame() {
 
                 if (body && body->getMotionState()) {
                     body->getMotionState()->getWorldTransform(trans);
-                } else {
+                }
+                else {
                     trans = obj->getWorldTransform();
                 }
 
-                switch(shape->getShapeType()) {
+                switch (shape->getShapeType()) {
                 case(BT_SHAPE_TYPE_BOX): {
                     //NOTE(sean): render box
                     btBoxShape* castratedObject = reinterpret_cast<btBoxShape*>(shape);
@@ -425,7 +447,7 @@ void CGame::RenderFrame() {
 
                 case(BT_SHAPE_TYPE_CAPSULE): {
                     btCapsuleShape* castratedObject = reinterpret_cast<btCapsuleShape*>(shape);
-                    m_pRenderer->DrawDebugCapsule(*(Vector3*)&trans.getOrigin(), castratedObject->getRadius(), castratedObject->getHalfHeight() , 32, Colors::Purple);
+                    m_pRenderer->DrawDebugCapsule(*(Vector3*)&trans.getOrigin(), castratedObject->getRadius(), castratedObject->getHalfHeight(), 32, Colors::Purple);
                 } break;
 
                 default: {
@@ -442,16 +464,9 @@ void CGame::RenderFrame() {
             }
         }
         m_pRenderer->EndDebugBatch();
-
-        {
-            ModelInstance instance = {};
-            instance.m_modelIndex = (u32)ModelType::Cube;
-            f32 xoff = 400.0f * cosf(m_pTimer->GetTime());
-            f32 zoff = 400.0f * sinf(m_pTimer->GetTime());
-            instance.m_worldMatrix = MoveScaleMatrix(Vector3(xoff, 100.0f, zoff), Vector3(100.0f, 100.0f, 100.0f));
-            m_pRenderer->DrawModelInstance(&instance);
-        }
     }
+    m_pRenderer->EndDebugDrawing();
+
     m_pRenderer->EndFrame();
 }
 

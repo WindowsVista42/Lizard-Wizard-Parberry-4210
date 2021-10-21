@@ -8,7 +8,7 @@
 
 class CObjectManager; 
 class LSpriteRenderer;
-class CRenderer;
+class Renderer;
 
 /// \brief The common variables class.
 ///
@@ -20,7 +20,7 @@ class CRenderer;
 
 class CCommon{
 protected:  
-    static CRenderer* m_pRenderer; ///< Pointer to renderer.
+    static Renderer* m_pRenderer; ///< Pointer to renderer.
     static CObjectManager* m_pObjectManager; ///< Pointer to object manager.
     //static LSpriteRenderer* m_pRenderer; ///< Pointer to renderer.
 }; //CCommon

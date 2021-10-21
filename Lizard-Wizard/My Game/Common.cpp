@@ -5,7 +5,7 @@
 
 //LSpriteRenderer* CCommon::m_pRenderer = nullptr;
 CObjectManager* CCommon::m_pObjectManager = nullptr;
-CRenderer* CCommon::m_pRenderer = nullptr;
+Renderer* CCommon::m_pRenderer = nullptr;
 //LSpriteRenderer* CCommon::m_pRenderer = nullptr;
 //CObjectManager* CCommon::m_pObjectManager = nullptr;
 

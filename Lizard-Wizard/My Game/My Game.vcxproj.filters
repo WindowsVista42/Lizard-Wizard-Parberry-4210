@@ -17,6 +17,8 @@
     <ClCompile Include="LightingEffect.cpp" />
     <ClCompile Include="TonemapEffect.cpp" />
     <ClCompile Include="PhysicsManager.cpp" />
+    <ClCompile Include="GenerationManager.cpp" />
+    <ClCompile Include="RenderTexture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h" />
@@ -36,6 +38,9 @@
     <ClInclude Include="LightingEffect.h" />
     <ClInclude Include="TonemapEffect.h" />
     <ClInclude Include="PhysicsManager.h" />
+    <ClInclude Include="GenerationManager.h" />
+    <ClInclude Include="RenderTexture.h" />
+    <ClInclude Include="GraphicsHelpers.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="My Game.rc" />
