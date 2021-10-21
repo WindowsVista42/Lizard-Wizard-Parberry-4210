@@ -9,17 +9,94 @@
 #include "TonemapEffect.h"
 #include "RenderTexture.h"
 #include <Renderer3D.h>
+#include <array>
 
 // All the benefits of enum class, without having to cast to the type :)
-namespace DeferredPass { enum e : u32 {
+namespace DeferredOutput { enum e : u32 {
     Color, Normal, Position,
     Count
 };}
 
-namespace TonemapPass { enum e : u32 {
+namespace LightingOutput { enum e : u32 {
     Color,
     Count
 };}
+
+template <typename E, const usize C>
+struct RenderPass {
+    std::unique_ptr<E> effect;
+    std::unique_ptr<DescriptorHeap> resources;
+    std::unique_ptr<DescriptorHeap> renders;
+    std::array<RenderTexture, C> textures;
+
+    void InitDescs(ID3D12Device* command_list, usize width, usize height) {
+        for every(index, C) {
+        	textures[index].Init(
+        	    command_list, 
+        	    resources->GetCpuHandle(index),
+        	    renders->GetCpuHandle(index),
+        	    width,
+        	    height 
+        	);
+        }
+    }
+
+    void SetAsInput(ID3D12GraphicsCommandList* command_list) {
+    	ID3D12DescriptorHeap* heaps[] = { resources->Heap() };
+    	command_list->SetDescriptorHeaps(_countof(heaps), heaps);
+
+        for every(index, C) {
+			textures[index].TransitionTo(command_list, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        }
+    }
+
+    void SetAsOutput(ID3D12GraphicsCommandList* command_list) {
+        std::array<CD3DX12_CPU_DESCRIPTOR_HANDLE, C> descriptors;
+        for every(index, C) {
+            descriptors[index] = renders->GetCpuHandle(index);
+        }
+
+        command_list->OMSetRenderTargets(C, descriptors.data(), FALSE, 0);
+
+        for every(index, C) {
+			textures[index].TransitionTo(command_list, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        }
+    }
+
+    void SetAsOutput(ID3D12GraphicsCommandList* command_list, const CD3DX12_CPU_DESCRIPTOR_HANDLE dsvDescriptor) {
+        std::array<CD3DX12_CPU_DESCRIPTOR_HANDLE, C> descriptors;
+        for every(index, C) {
+            descriptors[index] = renders->GetCpuHandle(index);
+        }
+
+        command_list->OMSetRenderTargets(C, descriptors.data(), FALSE, &dsvDescriptor);
+
+        for every(index, C) {
+			textures[index].TransitionTo(command_list, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        }
+    }
+
+    void ClearRenderTargetViews(ID3D12GraphicsCommandList* command_list) {
+        for every(index, C) {
+            D3D12_CPU_DESCRIPTOR_HANDLE handle = renders->GetCpuHandle(index);
+            Vec4 clear_color = textures[index].m_clearColor;
+            command_list->ClearRenderTargetView(handle, clear_color, 0, 0);
+        }
+    }
+
+    void CreateHeaps(ID3D12Device* device) {
+   		resources = std::make_unique<DescriptorHeap>(
+   		    device, C
+   		);
+		
+   		renders = std::make_unique<DescriptorHeap>(
+   		    device,
+   		    D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
+   		    D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+            C
+   		);
+    }
+};
 
 //NOTE(sean): A lot of this implementation is reverse-engineered based on what LSpriteRenderer does
 //The DirectXTK12 docs are super helpful for all of this as well :)
@@ -33,20 +110,12 @@ private:
     std::vector<DebugModel> m_debugModels;
     std::vector<ModelInstance> m_debugModelInstances;
 
-    std::unique_ptr<DeferredEffect> m_pDeferredEffect;
-    std::unique_ptr<LightingEffect> m_pLightingEffect;
     std::unique_ptr<TonemapEffect> m_pTonemapEffect;
+    RenderPass<DeferredEffect, DeferredOutput::Count> m_deferred;
+    RenderPass<LightingEffect, LightingOutput::Count> m_lighting;
 
     std::vector<GameModel> m_models;
     std::vector<ModelInstance> m_modelInstances;
-
-    std::unique_ptr<DescriptorHeap> m_pDeferredResourceDescs;
-    std::unique_ptr<DescriptorHeap> m_pDeferredRenderDescs;
-    std::vector<RenderTexture> m_deferredPassTextures;
-
-    std::unique_ptr<DescriptorHeap> m_pTonemapResourceDescs;
-    std::unique_ptr<DescriptorHeap> m_pTonemapRenderDescs;
-    std::vector<RenderTexture> m_tonemapPassTextures;
 
 public:
     bool m_screenShot = false; // TODO(sean): implement

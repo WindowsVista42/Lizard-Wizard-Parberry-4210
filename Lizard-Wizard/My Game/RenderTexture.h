@@ -23,12 +23,9 @@ struct RenderTexture {
     );
 
     void TransitionTo(ID3D12GraphicsCommandList* command_list, D3D12_RESOURCE_STATES after_state);
-    void PushTransition(ID3D12GraphicsCommandList* command_list, D3D12_RESOURCE_STATES after_state);
-    void PopTransition(ID3D12GraphicsCommandList* command_list);
 
     Microsoft::WRL::ComPtr<ID3D12Resource> m_resource;
     D3D12_RESOURCE_STATES m_state;
-    D3D12_RESOURCE_STATES m_pop_state;
     D3D12_CPU_DESCRIPTOR_HANDLE m_srvDescriptor;
     D3D12_CPU_DESCRIPTOR_HANDLE m_rtvDescriptor;
     DXGI_FORMAT m_format;

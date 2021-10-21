@@ -56,14 +56,10 @@ LightingEffect::LightingEffect(
     pipeline_state_desc.CreatePipelineState(device, m_rootSignature.Get(), vs, ps, m_pso.ReleaseAndGetAddressOf());
 }
 
-void LightingEffect::SetTextures(
-    D3D12_GPU_DESCRIPTOR_HANDLE color_texture,
-    D3D12_GPU_DESCRIPTOR_HANDLE normal_texture,
-    D3D12_GPU_DESCRIPTOR_HANDLE position_texture
-) {
-    m_colorTexture = color_texture;
-    m_normalTexture = normal_texture;
-    m_positionTexture = position_texture;
+void LightingEffect::SetTextures(DescriptorHeap* textures) {
+    m_colorTexture = textures->GetGpuHandle(DeferredOutput::Color);
+    m_normalTexture = textures->GetGpuHandle(DeferredOutput::Color);
+    m_positionTexture = textures->GetGpuHandle(DeferredOutput::Color);
 }
 
 //TODO(sean): update this to the right implementation

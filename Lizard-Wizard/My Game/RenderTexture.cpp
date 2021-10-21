@@ -95,19 +95,3 @@ void RenderTexture::TransitionTo(
     TransitionResource(command_list, m_resource.Get(), m_state, after_state);
     m_state = after_state;
 }
-
-void RenderTexture::PushTransition(
-    ID3D12GraphicsCommandList* command_list,
-    D3D12_RESOURCE_STATES after_state
-) {
-    TransitionResource(command_list, m_resource.Get(), m_state, after_state);
-    m_pop_state = m_state;
-    m_state = after_state;
-}
-
-void RenderTexture::PopTransition(
-    ID3D12GraphicsCommandList* command_list
-) {
-    TransitionResource(command_list, m_resource.Get(), m_state, m_pop_state);
-    m_state = m_pop_state;
-}

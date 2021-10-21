@@ -27,10 +27,10 @@ TonemapEffect::TonemapEffect(
         D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
         D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
 
-    CD3DX12_DESCRIPTOR_RANGE texture_range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+    CD3DX12_DESCRIPTOR_RANGE texture_range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, LightingOutput::Count, 0);
 
     CD3DX12_ROOT_PARAMETER root_parameters[PPDescriptors::Count] = {};
-    root_parameters[PPDescriptors::InputSRVs].InitAsDescriptorTable(1, &texture_range, D3D12_SHADER_VISIBILITY_PIXEL);
+    root_parameters[PPDescriptors::InputSRVs].InitAsDescriptorTable(LightingOutput::Count, &texture_range, D3D12_SHADER_VISIBILITY_PIXEL);
     root_parameters[PPDescriptors::ConstantBuffer].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_PIXEL);
 
     D3D12_STATIC_SAMPLER_DESC static_sampler_desc = {};
@@ -56,10 +56,8 @@ TonemapEffect::TonemapEffect(
     pipeline_state_desc.CreatePipelineState(device, m_rootSignature.Get(), vs, ps, m_pso.ReleaseAndGetAddressOf());
 }
 
-void TonemapEffect::SetTextures(
-    D3D12_GPU_DESCRIPTOR_HANDLE color_texture
-) {
-    m_colorTexture = color_texture;
+void TonemapEffect::SetTextures(DescriptorHeap* textures) {
+    m_colorTexture = textures->GetGpuHandle(LightingOutput::Color);
 }
 
 //TODO(sean): update this to the right implementation

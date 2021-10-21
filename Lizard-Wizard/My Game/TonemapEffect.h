@@ -14,7 +14,7 @@ public:
     );
 
     void Apply(ID3D12GraphicsCommandList* command_list) override;
-    void SetTextures(D3D12_GPU_DESCRIPTOR_HANDLE color_texture);
+    void SetTextures(DescriptorHeap* textures);
 
 private:
     Microsoft::WRL::ComPtr<ID3D12Device> m_device;

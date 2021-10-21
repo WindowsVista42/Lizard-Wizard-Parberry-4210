@@ -31,24 +31,6 @@ void LoadVBO(const char* fpath, VBOData* model) {
     fclose(fp);
 }
 
-void CreateRenderTextureHeaps(
-    ID3D12Device* device,
-    std::unique_ptr<DescriptorHeap>* resource_descs,
-    std::unique_ptr<DescriptorHeap>* render_descs,
-    usize count
-) {
-   *resource_descs = std::make_unique<DescriptorHeap>(
-       device, count
-   );
-
-   *render_descs = std::make_unique<DescriptorHeap>(
-       device,
-       D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
-       D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
-       count
-   );
-}
-
 template <typename T>
 void CreateBufferAndView(T* data, usize count, GraphicsResource& resource, std::shared_ptr<D3D12_VERTEX_BUFFER_VIEW>& view) {
     isize size = sizeof(T) * count;
