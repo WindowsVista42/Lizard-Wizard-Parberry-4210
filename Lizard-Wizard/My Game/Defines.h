@@ -122,4 +122,16 @@ public:
     }
 };
 
+// SET YOUR DEFINES HERE
+
+namespace SoundIndex { enum e : u32 {
+    Clang, Grunt,
+    Size  //MUST BE LAST
+};}
+
+namespace ModelIndex { enum e : u32 {
+    Cube, Suzanne,
+    Count // keep this last
+};}
+
 #endif

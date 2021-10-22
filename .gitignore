@@ -356,3 +356,5 @@ MigrationBackup/
 Lizard-Wizard/Media/
 Lizard-Wizard/Tools/*.exe
 
+*.png
+

@@ -4,7 +4,6 @@
 #include "Game.h"
 #include "Math.h"
 #include "Renderer.h"
-#include "GameDefines.h"
 #include "SpriteRenderer.h"
 #include "ComponentIncludes.h"
 #include "PhysicsManager.h"
@@ -31,15 +30,13 @@ static ModelInstance model_instance;
 
 static bool flycam_enabled = false;
 static bool debug_rendering_enabled = true;
+static u32 render_mode = 3;
 
-CGame::~CGame(){
-  delete m_pObjectManager;
-}
+CGame::~CGame() {}
 
 /// Create the renderer and the object manager, load images and sounds, and
 /// begin the game.
-/// 
-void CGame::Initialize(){
+void CGame::Initialize() {
     m_pRenderer = new Renderer();
     m_pRenderer->Initialize();
   
@@ -47,7 +44,6 @@ void CGame::Initialize(){
     LoadModels(); //load models from xml file list
 
     // Create Managers
-    m_pObjectManager = new CObjectManager; //set up the object manager
     m_pPhysicsManager = new PhysicsManager();
     m_pProjectileManager = new ProjectileManager(); // set up projectile manager
     m_pGenerationManager = new GenerationManager(); // sEts up the generation manager
@@ -86,29 +82,6 @@ void CGame::Initialize(){
         }
     }
 
-    //NOTE(sean): testing debug model loading
-    //getting this to work will be pretty similar to actual 3d models
-    {
-        const VertexPC verts[9] = {
-            // position and color
-            { {{-1.f, -1.f, -1.f, 0.f }}, {{1.0, 1.0, 1.0, 1.0}} },
-            { {{ 1.f, -1.f, -1.f, 0.f }}, {{1.0, 1.0, 1.0, 1.0}} },
-            { {{ 1.f, -1.f,  1.f, 0.f }}, {{1.0, 1.0, 1.0, 1.0}} },
-            { {{-1.f, -1.f,  1.f, 0.f }}, {{1.0, 1.0, 1.0, 1.0}} },
-            { {{-1.f,  1.f, -1.f, 0.f }}, {{1.0, 1.0, 1.0, 1.0}} },
-            { {{ 1.f,  1.f, -1.f, 0.f }}, {{1.0, 1.0, 1.0, 1.0}} },
-            { {{ 1.f,  1.f,  1.f, 0.f }}, {{1.0, 1.0, 1.0, 1.0}} },
-            { {{-1.f,  1.f,  1.f, 0.f }}, {{1.0, 1.0, 1.0, 1.0}} },
-            { {{ 1.f,  3.f,  1.f, 0.f }}, {{1.0, 1.0, 1.0, 1.0}} }
-        };
-
-        // this is probably 0 in this contrived case
-        u32 handle = m_pRenderer->AddDebugModel(&DebugModel(verts, 9, DebugModelType::TRIANGLE_LIST));
-        model_instance = ModelInstance(handle);
-        Vector3 scale = { 100.0, 100.0, 100.0 };
-        model_instance.m_worldMatrix = MoveScaleMatrix(Vector3::Zero, scale);
-    }
-
     // Lets bind this action to to the user's mouse. For key values : https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
     m_leftClick = CustomBind::New(VK_LBUTTON);
     m_rightClick = CustomBind::New(VK_RBUTTON);
@@ -124,7 +97,9 @@ void CGame::Initialize(){
 /// message in a dialog box.
 
 void CGame::LoadModels() {
-    m_pRenderer->LoadAllModels();
+    //m_pRenderer->LoadDebugModel("cube", Colors::Peru, DebugModelIndex::);
+    m_pRenderer->LoadModel("cube", ModelIndex::Cube);
+    m_pRenderer->LoadModel("suzanne", ModelIndex::Suzanne);
 }
 
 void CGame::LoadImages(){
@@ -141,24 +116,21 @@ void CGame::LoadImages(){
 /// Initialize the audio player and load game sounds.
 
 void CGame::LoadSounds(){
-  m_pAudio->Initialize(eSound::Size);
-  m_pAudio->Load(eSound::Grunt, "grunt");
-  m_pAudio->Load(eSound::Clang, "clang");
+  m_pAudio->Initialize(SoundIndex::Size);
+  m_pAudio->Load(SoundIndex::Grunt, "grunt");
+  m_pAudio->Load(SoundIndex::Clang, "clang");
 }
 
 /// Release all of the DirectX12 objects by deleting the renderer.
 
-void CGame::Release(){
-  delete m_pRenderer;
-  m_pRenderer = nullptr; //for safety
+void CGame::Release() {
+    delete m_pRenderer;
 }
 
 /// Ask the object manager to create the game objects. There's only one in this
 /// game, the rotating wheel o' text centered at the center of the window.
 
-void CGame::CreateObjects(){
-  m_pObjectManager->create(eSprite::TextWheel, m_vWinCenter); 
-}
+void CGame::CreateObjects(){}
 
 /// Call this function to start a new game. This should be re-entrant so that
 /// you can restart a new game without having to shut down and restart the
@@ -166,7 +138,6 @@ void CGame::CreateObjects(){
 /// manager and create some new ones.
 
 void CGame::BeginGame(){  
-  m_pObjectManager->clear(); //clear old objects
   CreateObjects(); //create new objects 
 }
 
@@ -189,7 +160,7 @@ void CGame::InputHandler() {
         btVector3 jumpVector = {0, 5000, 0};
         pBody->applyCentralImpulse(jumpVector);
     }
-
+Vec3(1.0, 1.0, 1.0);
     if (m_pKeyboard->TriggerUp(VK_SPACE)) //play sound
         //m_pAudio->play(eSound::Grunt);
 
@@ -207,12 +178,20 @@ void CGame::InputHandler() {
     if (m_pKeyboard->Down(VK_DOWN))
         pitch += sensitivity;
 
+    // Flycam toggle
     if (m_pKeyboard->TriggerDown('F')) {
         flycam_enabled = !flycam_enabled;
     }
 
+    // Render mode toggle
     if (m_pKeyboard->TriggerDown('G')) {
-        debug_rendering_enabled = !debug_rendering_enabled;
+        render_mode %= 3;
+        render_mode += 1;
+    }
+
+    // Print screenshot button thing that will do stuff
+    if (m_pKeyboard->TriggerDown('P')) {
+        m_pRenderer->m_screenShot = true;
     }
 
     {
@@ -270,7 +249,7 @@ void CGame::InputHandler() {
             }
         }
     }
-
+Vec3(1.0, 1.0, 1.0);
     //TODO(sean): Ignore input if user has just refocused on the window
     if(m_pRenderer->GetHwnd() == GetFocus()) { // check if focused window is us
         // I see you looking at 
@@ -336,7 +315,6 @@ void CGame::DrawFrameRateText(){
 /// Ask the object manager to draw the game objects. The renderer is notified
 /// of the start and end of the frame so that it can let Direct3D do its
 /// pipelining jiggery-pokery.
-
 void CGame::RenderFrame() {
     //NOTE(sean): Everything out here will technically be known
     // *before* we start rendering, so I dont want to give the impression
@@ -369,53 +347,69 @@ void CGame::RenderFrame() {
     m_pRenderer->BeginFrame();
 
 
-    m_pRenderer->BeginDrawing();
-    {
-        //NOTE(sean): Model instance rendering test.
-        // You can use this as a baseline for how to render real 3d models.
+    // 0x01
+    // 0x10
+    // 0x11
+
+    if (render_mode & 1) {
+        m_pRenderer->BeginDrawing();
         {
-            ModelInstance instance = {};
-            instance.m_modelIndex = (u32)ModelType::Cube;
-            f32 xoff = 400.0f * cosf(m_pTimer->GetTime());
-            f32 zoff = 400.0f * sinf(m_pTimer->GetTime());
-            instance.m_worldMatrix = MoveScaleMatrix(Vector3(xoff, 100.0f, zoff), Vector3(100.0f, 100.0f, 100.0f));
-            m_pRenderer->DrawModelInstance(&instance);
-        }
+            //NOTE(sean): Model instance rendering test.
+            // You can use this as a baseline for how to render real 3d models.
+            {
+                ModelInstance instance = {};
+                instance.m_modelIndex = (u32)ModelIndex::Cube;
+                f32 xoff = 400.0f * cosf(m_pTimer->GetTime());
+                f32 zoff = 400.0f * sinf(m_pTimer->GetTime());
+                instance.m_worldMatrix = MoveScaleMatrix(Vector3(xoff, 100.0f, zoff), Vector3(100.0f, 100.0f, 100.0f));
+                m_pRenderer->DrawModelInstance(&instance);
+            }
 
-        //NOTE(sean): test for rendering model instances onto bullet objects
-        {
-            for every(j, m_pDynamicsWorld->getNumCollisionObjects()) {
-                btCollisionObject* obj = m_pDynamicsWorld->getCollisionObjectArray()[j];
-                btCollisionShape* shape = obj->getCollisionShape();
-                btRigidBody* body = btRigidBody::upcast(obj);
-                btTransform trans;
+            //NOTE(sean): test for rendering model instances onto bullet objects
+            {
+                for every(j, m_pDynamicsWorld->getNumCollisionObjects()) {
+                    btCollisionObject* obj = m_pDynamicsWorld->getCollisionObjectArray()[j];
+                    btCollisionShape* shape = obj->getCollisionShape();
+                    btRigidBody* body = btRigidBody::upcast(obj);
+                    btTransform trans;
 
-                if (body && body->getMotionState()) {
-                    body->getMotionState()->getWorldTransform(trans);
-                }
-                else {
-                    trans = obj->getWorldTransform();
-                }
+                    if (body && body->getMotionState()) {
+                        body->getMotionState()->getWorldTransform(trans);
+                    }
+                    else {
+                        trans = obj->getWorldTransform();
+                    }
 
-                switch (shape->getShapeType()) {
-                case(BT_SHAPE_TYPE_BOX): {} break;
+                    switch (shape->getShapeType()) {
+                    case(BT_SHAPE_TYPE_BOX): {
+                        btBoxShape* castratedObject = reinterpret_cast<btBoxShape*>(shape);
 
-                case(BT_SHAPE_TYPE_CAPSULE): {} break;
+                        ModelInstance instance = {};
+                        instance.m_modelIndex = (u32)ModelIndex::Cube;
+                        instance.m_worldMatrix = MoveScaleMatrix(trans.getOrigin(), castratedObject->getHalfExtentsWithMargin());
+                        m_pRenderer->DrawModelInstance(&instance);
+                    } break;
 
-                default: {
-                    ModelInstance instance = {};
-                    instance.m_modelIndex = (u32)ModelType::Cube;
-                    instance.m_worldMatrix = MoveScaleMatrix(trans.getOrigin(), Vector3(10.0f, 10.0f, 10.0f));
-                    m_pRenderer->DrawModelInstance(&instance);
-                } break;
+                    case(BT_SHAPE_TYPE_CAPSULE): {} break;
+
+                    default: {
+                        ModelInstance instance = {};
+                        instance.m_modelIndex = (u32)ModelIndex::Cube;
+                        instance.m_worldMatrix = MoveScaleMatrix(trans.getOrigin(), Vector3(10.0f, 10.0f, 10.0f));
+                        m_pRenderer->DrawModelInstance(&instance);
+                    } break;
+                    }
                 }
             }
+
         }
-
+        m_pRenderer->EndDrawing();
+    } else {
+        m_pRenderer->BeginDrawing();
+        m_pRenderer->EndDrawing();
     }
-    m_pRenderer->EndDrawing();
 
-    if (debug_rendering_enabled) {
+    if (render_mode & 2) {
         m_pRenderer->BeginDebugDrawing();
         {
             //NOTE(sean): the reason batching all of this together works, is that we're doing all the vertex calculations on the cpu instead of the gpu
@@ -471,6 +465,10 @@ void CGame::RenderFrame() {
             }
             m_pRenderer->EndDebugBatch();
         }
+
+        m_pRenderer->tint_color = Vec3(1.0f, 1.0f, 1.0f);
+        m_pRenderer->blur_amount = 0.0f;
+        m_pRenderer->saturation_amount = 1.0f;
         m_pRenderer->EndDebugDrawing();
     }
 
@@ -487,7 +485,6 @@ void CGame::ProcessFrame(){
     InputHandler(); //handle keyboard input
     m_pAudio->BeginFrame(); //notify audio player that frame has begun
     m_pTimer->Tick([&]() { //all time-dependent function calls should go here
-        m_pObjectManager->move(); //move all objects
         m_pDynamicsWorld->stepSimulation(m_pTimer->GetFrameTime(), 10); // Step Physics
     });
     RenderFrame(); //render a frame of animation

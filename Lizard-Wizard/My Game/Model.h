@@ -29,11 +29,6 @@ struct ModelInstance {
     ModelInstance(u32 instance);
 };
 
-enum class ModelType: u32 {
-    Cube,
-    Count // keep this last
-};
-
 struct GameModel {
     u32 index_count;
     GraphicsResource vertex_buffer;

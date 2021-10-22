@@ -165,7 +165,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Common.cpp" />
     <ClCompile Include="GenerationManager.cpp" />
     <ClCompile Include="Helpers.cpp" />
     <ClCompile Include="CustomBind.cpp" />
@@ -178,14 +177,11 @@
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Object.cpp" />
-    <ClCompile Include="ObjectManager.cpp" />
     <ClCompile Include="RenderTexture.cpp" />
     <ClCompile Include="StagedBuffer.cpp" />
     <ClCompile Include="TonemapEffect.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Common.h" />
     <ClInclude Include="GenerationManager.h" />
     <ClInclude Include="GraphicsHelpers.h" />
     <ClInclude Include="Helpers.h" />
@@ -199,9 +195,6 @@
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Defines.h" />
     <ClInclude Include="Game.h" />
-    <ClInclude Include="GameDefines.h" />
-    <ClInclude Include="Object.h" />
-    <ClInclude Include="ObjectManager.h" />
     <ClInclude Include="RenderTexture.h" />
     <ClInclude Include="StagedBuffer.h" />
     <ClInclude Include="TonemapEffect.h" />

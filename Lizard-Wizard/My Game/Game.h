@@ -1,17 +1,16 @@
 /// \file Game.h
 /// \brief Interface for the game class CGame.
 
-#ifndef __L4RC_GAME_GAME_H__
-#define __L4RC_GAME_GAME_H__
+#ifndef GAME_H
+#define GAME_H
 
 #include "Component.h"
-#include "Common.h"
-#include "ObjectManager.h"
 #include "PhysicsManager.h"
 #include "ProjectileManager.h"
 #include "GenerationManager.h"
 #include "Settings.h"
 #include "CustomBind.h"
+#include "Renderer.h"
 #include <vector>
 
 // Bullet3 Inclusions
@@ -29,9 +28,8 @@
 /// any destructors are run.
 
 class CGame:
-	public LComponent, 
-	public LSettings,
-	public CCommon
+    public LComponent, 
+    public LSettings
 { 
 private:
     // Mouse Binds
@@ -42,10 +40,6 @@ private:
     ProjectileManager* m_pProjectileManager;
     PhysicsManager* m_pPhysicsManager;
     GenerationManager* m_pGenerationManager;
-
-
-    //StagedBuffer m_physicsScratch;
-    
 
     // UserInput Vector
     //CustomBind m_currentBinds;
@@ -68,7 +62,9 @@ private:
     void DrawFrameRateText(); ///< Draw frame rate text to screen.
 
 public:
-    // Bullet3 Declarations
+    Renderer* m_pRenderer; ///< Pointer to renderer.
+
+    // Bullet3 Declarationsstatic 
     btAlignedObjectArray<btCollisionShape*> m_pCollisionShapes;
     btDiscreteDynamicsWorld* m_pDynamicsWorld;
     std::vector<RayProjectile> m_currentRayProjectiles;

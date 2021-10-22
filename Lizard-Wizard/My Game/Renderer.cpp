@@ -4,12 +4,13 @@
 #include <iostream>
 #include "Keyboard.h"
 #include "GraphicsHelpers.h"
+#include <ScreenGrab.h>
 
 Renderer::Renderer():
     LRenderer3D(),
     m_pCamera(new LBaseCamera),
     m_debugScratch(16 * 1024), // 16k
-    m_models((u32)ModelType::Count)
+    m_models(ModelIndex::Count)
 {
     //NOTE(sean): Windows window stuff
     m_f32BgColor = Colors::Black; // NOTE(sean): set the clear color
@@ -29,7 +30,6 @@ Renderer::Renderer():
     
     m_pCamera->SetPerspective(aspect, fov_radians, near_clip, far_clip);
     m_pCamera->MoveTo(Vector3(0.0f, 0.0f, 0.0f));
-
 }
 
 Renderer::~Renderer() {
@@ -144,6 +144,25 @@ void Renderer::Initialize() {
     }
 }
 
+void Renderer::BetterScreenShot() {
+    SYSTEMTIME st;
+    GetSystemTime(&st);
+
+    const std::wstring file_name =
+        L"Lizard Wizard " +
+        std::to_wstring(st.wYear) + L"." + std::to_wstring(st.wMonth) + L"." + std::to_wstring(st.wDay) + L" " +
+        std::to_wstring(st.wHour) + L"." + std::to_wstring(st.wMinute) + L"." + std::to_wstring(st.wSecond) + L"." + std::to_wstring(st.wMilliseconds) + L".png";
+
+    SaveWICTextureToFile(
+        m_pDeviceResources->GetCommandQueue(),
+        m_pDeviceResources->GetRenderTarget(),
+        GUID_ContainerFormatPng,
+        file_name.c_str(),
+        D3D12_RESOURCE_STATE_PRESENT,
+        D3D12_RESOURCE_STATE_PRESENT
+    );
+}
+
 void Renderer::BeginFrame() {
     //NOTE(sean): Tell DirectX that we want to create a CommandList for the GPU
     m_pDeviceResources->Prepare();
@@ -162,7 +181,7 @@ void Renderer::EndFrame() {
     //NOTE(sean): some internal parberry code, I don't know what it does,
     // but it just saves a screenshot and should work despite all of my changes.
     if (m_screenShot) {
-        SaveScreenShot();
+        BetterScreenShot();
         m_screenShot = false;
     }
 
@@ -212,6 +231,7 @@ void Renderer::BeginDrawing() {
     CD3DX12_CPU_DESCRIPTOR_HANDLE dsvDescBackBuffer = m_pDeviceResources->GetDepthStencilView();
     m_deferred.SetAsOutput(m_pCommandList, dsvDescBackBuffer);
     m_deferred.ClearRenderTargetViews(m_pCommandList);
+    m_pCommandList->ClearRenderTargetView(m_pDeviceResources->GetRenderTargetView(), m_f32BgColor, 0, 0);
     m_pCommandList->ClearDepthStencilView(dsvDescBackBuffer, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, 0);
 }
 
@@ -221,6 +241,7 @@ void RenderPostProcess(ID3D12GraphicsCommandList* command_list, RenderPass<A, B>
     output->SetAsOutput(command_list);
     output->effect->SetTextures(input->resources.get());
     output->effect->Apply(command_list);
+    command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     command_list->DrawInstanced(3, 1, 0, 0);
 }
 
@@ -237,6 +258,7 @@ void Renderer::EndDrawing() {
         m_pCommandList->OMSetRenderTargets(1, &m_pDeviceResources->GetRenderTargetView(), FALSE, 0);
 
         m_pTonemapEffect->SetTextures(m_lighting.resources.get());
+        m_pTonemapEffect->UpdateConstants(m_nWinWidth, m_nWinHeight, tint_color, blur_amount, saturation_amount);
 
         m_pTonemapEffect->Apply(m_pCommandList);
         m_pCommandList->DrawInstanced(3, 1, 0, 0);
@@ -551,11 +573,6 @@ u32 Renderer::AddDebugModel(DebugModel* model) {
     return (u32)m_debugModels.size() - 1;
 }
 
-void Renderer::LoadAllModels() {
-    LoadDebugModel("suzanne", Colors::Peru);
-    LoadModel("suzanne", ModelType::Cube);
-}
-
 /// Draw an instance of a DebugModel.
 /// For example, you might want to render 3 enemies of the same type.
 /// Instead of storing an entire copy of the model in each enemy, we store the model once,
@@ -659,14 +676,16 @@ u32 Renderer::LoadDebugModel(const char* name, Vec4 color) {
 
 /// Load a model.
 /// Models are assumed to be VBO (.vbo) files.
-void Renderer::LoadModel(const char* name, ModelType model_type) {
+void Renderer::LoadModel(const char* name, u32 model_index) {
+    if (model_index > m_models.size()) { ABORT("Model index exceeds total number of models!"); }
+
     std::string fpath = XMLFindItem(m_pXmlSettings, "models", "model", name);
     ABORT_EQ_FORMAT(fpath, "", "Unable to find \"%s\\%s\\%s\"", "models", "model", name);
 
     VBOData vbo_data;
     LoadVBO(fpath.c_str(), &vbo_data);
 
-    GameModel* pmodel = &m_models[(u32)model_type];
+    GameModel* pmodel = &m_models[model_index];
     pmodel->index_count = vbo_data.index_count;
 
     u32* indices = new u32[vbo_data.index_count];

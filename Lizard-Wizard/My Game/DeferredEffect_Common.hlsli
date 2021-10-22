@@ -9,7 +9,7 @@
 "    DENY_HULL_SHADER_ROOT_ACCESS ),"\
 "CBV(b0)" \
 
-cbuffer GameEffectConstants : register(b0) {
+cbuffer Constants : register(b0) {
     float4x4 WorldViewProjection;
     float4x4 World;
 }

@@ -4,8 +4,6 @@
 // Inclusions
 #include <stdio.h>
 #include "Component.h"
-#include "Common.h"
-#include "ObjectManager.h"
 #include "Settings.h"
 #include "CustomBind.h"
 #include <vector>

@@ -19,7 +19,15 @@ Texture2D<float4> Color : register(t0);
 
 sampler Sampler : register(s0);
 
-cbuffer GameEffectConstants : register(b0) {}
+cbuffer Constants : register(b0) {
+    uint DimensionsX;
+    uint DimensionsY;
+    float TintR;
+    float TintG;
+    float TintB;
+    float Glasses;
+    float Saturation;
+}
 
 struct PixelOutput {
     float4 Color : SV_TARGET0;

@@ -117,8 +117,14 @@ private:
     std::vector<GameModel> m_models;
     std::vector<ModelInstance> m_modelInstances;
 
+    void BetterScreenShot();
+
 public:
     bool m_screenShot = false; // TODO(sean): implement
+
+    Vec3 tint_color;
+    f32 blur_amount;
+    f32 saturation_amount;
 
     // I dont like putting this behind walls because it doesnt stop people from fucking with it
     LBaseCamera* m_pCamera = nullptr;
@@ -155,8 +161,6 @@ public:
     void DrawDebugAABB(const BoundingBox box, const Vec4 color);
     void DrawDebugOBB(const BoundingOrientedBox obb, const Vec4 color);
     void DrawDebugSphere(const BoundingSphere sphere, const u32 segments, const Vec4 color);
-    //void DrawDebugCylinder(const BoundingSphere sphere, const XMVECTORF32 color);
-    //void DrawDebugGrid(const Vec3 center, const Vec3 orientation, const f32 length, const f32 width, const u32 length_segments, const u32 width_segments, const XMVECTORF32 color);
     void DrawDebugCapsule(const Vec3 origin, const f32 radius, const f32 height, const u32 segments, const Vec4 color);
     void DrawDebugGrid(const Vec3 x_axis, const Vec3 y_axis, const Vec3 origin, const u32 length_segments, const u32 width_segments, const Vec4 color);
 
@@ -165,7 +169,6 @@ public:
     //NOTE(sean): these are self-contained, no shimmying into a batch
     u32 LoadDebugModel(const char* name, Vec4 color);
     u32 AddDebugModel(DebugModel* model);
-    void LoadAllModels();
 
     void DrawDebugLineModel(DebugModel* model);
     void DrawDebugTriangleModel(DebugModel* model);
@@ -179,7 +182,7 @@ public:
     u32 GetResolutionHeight();
 
     void DrawModelInstance(ModelInstance* instance);
-    void LoadModel(const char* name, ModelType model_type);
+    void LoadModel(const char* name, u32 model_index);
 
     //TODO(sean): Implement this
     //NOTE(sean): Frustum Culling -- Don't render things behind the cameras near clip plane
