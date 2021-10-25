@@ -57,12 +57,7 @@ void CGame::Initialize() {
     m_pProjectileManager->InitializeProjectiles(m_pCollisionShapes, &m_currentRayProjectiles, m_pDynamicsWorld);
     m_pGenerationManager->InitializeGeneration(m_pPhysicsManager);
 
-    // Ground Collider
-    {
-        m_pPhysicsManager->CreateBoxObject(Vec3(3000.0f, 50.0f, 3000.0f), Vec3(0.0f, -10000.0f, 0.0f), 0.0f, 1.5f, 1);
-    }
-
-    // Player Rigidbody | (Note) : Create this second, as the player is currently indexed as [1] in the collision table.
+    // Player Rigidbody | (Note) : Create this first, as the player is currently indexed as [0] in the collision table.
     {
         m_pPhysicsManager->CreateCapsuleObject(100.0f, 250.0f, Vec3(0, 1500, 0), 1.0f, 0.5f, 3);
     }
@@ -170,7 +165,7 @@ void CGame::InputHandler() {
         m_bDrawFrameRate = !m_bDrawFrameRate;
 
     if (m_pKeyboard->TriggerDown(VK_SPACE) && !flycam_enabled) {
-        btCollisionObject* pObj = m_pDynamicsWorld->getCollisionObjectArray()[1];
+        btCollisionObject* pObj = m_pDynamicsWorld->getCollisionObjectArray()[0];
         pObj->activate(true);
         btRigidBody* pBody = btRigidBody::upcast(pObj);
         btVector3 jumpVector = {0, 5000, 0};
@@ -245,7 +240,7 @@ Vec3(1.0, 1.0, 1.0);
             delta_movement.Normalize();
 
             if (!flycam_enabled) {
-                btCollisionObject* pObj = m_pDynamicsWorld->getCollisionObjectArray()[1];
+                btCollisionObject* pObj = m_pDynamicsWorld->getCollisionObjectArray()[0];
                 pObj->activate(true);
                 btRigidBody* pBody = btRigidBody::upcast(pObj);
                 delta_movement *= 17500.0;
@@ -289,11 +284,11 @@ Vec3(1.0, 1.0, 1.0);
         m_rightClick.UpdateState();
 
         if (m_leftClick.pressed) {
-            m_pProjectileManager->GenerateSimProjectile(m_pDynamicsWorld->getCollisionObjectArray()[1], m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), 3, 4.0, 5.0, Colors::IndianRed, true);
+            m_pProjectileManager->GenerateSimProjectile(m_pDynamicsWorld->getCollisionObjectArray()[0], m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), 3, 4.0, 5.0, Colors::IndianRed, true);
         }
 
         if (m_rightClick.pressed) {
-            m_pProjectileManager->GenerateRayProjectile(m_pDynamicsWorld->getCollisionObjectArray()[1], m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), 3, 2, 5.0, Colors::IndianRed, false, true);
+            m_pProjectileManager->GenerateRayProjectile(m_pDynamicsWorld->getCollisionObjectArray()[0], m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), 3, 2, 5.0, Colors::IndianRed, false, true);
         }
 
         Vector2 delta = { (f32)(cursor_pos.x - center.x), (f32)(cursor_pos.y - center.y) };
@@ -340,7 +335,7 @@ void CGame::RenderFrame() {
     m_pRenderer->m_pCamera->SetPitch(pitch);
 
     if (!flycam_enabled) {
-        btCollisionObject* obj = m_pDynamicsWorld->getCollisionObjectArray()[1];
+        btCollisionObject* obj = m_pDynamicsWorld->getCollisionObjectArray()[0];
         btCollisionShape* shape = obj->getCollisionShape();
         btRigidBody* body = btRigidBody::upcast(obj);
         btTransform trans;
