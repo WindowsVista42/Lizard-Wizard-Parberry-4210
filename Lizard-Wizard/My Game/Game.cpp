@@ -75,11 +75,27 @@ void CGame::Initialize() {
     // Room Collider
     {
         Vec3 roomPos = Vec3(0, 0, 0);
-        for (int i = 0; i < 3; ++i)
+        for (int i = 0; i < 4; ++i)
         {
-            m_pGenerationManager->GenerateRoom(roomPos);
-            roomPos.x = roomPos.x + 3000.0f;
+            if (i == 0)
+            {
+                m_pGenerationManager->CreateNormalRoom(roomPos);
+            }
+            
+            if(i>0)
+            {
+                m_pGenerationManager->CreateHallway(roomPos);
+                roomPos.x = roomPos.x + 6000.0f;
+            }
         }
+
+        roomPos = Vec3(-10000.0f, 0, -10000.0f);
+        m_pGenerationManager->CreateBossRoom(roomPos);
+
+        roomPos = Vec3(10000.0f, 0, 10000.0f);
+        m_pGenerationManager->CreateSpawnRoom(roomPos);
+
+
     }
 
     // Lets bind this action to to the user's mouse. For key values : https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes

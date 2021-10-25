@@ -22,7 +22,10 @@ struct Room {
 class GenerationManager {
 
 public:
-    void GenerateRoom(Vec3);
+    void CreateNormalRoom(Vec3);
+    void CreateBossRoom(Vec3);
+    void CreateSpawnRoom(Vec3);
+    void CreateHallway(Vec3);
     void GenerateRooms(const i32);
     void DestroyRooms();
     void InitializeGeneration(PhysicsManager*);
