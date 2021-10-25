@@ -358,10 +358,10 @@ void CGame::RenderFrame() {
             // You can use this as a baseline for how to render real 3d models.
             {
                 ModelInstance instance = {};
-                instance.m_modelIndex = (u32)ModelIndex::Cube;
+                instance.model = (u32)ModelIndex::Cube;
                 f32 xoff = 400.0f * cosf(m_pTimer->GetTime());
                 f32 zoff = 400.0f * sinf(m_pTimer->GetTime());
-                instance.m_worldMatrix = MoveScaleMatrix(Vector3(xoff, 100.0f, zoff), Vector3(100.0f, 100.0f, 100.0f));
+                instance.world = MoveScaleMatrix(Vector3(xoff, 100.0f, zoff), Vector3(100.0f, 100.0f, 100.0f));
                 m_pRenderer->DrawModelInstance(&instance);
             }
 
@@ -385,8 +385,8 @@ void CGame::RenderFrame() {
                         btBoxShape* castratedObject = reinterpret_cast<btBoxShape*>(shape);
 
                         ModelInstance instance = {};
-                        instance.m_modelIndex = (u32)ModelIndex::Cube;
-                        instance.m_worldMatrix = MoveScaleMatrix(trans.getOrigin(), castratedObject->getHalfExtentsWithMargin());
+                        instance.model = (u32)ModelIndex::Cube;
+                        instance.world = MoveScaleMatrix(trans.getOrigin(), castratedObject->getHalfExtentsWithMargin());
                         m_pRenderer->DrawModelInstance(&instance);
                     } break;
 
@@ -394,15 +394,15 @@ void CGame::RenderFrame() {
 
                     default: {
                         ModelInstance instance = {};
-                        instance.m_modelIndex = (u32)ModelIndex::Cube;
-                        instance.m_worldMatrix = MoveScaleMatrix(trans.getOrigin(), Vector3(10.0f, 10.0f, 10.0f));
+                        instance.model = (u32)ModelIndex::Cube;
+                        instance.world = MoveScaleMatrix(trans.getOrigin(), Vector3(10.0f, 10.0f, 10.0f));
                         m_pRenderer->DrawModelInstance(&instance);
                     } break;
                     }
                 }
             }
-
         }
+
         m_pRenderer->EndDrawing();
     } else {
         m_pRenderer->BeginDrawing();

@@ -24,9 +24,10 @@ public:
 
     //TODO(sean): state setting functions
     //Something to set textures, idk
-
+    void SetTexture(DescriptorHeap* textures, u32 index);
 private:
     enum Descriptors {
+        InputSRV,
         ConstantBuffer,
         Count
     };
@@ -42,7 +43,7 @@ private:
     XMMATRIX m_worldViewProjection;
     DirectX::GraphicsResource m_constantBuffer;
 
-    //TODO(sean): other state
+    D3D12_GPU_DESCRIPTOR_HANDLE m_colorTexture;
 };
 
 #endif

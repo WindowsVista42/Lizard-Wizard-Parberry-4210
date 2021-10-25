@@ -197,6 +197,7 @@
     <ClInclude Include="Game.h" />
     <ClInclude Include="RenderTexture.h" />
     <ClInclude Include="StagedBuffer.h" />
+    <ClInclude Include="Ecs.h" />
     <ClInclude Include="TonemapEffect.h" />
   </ItemGroup>
   <ItemGroup>

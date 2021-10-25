@@ -5,6 +5,7 @@
 #include "Keyboard.h"
 #include "GraphicsHelpers.h"
 #include <ScreenGrab.h>
+#include <BufferHelpers.h>
 
 Renderer::Renderer():
     LRenderer3D(),
@@ -212,6 +213,7 @@ void Renderer::BeginDebugDrawing() {
     };
 
     m_pCommandList->OMSetRenderTargets(_countof(rtvDescs), rtvDescs, FALSE, &dsvDescBackBuffer);
+    m_pCommandList->ClearDepthStencilView(dsvDescBackBuffer, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, 0);
 
     //NOTE(sean): we would normally clear here, but we don't want to do that,
     // because we want the debug lines to be rendered-over like normal, and
@@ -221,13 +223,14 @@ void Renderer::BeginDebugDrawing() {
 /// Begin rendering a debug frame.
 /// Put all DrawDebugXYZ() or other functions in between this and EndDebugFrame()
 void Renderer::EndDebugDrawing() {
-    //NOTE(sean): Unless we need to do some actual post-processing,
-    // this is a stub for now
+    //NOTE(sean): Stub for now
 }
 
 /// Begin rendering a frame.
 /// Put all DrawXYZ() or other functions in between this and EndFrame()
 void Renderer::BeginDrawing() {
+    ID3D12DescriptorHeap* heap[] = { m_pDescriptorHeap->Heap() };
+    m_pCommandList->SetDescriptorHeaps(1, heap);
     CD3DX12_CPU_DESCRIPTOR_HANDLE dsvDescBackBuffer = m_pDeviceResources->GetDepthStencilView();
     m_deferred.SetAsOutput(m_pCommandList, dsvDescBackBuffer);
     m_deferred.ClearRenderTargetViews(m_pCommandList);
@@ -235,8 +238,8 @@ void Renderer::BeginDrawing() {
     m_pCommandList->ClearDepthStencilView(dsvDescBackBuffer, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, 0);
 }
 
-template <typename A, const usize B, typename C, const usize D>
-void RenderPostProcess(ID3D12GraphicsCommandList* command_list, RenderPass<A, B>* input, RenderPass<C, D>* output) {
+template <typename A, const usize B, typename D, const usize E>
+void RenderPostProcess(ID3D12GraphicsCommandList* command_list, RenderPass<A, B>* input, RenderPass<D, E>* output) {
     input->SetAsInput(command_list);
     output->SetAsOutput(command_list);
     output->effect->SetTextures(input->resources.get());
@@ -248,6 +251,13 @@ void RenderPostProcess(ID3D12GraphicsCommandList* command_list, RenderPass<A, B>
 /// End Rendering a frame.
 /// Put all DrawXYZ() or other functions in between this and BeginFrame()
 void Renderer::EndDrawing() {
+    m_lighting.effect->SetLightCount(2);
+
+    m_lighting.effect->SetLightPosition(Vec4(500.0f, 200.0f, 0.0f, 0.0f), 0);
+    m_lighting.effect->SetLightColor(Vec4(0.0f, 1000.0f, 0.0f, 0.0f), 0);
+
+    m_lighting.effect->SetLightPosition(Vec4(2500.0f, 200.0f, 0.0f, 0.0f), 1);
+    m_lighting.effect->SetLightColor(Vec4(2000.0f, 0.0f, 0.0f, 0.0f), 1);
     RenderPostProcess(m_pCommandList, &m_deferred, &m_lighting);
 
     // Render Tonemap Effect
@@ -579,13 +589,13 @@ u32 Renderer::AddDebugModel(DebugModel* model) {
 /// then reference it with a "handle", in this case a bog-standard index into an array.
 /// To move, scasle, and rotate the model, change the world matrix in the instance.
 void Renderer::DrawDebugModelInstance(ModelInstance* instance) {
-    DebugModel* pModel = &m_debugModels[instance->m_modelIndex];
+    DebugModel* pModel = &m_debugModels[instance->model];
 
     switch (pModel->m_modelType) {
     case(DebugModelType::LINE_LIST): {
         BeginDebugLineBatch();
         {
-            m_pDebugLineEffect->SetWorld(instance->m_worldMatrix);
+            m_pDebugLineEffect->SetWorld(instance->world);
             m_pDebugLineEffect->Apply(m_pCommandList);
             DrawDebugLineModel(pModel);
         }
@@ -595,7 +605,7 @@ void Renderer::DrawDebugModelInstance(ModelInstance* instance) {
     case(DebugModelType::TRIANGLE_LIST): {
         BeginDebugTriangleBatch();
         {
-            m_pDebugTriangleEffect->SetWorld(instance->m_worldMatrix);
+            m_pDebugTriangleEffect->SetWorld(instance->world);
             m_pDebugTriangleEffect->Apply(m_pCommandList);
             DrawDebugTriangleModel(pModel);
         }
@@ -702,12 +712,13 @@ void Renderer::LoadModel(const char* name, u32 model_index) {
 
 void Renderer::DrawModelInstance(ModelInstance* instance) {
     //TODO(sean): check if this can be moved out when we finalize the debug and game drawing APIs
-    m_deferred.effect->SetWorld(instance->m_worldMatrix);
+    m_deferred.effect->SetWorld(instance->world);
     m_deferred.effect->SetView(XMLoadFloat4x4(&m_view));
+    m_deferred.effect->SetTexture(m_pDescriptorHeap.get(), 0);
 
     m_deferred.effect->Apply(m_pCommandList);
 
-    GameModel* pmodel = &m_models[instance->m_modelIndex];
+    GameModel* pmodel = &m_models[instance->model];
     m_pCommandList->IASetVertexBuffers(0, 1, pmodel->vertex_view.get());
     m_pCommandList->IASetIndexBuffer(pmodel->index_view.get());
 

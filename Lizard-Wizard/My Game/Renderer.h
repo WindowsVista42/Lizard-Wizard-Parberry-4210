@@ -11,6 +11,8 @@
 #include <Renderer3D.h>
 #include <array>
 
+#define MAX_LIGHTS 254
+
 // All the benefits of enum class, without having to cast to the type :)
 namespace DeferredOutput { enum e : u32 {
     Color, Normal, Position,
@@ -22,17 +24,21 @@ namespace LightingOutput { enum e : u32 {
     Count
 };}
 
-template <typename E, const usize C>
+template <typename E, const usize N>
 struct RenderPass {
     std::unique_ptr<E> effect;
     std::unique_ptr<DescriptorHeap> resources;
     std::unique_ptr<DescriptorHeap> renders;
-    std::array<RenderTexture, C> textures;
+    std::array<RenderTexture, N> textures;
 
-    void InitDescs(ID3D12Device* command_list, usize width, usize height) {
-        for every(index, C) {
+    void InitDescs(
+        ID3D12Device* device,
+        usize width,
+        usize height
+    ) {
+        for every(index, N) {
         	textures[index].Init(
-        	    command_list, 
+        	    device, 
         	    resources->GetCpuHandle(index),
         	    renders->GetCpuHandle(index),
         	    width,
@@ -45,39 +51,39 @@ struct RenderPass {
     	ID3D12DescriptorHeap* heaps[] = { resources->Heap() };
     	command_list->SetDescriptorHeaps(_countof(heaps), heaps);
 
-        for every(index, C) {
+        for every(index, N) {
 			textures[index].TransitionTo(command_list, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         }
     }
 
     void SetAsOutput(ID3D12GraphicsCommandList* command_list) {
-        std::array<CD3DX12_CPU_DESCRIPTOR_HANDLE, C> descriptors;
-        for every(index, C) {
+        std::array<CD3DX12_CPU_DESCRIPTOR_HANDLE, N> descriptors;
+        for every(index, N) {
             descriptors[index] = renders->GetCpuHandle(index);
         }
 
-        command_list->OMSetRenderTargets(C, descriptors.data(), FALSE, 0);
+        command_list->OMSetRenderTargets(N, descriptors.data(), FALSE, 0);
 
-        for every(index, C) {
+        for every(index, N) {
 			textures[index].TransitionTo(command_list, D3D12_RESOURCE_STATE_RENDER_TARGET);
         }
     }
 
     void SetAsOutput(ID3D12GraphicsCommandList* command_list, const CD3DX12_CPU_DESCRIPTOR_HANDLE dsvDescriptor) {
-        std::array<CD3DX12_CPU_DESCRIPTOR_HANDLE, C> descriptors;
-        for every(index, C) {
+        std::array<CD3DX12_CPU_DESCRIPTOR_HANDLE, N> descriptors;
+        for every(index, N) {
             descriptors[index] = renders->GetCpuHandle(index);
         }
 
-        command_list->OMSetRenderTargets(C, descriptors.data(), FALSE, &dsvDescriptor);
+        command_list->OMSetRenderTargets(N, descriptors.data(), FALSE, &dsvDescriptor);
 
-        for every(index, C) {
+        for every(index, N) {
 			textures[index].TransitionTo(command_list, D3D12_RESOURCE_STATE_RENDER_TARGET);
         }
     }
 
     void ClearRenderTargetViews(ID3D12GraphicsCommandList* command_list) {
-        for every(index, C) {
+        for every(index, N) {
             D3D12_CPU_DESCRIPTOR_HANDLE handle = renders->GetCpuHandle(index);
             Vec4 clear_color = textures[index].m_clearColor;
             command_list->ClearRenderTargetView(handle, clear_color, 0, 0);
@@ -86,15 +92,25 @@ struct RenderPass {
 
     void CreateHeaps(ID3D12Device* device) {
    		resources = std::make_unique<DescriptorHeap>(
-   		    device, C
+   		    device, N 
    		);
 		
    		renders = std::make_unique<DescriptorHeap>(
    		    device,
    		    D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
    		    D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
-            C
+            N
    		);
+    }
+
+    const usize n() {
+        const auto n = N;
+        return n;
+    }
+
+    const usize m() {
+        const auto m = M;
+        return m;
     }
 };
 
@@ -122,13 +138,12 @@ private:
 public:
     bool m_screenShot = false; // TODO(sean): implement
 
-    Vec3 tint_color;
-    f32 blur_amount;
-    f32 saturation_amount;
+    Vec3 tint_color = Vec3(0.0f, 0.0f, 0.0f);
+    f32 blur_amount = 0.0f;
+    f32 saturation_amount = 1.0f;
 
     // I dont like putting this behind walls because it doesnt stop people from fucking with it
     LBaseCamera* m_pCamera = nullptr;
-
     Renderer();
     virtual ~Renderer();
 

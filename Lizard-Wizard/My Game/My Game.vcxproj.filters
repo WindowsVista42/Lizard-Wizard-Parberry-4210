@@ -34,6 +34,7 @@
     <ClInclude Include="RenderTexture.h" />
     <ClInclude Include="GraphicsHelpers.h" />
     <ClInclude Include="StagedBuffer.h" />
+    <ClInclude Include="Ecs.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="My Game.rc" />

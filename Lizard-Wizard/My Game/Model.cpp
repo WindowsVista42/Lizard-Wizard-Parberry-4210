@@ -40,16 +40,16 @@ DebugModel::DebugModel(const VertexPC* triangles, const u32 count, DebugModelTyp
     }
 }
 
-ModelInstance::ModelInstance(u32 instance) {
-    m_modelIndex = instance;
+ModelInstance::ModelInstance(u32 index) {
+    this->model = index;
 
     const XMMATRIX world = XMMatrixTransformation(g_XMZero, Quaternion::Identity, g_XMOne, g_XMZero, Quaternion::Identity, g_XMZero);
-    m_worldMatrix = world;
+    this->world = world;
 }
 
 ModelInstance::ModelInstance() {
-    m_modelIndex = UINT_MAX; // i really hope you segfault if you default construct
+    model = UINT_MAX; // i really hope you segfault if you default construct
 
     const XMMATRIX world = XMMatrixTransformation(g_XMZero, Quaternion::Identity, g_XMOne, g_XMZero, Quaternion::Identity, g_XMZero);
-    m_worldMatrix = world;
+    this->world = world;
 }

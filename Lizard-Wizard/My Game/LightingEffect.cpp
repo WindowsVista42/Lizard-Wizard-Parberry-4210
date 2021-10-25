@@ -1,16 +1,23 @@
 #include "LightingEffect.h"
 #include "Renderer.h"
 #include <ReadData.h>
+#include <iostream>
 
 //NOTE(sean): this is actually a really nice way to do a bitset,
 //courtesy of --> https://github.com/microsoft/DirectXTK12/wiki/Authoring-an-Effect
 namespace {
-    struct __declspec(align(16)) GameEffectConstants {};
+    struct __declspec(align(16)) GameEffectConstants {
+        u32 light_count;
+        u32 _pad0;
+        u32 _pad1;
+        u32 _pad2;
+        Vec4 light_pos[254];
+        Vec4 light_col[254];
+    };
 
     static_assert((sizeof(GameEffectConstants) % 16) == 0, "Constant Buffer size alignment");
 
     constexpr u32 DirtyConstantBuffer = 0x1;
-    //NOTE(sean): other bit flags go here
 }
 
 //TODO(sean): update this to the right implementation
@@ -57,9 +64,22 @@ LightingEffect::LightingEffect(
 }
 
 void LightingEffect::SetTextures(DescriptorHeap* textures) {
-    m_colorTexture = textures->GetGpuHandle(DeferredOutput::Color);
-    m_normalTexture = textures->GetGpuHandle(DeferredOutput::Color);
-    m_positionTexture = textures->GetGpuHandle(DeferredOutput::Color);
+    m_colorTexture = textures->GetFirstGpuHandle();
+}
+
+void LightingEffect::SetLightCount(u32 light_count) {
+    this->light_count = light_count;
+    m_dirtyFlags |= DirtyConstantBuffer;
+}
+
+void LightingEffect::SetLightPosition(Vec4 position, u32 index) {
+    light_positions[index] = position;
+    m_dirtyFlags |= DirtyConstantBuffer;
+}
+
+void LightingEffect::SetLightColor(Vec4 color, u32 index) {
+    light_colors[index] = color;
+    m_dirtyFlags |= DirtyConstantBuffer;
 }
 
 //TODO(sean): update this to the right implementation
@@ -68,20 +88,40 @@ void LightingEffect::Apply(ID3D12GraphicsCommandList* command_list) {
     if (m_dirtyFlags & DirtyConstantBuffer) {
         auto constant_buffer = GraphicsMemory::Get(m_device.Get()).AllocateConstant<GameEffectConstants>();
 
-        GameEffectConstants data = {};
+        GameEffectConstants data = {
+            light_count
+        };
 
-        memcpy(constant_buffer.Memory(), &data, constant_buffer.Size());
+        memcpy((u8*)constant_buffer.Memory(), &data, sizeof(u32));
+        memcpy((u8*)constant_buffer.Memory() + offsetof(GameEffectConstants, light_pos), light_positions, sizeof(Vec4) * _countof(light_positions));
+        memcpy((u8*)constant_buffer.Memory() + offsetof(GameEffectConstants, light_col), light_colors, sizeof(Vec4) * _countof(light_colors));
         std::swap(m_constantBuffer, constant_buffer);
 
         m_dirtyFlags &= ~DirtyConstantBuffer;
     }
 
+    /*
+    if (m_dirtyFlags & DirtyPositionsBuffer) {
+        auto constant_buffer = GraphicsMemory::Get(m_device.Get()).AllocateConstant<LightPositions>();
+
+        std::swap(m_constantBuffer, constant_buffer);
+
+        m_dirtyFlags &= ~DirtyPositionsBuffer;
+    }
+
+    if (m_dirtyFlags & DirtyColorsBuffer) {
+        auto constant_buffer = GraphicsMemory::Get(m_device.Get()).AllocateConstant<LightColors>();
+
+        std::swap(m_constantBuffer, constant_buffer);
+
+        m_dirtyFlags &= ~DirtyColorsBuffer;
+    }
+    */
+
     //NOTE(sean): set root signature and parameters
     command_list->SetGraphicsRootSignature(m_rootSignature.Get());
 
     //NOTE(sean): set render resources
-    command_list->SetGraphicsRootDescriptorTable(0, m_positionTexture);
-    command_list->SetGraphicsRootDescriptorTable(0, m_normalTexture);
     command_list->SetGraphicsRootDescriptorTable(0, m_colorTexture);
 
     //NOTE(sean): set render constants

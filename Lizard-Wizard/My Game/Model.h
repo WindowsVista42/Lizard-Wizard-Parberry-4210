@@ -22,8 +22,9 @@ struct DebugModel {
 //NOTE(sean):
 /// Instance of a model, we store the index of the model we want to render as, and we store the model matrix
 struct ModelInstance {
-    u32 m_modelIndex;
-    XMMATRIX m_worldMatrix;
+    u32 model;
+    u32 texture;
+    XMMATRIX world;
 
     ModelInstance();
     ModelInstance(u32 instance);

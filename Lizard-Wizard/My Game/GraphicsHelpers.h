@@ -56,4 +56,3 @@ void CreateBufferAndView(T* data, usize count, GraphicsResource& resource, std::
     view->SizeInBytes = (u32)resource.Size();
     view->Format = DXGI_FORMAT_R32_UINT;
 }
-

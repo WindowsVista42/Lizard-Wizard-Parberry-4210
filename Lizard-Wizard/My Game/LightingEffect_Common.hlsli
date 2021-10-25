@@ -21,17 +21,30 @@ Texture2D<float4> Color : register(t0);
 Texture2D<float4> Normal : register(t1);
 Texture2D<float4> Position : register(t2);
 
+struct Light {
+    float4 Position;
+    float4 Color;
+};
+
 sampler Sampler : register(s0);
 
-cbuffer GameEffectConstants : register(b0) {}
+cbuffer GameEffectConstants : register(b0) {
+    uint light_count;
+    uint _pad0;
+    uint _pad1;
+    uint _pad2;
+    float4 LightPos[254];
+    float4 LightCol[254];
+}
+
+//cbuffer LightPositions : register(b1) {
+//}
+//
+//cbuffer LightColors : register(b2) {
+//}
 
 struct PixelOutput {
     float4 Color : SV_TARGET0;
-};
-
-struct Light {
-    float3 Position;
-    float3 Color;
 };
 
 #endif
