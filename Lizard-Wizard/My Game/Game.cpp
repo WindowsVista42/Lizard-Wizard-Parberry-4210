@@ -401,7 +401,7 @@ void CGame::RenderFrame() {
                     default: {
                         ModelInstance instance = {};
                         instance.model = (u32)ModelIndex::Cube;
-                        instance.world = MoveScaleMatrix(trans.getOrigin(), Vector3(10.0f, 10.0f, 10.0f));
+                        instance.world = MoveScaleMatrix(trans.getOrigin(), Vector3(25.0f));
                         m_pRenderer->DrawModelInstance(&instance);
                     } break;
                     }
