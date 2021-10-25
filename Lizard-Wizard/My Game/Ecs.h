@@ -40,37 +40,51 @@ public:
     }
 };
 
+/// An 'Ecs' data structure that stores a list of entities bounded to components.
+/// Entities in this table can be thought of as containing the component, but the benefit
+/// is that adding and removing components can be done dynamically at run-time.
 template <typename T>
-class Table {
-    // Mapping of Handle --> index
+class Table { // Sean
+    // Mapping of Handle --> index.
     std::unordered_map<Entity, usize> mapping;
 
-    // Data in a packed vector
-    std::vector<T> data;
+    // Components in a packed vector.
+    // This favors iteration performance.
+    std::vector<T> components;
 
-    // Store which entity we are a part of
+    // Store which entity we are a part of.
+    // This is required for removal in its current implementation.
     std::vector<Entity> entities;
 
 public:
-    // Add item to Table using Entity
-    void Add(Entity e, T t) {
-        data.push_back(t);
-        mapping.insert(std::make_pair(e, data.size() - 1));
+    /// Add item to the table and automatically generate a new "Entity"
+    Entity Add(T t) {
+        Entity e = Entity();
+        components.push_back(t);
+        mapping.insert(std::make_pair(e, components.size() - 1));
+        entities.push_back(e);
+        return e;
+    }
+
+    /// Add an existing "Entity" to the Table.
+    void AddExisting(Entity e, T t) {
+        components.push_back(t);
+        mapping.insert(std::make_pair(e, components.size() - 1));
         entities.push_back(e);
     }
 
-    // Remove item from Table
+    /// Remove an "Entity" from the Table.
     void Remove(Entity e) {
         // Get the index of the item to be removed
         //if (mapping.count(e) != 1) { std::cout << typeid(T).name() << "Item not found!\n"; exit(1); }
         usize index = mapping[e];
 
         // Write last item to index
-        data[index] = data[data.size() - 1];
+        components[index] = components[components.size() - 1];
         entities[index] = entities[entities.size() - 1];
 
         // Resize data
-        data.resize(data.size() - 1);
+        components.resize(components.size() - 1);
         entities.resize(entities.size() - 1);
 
         // Remove old item
@@ -80,41 +94,61 @@ public:
         mapping[entities[index]] = index;
     }
 
+    /// Clear the table of all data.
     void Clear() {
         mapping.clear();
-        data.clear();
+        components.clear();
         entities.clear();
     }
 
-    // Get an item in the Table
+    /// Get the component corresponding to the Entity.
     T* Get(Entity e) {
         //if (mapping.count(e) != 1) { std::cout << typeid(*this).name() << " Item not found!\n"; exit(1); }
-        return &data[mapping[e]];
+        return &components[mapping[e]];
     }
 
+    /// Get the number of components in the table.
     usize Size() {
-        return data.size();
+        return components.size();
     }
 
-    T* Data() {
-        return data.data();
+    /// Get a pointer to the start of the components array.
+    /// This array is contiguous and bounded by Table.Size().
+    /// This array has as 1 to 1 mapping with Entities().
+    T* Components() {
+        return components.data();
     }
 
+    /// Get a pointer to the start of the entities array.
+    /// This array is contiguous and bounded by Table.Size().
+    /// This array has a one to one mapping with Components().
     Entity* Entities() {
         return entities.data();
     }
 };
 
+/// An 'Ecs' data structure that stores a list of entities.
+/// Entities in this group can be thought of as being 'tagged' with a specific function.
 class Group {
     std::unordered_map<Entity, usize> mapping;
     std::vector<Entity> entities;
 
 public:
-    void Add(Entity e) {
+    /// Automatically generate a new "Entity" and add it to the group.
+    Entity Add() {
+        Entity e = Entity();
+        entities.push_back(e);
+        mapping.insert(std::make_pair(e, entities.size() - 1));
+        return e;
+    }
+
+    /// Add an existing "Entity" to the group.
+    void AddExisting(Entity e) {
         entities.push_back(e);
         mapping.insert(std::make_pair(e, entities.size() - 1));
     }
 
+    /// Remove an existing "Entity" from the group.
     void Remove(Entity e) {
         usize index = mapping[e];
 
@@ -131,15 +165,19 @@ public:
         mapping[entities[index]] = index;
     }
 
+    /// Clear the Group of all data.
     void Clear() {
         entities.clear();
         mapping.clear();
     }
 
+    /// Get the number of entities in this group.
     usize Size() {
         return entities.size();
     }
 
+    /// Get a pointer to the start of the entities array.
+    /// This array is contiguous.
     Entity* Entities() {
         return entities.data();
     }
