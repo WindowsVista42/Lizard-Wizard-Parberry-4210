@@ -59,12 +59,7 @@ void CGame::Initialize() {
 
     // Player Rigidbody | (Note) : Create this first, as the player is currently indexed as [0] in the collision table.
     {
-        m_pPhysicsManager->CreateCapsuleObject(100.0f, 250.0f, Vec3(0, 1500, 0), 1.0f, 0.5f, 3);
-    }
-
-    // Wall Collider
-    {
-       // m_pPhysicsManager->CreateBoxObject(Vec3(150.0f, 3000.0f, 3000.0f), Vec3(-3000.0f, 2800.0f, 0.0f), 0.0f, 1.5f, -1);
+        m_pPhysicsManager->CreateCapsuleObject(100.0f, 250.0f, Vec3(0, 1500, 0), 1.0f, 0.5f, 2, 29);
     }
 
     // Room Collider

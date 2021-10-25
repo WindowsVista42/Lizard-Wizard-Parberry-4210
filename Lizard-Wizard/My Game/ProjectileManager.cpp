@@ -31,7 +31,6 @@ void ProjectileManager::GenerateSimProjectile(btCollisionObject* caster, const V
        will expand to include :
        model, texture.
     */
-    auto batch = std::make_unique<btRigidBody* []>(projectileCount);
     for (i32 i = 0; i < projectileCount; i++) {
 
         // PUSH TO COLLISION ARRAY
@@ -61,7 +60,7 @@ void ProjectileManager::GenerateSimProjectile(btCollisionObject* caster, const V
         f32 newVelocity = projectileVelocity * 15000.0f;
         body->applyForce(Vec3(lookDirection * newVelocity), startPos);
         body->setIgnoreCollisionCheck(caster, ignoreCaster);
-        currentWorld->addRigidBody(body, 1, 1);
+        currentWorld->addRigidBody(body, 3, 31);
     }
 }
 
@@ -70,8 +69,8 @@ void ProjectileManager::CalculateRay(btCollisionObject* caster, RayProjectile& n
 
     btCollisionWorld::ClosestRayResultCallback rayResults(Pos1, Vec3(Pos1 + btLookDirection * 5000.));
     if (ignoreCaster) {
-        rayResults.m_collisionFilterGroup = 2;
-        rayResults.m_collisionFilterMask = 2;
+        rayResults.m_collisionFilterGroup = 3;
+        rayResults.m_collisionFilterMask = 31;
 
     }
     currentWorld->rayTest(Pos1, Vec3(Pos1 + btLookDirection * 5000.), rayResults);
@@ -86,7 +85,6 @@ void ProjectileManager::CalculateRay(btCollisionObject* caster, RayProjectile& n
         newRay.Pos2 = Vec3(hitPosition);
         rayBounces = rayBounces - 1;
         if (rayBounces > 0) {
-            printf("Raybounces : %d \n", rayBounces);
             GenerateRayProjectile(caster, Vec3(hitPosition), Vec3(reflectedDirection), 1, 1, rayBounces, color, true, ignoreCaster);
         }
     } else {
