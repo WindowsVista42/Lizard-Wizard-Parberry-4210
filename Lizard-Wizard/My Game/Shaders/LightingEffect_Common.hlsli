@@ -33,8 +33,7 @@ cbuffer GameEffectConstants : register(b0) {
     uint _pad0;
     uint _pad1;
     uint _pad2;
-    float4 LightPos[254];
-    float4 LightCol[254];
+    Light Lights[254];
 }
 
 //cbuffer LightPositions : register(b1) {

@@ -207,37 +207,37 @@
     <Text Include="SeanTodo.txt" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="PostProcess_Common.hlsli" />
-    <None Include="DeferredEffect_Common.hlsli" />
-    <None Include="LightingEffect_Common.hlsli" />
-    <None Include="TonemapEffect_Common.hlsli" />
+    <None Include="Shaders\PostProcess_Common.hlsli" />
+    <None Include="Shaders\DeferredEffect_Common.hlsli" />
+    <None Include="Shaders\LightingEffect_Common.hlsli" />
+    <None Include="Shaders\TonemapEffect_Common.hlsli" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="DeferredEffect_PS.hlsl">
+    <FxCompile Include="Shaders\DeferredEffect_PS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
     </FxCompile>
-    <FxCompile Include="DeferredEffect_VS.hlsl">
+    <FxCompile Include="Shaders\DeferredEffect_VS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
     </FxCompile>
-    <FxCompile Include="LightingEffect_PS.hlsl">
+    <FxCompile Include="Shaders\LightingEffect_PS.hlsl">
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
-    <FxCompile Include="PostProcessEffect_VS.hlsl">
+    <FxCompile Include="Shaders\PostProcessEffect_VS.hlsl">
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
-    <FxCompile Include="TonemapEffect_PS.hlsl">
+    <FxCompile Include="Shaders\TonemapEffect_PS.hlsl">
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>

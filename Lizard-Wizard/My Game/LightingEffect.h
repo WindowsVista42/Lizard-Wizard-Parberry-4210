@@ -3,7 +3,6 @@
 
 #include "Defines.h"
 #include <Effects.h>
-#include <Renderer3D.h>
 #include <vector>
 
 namespace PPDescriptors { enum e {
@@ -22,8 +21,8 @@ public:
     void SetTextures(DescriptorHeap* textures);
 
     void SetLightCount(u32 light_count);
-    void SetLightPosition(Vec4 position, u32 index);
-    void SetLightColor(Vec4 color, u32 index);
+    void SetLight(usize index, Light light);
+    Light* Lights();
 
 private:
     Microsoft::WRL::ComPtr<ID3D12Device> m_device;
@@ -38,8 +37,7 @@ private:
     D3D12_GPU_DESCRIPTOR_HANDLE m_positionTexture;
 
     u32 light_count;
-    Vec4 light_positions[254];
-    Vec4 light_colors[254];
+    Light lights[254];
 };
 
 #endif

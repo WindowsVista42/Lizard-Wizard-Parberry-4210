@@ -46,9 +46,9 @@ void Renderer::Initialize() {
     {
         m_deferred.CreateHeaps(m_pD3DDevice);
 
-        m_deferred.textures[DeferredOutput::Color] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
-        m_deferred.textures[DeferredOutput::Normal] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
-        m_deferred.textures[DeferredOutput::Position] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
+        m_deferred.textures[DeferredOutput::Color] = RenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, Colors::Black);
+        m_deferred.textures[DeferredOutput::Normal] = RenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, Colors::Black);
+        m_deferred.textures[DeferredOutput::Position] = RenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, Colors::Black);
 
         m_deferred.InitDescs(m_pD3DDevice, m_nWinWidth, m_nWinHeight);
     }
@@ -57,7 +57,7 @@ void Renderer::Initialize() {
     {
         m_lighting.CreateHeaps(m_pD3DDevice);
 
-        m_lighting.textures[LightingOutput::Color] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
+        m_lighting.textures[LightingOutput::Color] = RenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, Colors::Black);
 
         m_lighting.InitDescs(m_pD3DDevice, m_nWinWidth, m_nWinHeight);
     }
@@ -251,13 +251,12 @@ void RenderPostProcess(ID3D12GraphicsCommandList* command_list, RenderPass<A, B>
 /// End Rendering a frame.
 /// Put all DrawXYZ() or other functions in between this and BeginFrame()
 void Renderer::EndDrawing() {
-    m_lighting.effect->SetLightCount(2);
+    static Entity e = lights.Add({ Vec4(500.0f, 200.0f, 0.0f, 0.0f), Vec4(2000.0f, 1000.0f, 3000.0f, 0.0f) * 2.0f });
 
-    m_lighting.effect->SetLightPosition(Vec4(500.0f, 200.0f, 0.0f, 0.0f), 0);
-    m_lighting.effect->SetLightColor(Vec4(0.0f, 1000.0f, 0.0f, 0.0f), 0);
+    assert(lights.Size() < 254);
+    m_lighting.effect->SetLightCount(lights.Size());
+    memcpy(m_lighting.effect->Lights(), lights.Components(), sizeof(Light) * lights.Size()); 
 
-    m_lighting.effect->SetLightPosition(Vec4(2500.0f, 200.0f, 0.0f, 0.0f), 1);
-    m_lighting.effect->SetLightColor(Vec4(2000.0f, 0.0f, 0.0f, 0.0f), 1);
     RenderPostProcess(m_pCommandList, &m_deferred, &m_lighting);
 
     // Render Tonemap Effect
@@ -726,3 +725,4 @@ void Renderer::DrawModelInstance(ModelInstance* instance) {
 
     m_pCommandList->DrawIndexedInstanced(pmodel->index_count, 1, 0, 0, 0);
 }
+

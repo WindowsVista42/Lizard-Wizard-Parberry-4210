@@ -8,6 +8,7 @@
 #include "LightingEffect.h"
 #include "TonemapEffect.h"
 #include "RenderTexture.h"
+#include "Ecs.h"
 #include <Renderer3D.h>
 #include <array>
 
@@ -37,22 +38,22 @@ struct RenderPass {
         usize height
     ) {
         for every(index, N) {
-        	textures[index].Init(
-        	    device, 
-        	    resources->GetCpuHandle(index),
-        	    renders->GetCpuHandle(index),
-        	    width,
-        	    height 
-        	);
+            textures[index].Init(
+                device, 
+                resources->GetCpuHandle(index),
+                renders->GetCpuHandle(index),
+                width,
+                height 
+            );
         }
     }
 
     void SetAsInput(ID3D12GraphicsCommandList* command_list) {
-    	ID3D12DescriptorHeap* heaps[] = { resources->Heap() };
-    	command_list->SetDescriptorHeaps(_countof(heaps), heaps);
+        ID3D12DescriptorHeap* heaps[] = { resources->Heap() };
+        command_list->SetDescriptorHeaps(_countof(heaps), heaps);
 
         for every(index, N) {
-			textures[index].TransitionTo(command_list, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+            textures[index].TransitionTo(command_list, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         }
     }
 
@@ -65,7 +66,7 @@ struct RenderPass {
         command_list->OMSetRenderTargets(N, descriptors.data(), FALSE, 0);
 
         for every(index, N) {
-			textures[index].TransitionTo(command_list, D3D12_RESOURCE_STATE_RENDER_TARGET);
+            textures[index].TransitionTo(command_list, D3D12_RESOURCE_STATE_RENDER_TARGET);
         }
     }
 
@@ -78,7 +79,7 @@ struct RenderPass {
         command_list->OMSetRenderTargets(N, descriptors.data(), FALSE, &dsvDescriptor);
 
         for every(index, N) {
-			textures[index].TransitionTo(command_list, D3D12_RESOURCE_STATE_RENDER_TARGET);
+            textures[index].TransitionTo(command_list, D3D12_RESOURCE_STATE_RENDER_TARGET);
         }
     }
 
@@ -91,16 +92,16 @@ struct RenderPass {
     }
 
     void CreateHeaps(ID3D12Device* device) {
-   		resources = std::make_unique<DescriptorHeap>(
-   		    device, N 
-   		);
-		
-   		renders = std::make_unique<DescriptorHeap>(
-   		    device,
-   		    D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
-   		    D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+        resources = std::make_unique<DescriptorHeap>(
+            device, N 
+        );
+        
+        renders = std::make_unique<DescriptorHeap>(
+            device,
+            D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
+            D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
             N
-   		);
+        );
     }
 
     const usize n() {
@@ -144,6 +145,9 @@ public:
 
     // I dont like putting this behind walls because it doesnt stop people from fucking with it
     LBaseCamera* m_pCamera = nullptr;
+
+    Table<Light> lights;
+
     Renderer();
     virtual ~Renderer();
 

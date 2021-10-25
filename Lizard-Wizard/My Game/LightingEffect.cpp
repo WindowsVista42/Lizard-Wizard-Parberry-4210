@@ -1,5 +1,4 @@
 #include "LightingEffect.h"
-#include "Renderer.h"
 #include <ReadData.h>
 #include <iostream>
 
@@ -11,8 +10,7 @@ namespace {
         u32 _pad0;
         u32 _pad1;
         u32 _pad2;
-        Vec4 light_pos[254];
-        Vec4 light_col[254];
+        Light lights[254];
     };
 
     static_assert((sizeof(GameEffectConstants) % 16) == 0, "Constant Buffer size alignment");
@@ -72,14 +70,12 @@ void LightingEffect::SetLightCount(u32 light_count) {
     m_dirtyFlags |= DirtyConstantBuffer;
 }
 
-void LightingEffect::SetLightPosition(Vec4 position, u32 index) {
-    light_positions[index] = position;
-    m_dirtyFlags |= DirtyConstantBuffer;
+void LightingEffect::SetLight(usize index, Light light) {
+    lights[index] = light;
 }
 
-void LightingEffect::SetLightColor(Vec4 color, u32 index) {
-    light_colors[index] = color;
-    m_dirtyFlags |= DirtyConstantBuffer;
+Light* LightingEffect::Lights() {
+    return lights;
 }
 
 //TODO(sean): update this to the right implementation
@@ -93,8 +89,7 @@ void LightingEffect::Apply(ID3D12GraphicsCommandList* command_list) {
         };
 
         memcpy((u8*)constant_buffer.Memory(), &data, sizeof(u32));
-        memcpy((u8*)constant_buffer.Memory() + offsetof(GameEffectConstants, light_pos), light_positions, sizeof(Vec4) * _countof(light_positions));
-        memcpy((u8*)constant_buffer.Memory() + offsetof(GameEffectConstants, light_col), light_colors, sizeof(Vec4) * _countof(light_colors));
+        memcpy((u8*)constant_buffer.Memory() + offsetof(GameEffectConstants, lights), lights, sizeof(Light) * _countof(lights));
         std::swap(m_constantBuffer, constant_buffer);
 
         m_dirtyFlags &= ~DirtyConstantBuffer;

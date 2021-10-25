@@ -26,19 +26,32 @@
 #include <chrono>
 
 class Entity {
-    usize id;
-
     static usize& gen() {
         static usize gen= ~0;
         return gen;
     }
 
 public:
+    usize id;
+
+    bool operator ==(const Entity& rhs) const {
+        return this->id == rhs.id;
+    }
+
     Entity() {
         gen() += 1;
         id = gen();
     }
 };
+
+namespace std {
+    template<> struct hash<Entity> {
+        size_t operator()(Entity const& e) const {
+            size_t h = e.id;
+            return h;
+        }
+    };
+}
 
 /// An 'Ecs' data structure that stores a list of entities bounded to components.
 /// Entities in this table can be thought of as containing the component, but the benefit
@@ -124,6 +137,10 @@ public:
     /// This array has a one to one mapping with Components().
     Entity* Entities() {
         return entities.data();
+    }
+
+    const type_info T() const noexcept {
+        return typeid(T);
     }
 };
 

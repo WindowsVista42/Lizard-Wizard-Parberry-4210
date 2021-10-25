@@ -122,6 +122,11 @@ public:
     }
 };
 
+struct Light {
+    Vec4 position;
+    Vec4 color;
+};
+
 // SET YOUR DEFINES HERE
 
 namespace SoundIndex { enum e : u32 {
