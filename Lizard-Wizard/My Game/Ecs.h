@@ -95,14 +95,10 @@ public:
         usize index = mapping[e];
 
         // Write last item to index
-        std::cout << "test 7\n";
-        std::cout.flush();
         if (index != entities.size() - 1) {
             components[index] = components[components.size() - 1];
             entities[index] = entities[entities.size() - 1];
         }
-        std::cout << "test 8\n";
-        std::cout.flush();
 
         // Resize data
         components.pop_back();
@@ -180,31 +176,20 @@ public:
         usize index = mapping[e];
 
         // Write last item to index
-        std::cout << "test 1\n";
-        std::cout.flush();
         if (index != entities.size() - 1) {
             entities[index] = entities[entities.size() - 1];
         }
-        std::cout << "test 2\n";
-        std::cout.flush();
 
-        std::cout << "test 3\n";
-        std::cout.flush();
         // Resize data
         entities.pop_back();
-        std::cout << "test 4\n";
-        std::cout.flush();
+
         // Remove old item
         mapping.erase(e);
 
-        std::cout << "test 5\n";
-        std::cout.flush();
         // Remap last item
         if (index != entities.size()) {
             mapping[entities[index]] = index;
         }
-        std::cout << "test 6\n";
-        std::cout.flush();
     }
 
     /// Clear the Group of all data.
