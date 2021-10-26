@@ -68,7 +68,7 @@ void ProjectileManager::GenerateSimProjectile(btCollisionObject* caster, const V
         projectile->setFriction(friction);
 
         // Re-add regidbody to world after edit.
-        CurrentWorld->addRigidBody(projectile);
+        CurrentWorld->addRigidBody(projectile, 2, 0b00001);
         projectile->activate();
     }
 }
@@ -79,7 +79,7 @@ void ProjectileManager::CalculateRay(btCollisionObject* caster, RayProjectile& n
     btCollisionWorld::ClosestRayResultCallback rayResults(Pos1, Vec3(Pos1 + btLookDirection * 5000.));
     if (ignoreCaster) {
         rayResults.m_collisionFilterGroup = 3;
-        rayResults.m_collisionFilterMask = 31;
+		rayResults.m_collisionFilterMask = 0b00001;
 
     }
     CurrentWorld->rayTest(Pos1, Vec3(Pos1 + btLookDirection * 5000.), rayResults);
@@ -143,7 +143,7 @@ void ProjectileManager::InitializeProjectiles(
 
     for every(index, 64) {
         Entity e = Entity();
-        btRigidBody* newBody = CurrentPhysicsManager->CreateSphereObject(50.f, Vec3(99999.f, 99999.f, 99999.f), 0.0f, 0.0f, 3, 31);
+        btRigidBody* newBody = CurrentPhysicsManager->CreateSphereObject(50.f, Vec3(99999.f, 99999.f, 99999.f), 0.0f, 0.0f, 3, 0b00001);
         CurrentWorld->removeRigidBody(newBody);
         Light newLight = { Vec4(99999.f,99999.f,99999.f,0), Vec4{150.0f, 30.0f, 10.0f, 0} };
         CurrentLights->AddExisting(e, newLight);
