@@ -66,6 +66,7 @@ DeferredEffect::DeferredEffect(
 
 void DeferredEffect::SetTexture(DescriptorHeap* textures, u32 index) {
     m_colorTexture = textures->GetGpuHandle(index);
+    m_textureIndex = index;
 }
 
 
@@ -104,7 +105,7 @@ void DeferredEffect::Apply(ID3D12GraphicsCommandList* command_list) {
     command_list->SetGraphicsRootSignature(m_rootSignature.Get());
 
     //NOTE(sean): set textures
-    command_list->SetGraphicsRootDescriptorTable(0, m_colorTexture);
+    command_list->SetGraphicsRootDescriptorTable(m_textureIndex, m_colorTexture);
 
     //NOTE(sean): set render constants
     command_list->SetGraphicsRootConstantBufferView(Descriptors::ConstantBuffer, m_constantBuffer.GpuAddress());

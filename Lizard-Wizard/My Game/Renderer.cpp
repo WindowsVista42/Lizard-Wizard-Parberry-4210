@@ -49,11 +49,12 @@ void Renderer::Initialize() {
         m_deferred.textures[DeferredOutput::Color] = RenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, Colors::Black);
         m_deferred.textures[DeferredOutput::Normal] = RenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, Colors::Black);
         m_deferred.textures[DeferredOutput::Position] = RenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, Colors::Black);
+        m_deferred.textures[DeferredOutput::Depth] = RenderTexture(DXGI_FORMAT_R32_FLOAT, Colors::White);
 
         m_deferred.InitDescs(m_pD3DDevice, m_nWinWidth, m_nWinHeight);
     }
 
-    //NOTE(sean): Tonemap Effect
+    //NOTE(sean): Tonemap Effect16
     {
         m_lighting.CreateHeaps(m_pD3DDevice);
 
@@ -98,6 +99,7 @@ void Renderer::Initialize() {
         render_target_state.rtvFormats[DeferredOutput::Color] = m_deferred.textures[DeferredOutput::Color].m_format;
         render_target_state.rtvFormats[DeferredOutput::Normal] = m_deferred.textures[DeferredOutput::Normal].m_format;
         render_target_state.rtvFormats[DeferredOutput::Position] = m_deferred.textures[DeferredOutput::Position].m_format;
+        render_target_state.rtvFormats[DeferredOutput::Depth] = m_deferred.textures[DeferredOutput::Depth].m_format;
         render_target_state.sampleMask = ~0u;
         render_target_state.sampleDesc.Count = 1;
 
@@ -213,11 +215,7 @@ void Renderer::BeginDebugDrawing() {
     };
 
     m_pCommandList->OMSetRenderTargets(_countof(rtvDescs), rtvDescs, FALSE, &dsvDescBackBuffer);
-    m_pCommandList->ClearDepthStencilView(dsvDescBackBuffer, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, 0);
-
-    //NOTE(sean): we would normally clear here, but we don't want to do that,
-    // because we want the debug lines to be rendered-over like normal, and
-    // we want a proper depth test
+    //m_pCommandList->ClearDepthStencilView(dsvDescBackBuffer, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, 0);
 }
 
 /// Begin rendering a debug frame.
@@ -256,6 +254,16 @@ void Renderer::EndDrawing() {
     assert(lights.Size() < 254);
     m_lighting.effect->SetLightCount(lights.Size());
     memcpy(m_lighting.effect->Lights(), lights.Components(), sizeof(Light) * lights.Size()); 
+
+    {
+        m_deferred.textures[DeferredOutput::Depth].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_COPY_DEST);
+        TransitionResource(m_pCommandList, m_pDeviceResources->GetDepthStencil(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_COPY_SOURCE);
+
+        m_pCommandList->CopyResource(m_deferred.textures[DeferredOutput::Depth].m_resource.Get(), m_pDeviceResources->GetDepthStencil());
+
+        TransitionResource(m_pCommandList, m_pDeviceResources->GetDepthStencil(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+        m_deferred.textures[DeferredOutput::Depth].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    }
 
     RenderPostProcess(m_pCommandList, &m_deferred, &m_lighting);
 
@@ -713,7 +721,7 @@ void Renderer::DrawModelInstance(ModelInstance* instance) {
     //TODO(sean): check if this can be moved out when we finalize the debug and game drawing APIs
     m_deferred.effect->SetWorld(instance->world);
     m_deferred.effect->SetView(XMLoadFloat4x4(&m_view));
-    m_deferred.effect->SetTexture(m_pDescriptorHeap.get(), 0);
+    m_deferred.effect->SetTexture(m_pDescriptorHeap.get(), instance->texture);
 
     m_deferred.effect->Apply(m_pCommandList);
 

@@ -95,24 +95,6 @@ void LightingEffect::Apply(ID3D12GraphicsCommandList* command_list) {
         m_dirtyFlags &= ~DirtyConstantBuffer;
     }
 
-    /*
-    if (m_dirtyFlags & DirtyPositionsBuffer) {
-        auto constant_buffer = GraphicsMemory::Get(m_device.Get()).AllocateConstant<LightPositions>();
-
-        std::swap(m_constantBuffer, constant_buffer);
-
-        m_dirtyFlags &= ~DirtyPositionsBuffer;
-    }
-
-    if (m_dirtyFlags & DirtyColorsBuffer) {
-        auto constant_buffer = GraphicsMemory::Get(m_device.Get()).AllocateConstant<LightColors>();
-
-        std::swap(m_constantBuffer, constant_buffer);
-
-        m_dirtyFlags &= ~DirtyColorsBuffer;
-    }
-    */
-
     //NOTE(sean): set root signature and parameters
     command_list->SetGraphicsRootSignature(m_rootSignature.Get());
 

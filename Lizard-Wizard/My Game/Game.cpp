@@ -407,7 +407,8 @@ void CGame::RenderFrame() {
             // You can use this as a baseline for how to render real 3d models.
             {
                 ModelInstance instance = {};
-                instance.model = (u32)ModelIndex::Cube;
+                instance.model = ModelIndex::Suzanne;
+                instance.texture = 0;
                 f32 xoff = 400.0f * cosf(m_pTimer->GetTime());
                 f32 zoff = 400.0f * sinf(m_pTimer->GetTime());
                 instance.world = MoveScaleMatrix(Vector3(xoff, 100.0f, zoff), Vector3(100.0f, 100.0f, 100.0f));
@@ -436,6 +437,7 @@ void CGame::RenderFrame() {
                         ModelInstance instance = {};
                         instance.model = (u32)ModelIndex::Cube;
                         instance.world = MoveScaleMatrix(trans.getOrigin(), castratedObject->getHalfExtentsWithMargin());
+                        instance.texture = 0;
                         m_pRenderer->DrawModelInstance(&instance);
                     } break;
 
@@ -443,8 +445,9 @@ void CGame::RenderFrame() {
 
                     default: {
                         ModelInstance instance = {};
-                        instance.model = (u32)ModelIndex::Cube;
+                        instance.model = ModelIndex::Suzanne;
                         instance.world = MoveScaleMatrix(trans.getOrigin(), Vector3(25.0f));
+                        instance.texture = 0;
                         m_pRenderer->DrawModelInstance(&instance);
                     } break;
                     }

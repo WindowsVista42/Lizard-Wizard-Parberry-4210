@@ -16,7 +16,7 @@
 
 // All the benefits of enum class, without having to cast to the type :)
 namespace DeferredOutput { enum e : u32 {
-    Color, Normal, Position,
+    Color, Normal, Position, Depth,
     Count
 };}
 
