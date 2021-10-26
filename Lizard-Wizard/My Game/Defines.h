@@ -120,6 +120,14 @@ public:
     static f32 Randf32() {
         return Get().randf();
     }
+
+    static u32 Randu32() {
+        return Get().randn();
+    }
+
+    static u32 Randu32(u32 min, u32 max) {
+        return Get().randn(min, max);
+    }
 };
 
 struct Light {
