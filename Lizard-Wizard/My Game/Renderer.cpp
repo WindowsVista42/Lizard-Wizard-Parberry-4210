@@ -215,7 +215,7 @@ void Renderer::BeginDebugDrawing() {
     };
 
     m_pCommandList->OMSetRenderTargets(_countof(rtvDescs), rtvDescs, FALSE, &dsvDescBackBuffer);
-    //m_pCommandList->ClearDepthStencilView(dsvDescBackBuffer, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, 0);
+    m_pCommandList->ClearDepthStencilView(dsvDescBackBuffer, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, 0);
 }
 
 /// Begin rendering a debug frame.
