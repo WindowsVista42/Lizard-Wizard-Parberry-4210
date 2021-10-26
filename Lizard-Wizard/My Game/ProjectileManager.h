@@ -7,6 +7,8 @@
 #include "Settings.h"
 #include "CustomBind.h"
 #include <vector>
+#include "Ecs.h"
+#include "PhysicsManager.h"
 
 // Bullet3 Inclusions
 #include <btBulletCollisionCommon.h>
@@ -26,17 +28,52 @@ struct RayProjectile {
 class ProjectileManager {
 
     public:
-        void GenerateSimProjectile(btCollisionObject*, const Vec3, const Vec3, const i32, const f32, const f32, const Vec4, const b8);
-        void GenerateRayProjectile(btCollisionObject*, const Vec3, const Vec3, const i32, const i32, const f32, const Vec4, const b8, const b8);
-        void InitializeProjectiles(btAlignedObjectArray<btCollisionShape*>, std::vector<RayProjectile>*, btDiscreteDynamicsWorld*);
-        void DestroyAllProjectiles();
+        void GenerateSimProjectile(
+            btCollisionObject*, 
+            const Vec3, 
+            const Vec3, 
+            const i32, 
+            const f32, 
+            const f32, 
+            const Vec4, 
+            const b8
+        );
+        void GenerateRayProjectile(
+            btCollisionObject*, 
+            const Vec3, 
+            const Vec3, 
+            const i32, 
+            const i32, 
+            const f32, 
+            const Vec4, 
+            const b8, 
+            const b8
+        );
+        void InitializeProjectiles(
+            btAlignedObjectArray<btCollisionShape*>, 
+            std::vector<RayProjectile>*, 
+            btDiscreteDynamicsWorld*, 
+            PhysicsManager*, 
+            Table<btRigidBody*>*, 
+            Table<Light>*, 
+            Table<f32>*,
+            Group*, 
+            Group*
+        );
+        void StripProjectile(Entity);
 
     private:
         void CalculateRay(btCollisionObject*, RayProjectile&, Vec3, Vec3, i32, Vec4, b8);
 
-        btAlignedObjectArray<btCollisionShape*> currentSimProjectiles;
-        std::vector<RayProjectile>* currentRayProjectiles;
-        btDiscreteDynamicsWorld* currentWorld;
+        btAlignedObjectArray<btCollisionShape*> CurrentSimProjectiles;
+        std::vector<RayProjectile>* CurrentRayProjectiles;
+        btDiscreteDynamicsWorld* CurrentWorld;
+        PhysicsManager* CurrentPhysicsManager;
+        Table<btRigidBody*>* CurrentRigidBodies;
+        Table<Light>* CurrentLights;
+        Table<f32>* CurrentTimers;
+        Group* CurrentProjectilesCache;
+        Group* CurrentProjectilesActive;
 };
 
 

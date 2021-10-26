@@ -24,6 +24,7 @@
 #include <ctime>
 #include <random>
 #include <chrono>
+#include <iostream>
 
 class Entity {
     static usize& gen() {
@@ -58,6 +59,7 @@ namespace std {
 /// is that adding and removing components can be done dynamically at run-time.
 template <typename T>
 class Table { // Sean
+
     // Mapping of Handle --> index.
     std::unordered_map<Entity, usize> mapping;
 
@@ -93,18 +95,26 @@ public:
         usize index = mapping[e];
 
         // Write last item to index
-        components[index] = components[components.size() - 1];
-        entities[index] = entities[entities.size() - 1];
+        std::cout << "test 7\n";
+        std::cout.flush();
+        if (index != entities.size() - 1) {
+            components[index] = components[components.size() - 1];
+            entities[index] = entities[entities.size() - 1];
+        }
+        std::cout << "test 8\n";
+        std::cout.flush();
 
         // Resize data
-        components.resize(components.size() - 1);
-        entities.resize(entities.size() - 1);
+        components.pop_back();
+        entities.pop_back();
 
         // Remove old item
         mapping.erase(e);
 
         // Remap last item
-        mapping[entities[index]] = index;
+        if (index != entities.size()) {
+            mapping[entities[index]] = index;
+        }
     }
 
     /// Clear the table of all data.
@@ -170,16 +180,31 @@ public:
         usize index = mapping[e];
 
         // Write last item to index
-        entities[index] = entities[entities.size() - 1];
+        std::cout << "test 1\n";
+        std::cout.flush();
+        if (index != entities.size() - 1) {
+            entities[index] = entities[entities.size() - 1];
+        }
+        std::cout << "test 2\n";
+        std::cout.flush();
 
+        std::cout << "test 3\n";
+        std::cout.flush();
         // Resize data
-        entities.resize(entities.size() - 1);
-
+        entities.pop_back();
+        std::cout << "test 4\n";
+        std::cout.flush();
         // Remove old item
         mapping.erase(e);
 
+        std::cout << "test 5\n";
+        std::cout.flush();
         // Remap last item
-        mapping[entities[index]] = index;
+        if (index != entities.size()) {
+            mapping[entities[index]] = index;
+        }
+        std::cout << "test 6\n";
+        std::cout.flush();
     }
 
     /// Clear the Group of all data.
@@ -197,6 +222,13 @@ public:
     /// This array is contiguous.
     Entity* Entities() {
         return entities.data();
+    }
+
+    Entity RemoveTail() {
+        Entity e = entities.back();
+        entities.pop_back();
+        mapping.erase(e);
+        return e;
     }
 };
 

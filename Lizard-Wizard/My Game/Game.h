@@ -41,6 +41,18 @@ private:
     PhysicsManager* m_pPhysicsManager;
     GenerationManager* m_pGenerationManager;
 
+    // Timing Table
+    Table<f32> m_Timers;
+
+    // Projectile Cache (MAX 64)
+    Table<btRigidBody*> m_RigidBodies;
+    Group m_ProjectilesCache;
+    Group m_ProjectilesActive;
+
+    // AI Cache (MAX 24)
+    Group m_EnemiesCache;
+    Group m_EnemiesActive;
+
     // UserInput Vector
     //CustomBind m_currentBinds;
     

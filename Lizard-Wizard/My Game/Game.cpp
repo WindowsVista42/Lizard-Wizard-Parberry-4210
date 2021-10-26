@@ -49,18 +49,37 @@ void CGame::Initialize() {
     m_pGenerationManager = new GenerationManager(); // sEts up the generation manager
     LoadSounds(); //load the sounds for this game
 
-    // Create Tables
+    // Projectile Cache (MAX 64)
+    m_ProjectilesCache;
+    m_ProjectilesActive;
+
+    // AI Cache (MAX 24)
+    m_EnemiesCache;
+    m_EnemiesActive;
+
+    // Create Raycast Vector. Note(Ethan) : Remove this and prepare a raycast-texture pipeline.
     m_currentRayProjectiles = std::vector<RayProjectile>();
 
     // Initialize Managers
-    m_pPhysicsManager->InitializePhysics(&m_pDynamicsWorld, &m_pCollisionShapes);
-    m_pProjectileManager->InitializeProjectiles(m_pCollisionShapes, &m_currentRayProjectiles, m_pDynamicsWorld);
-    m_pGenerationManager->InitializeGeneration(m_pPhysicsManager);
+    m_pPhysicsManager->InitializePhysics(
+        &m_pDynamicsWorld, 
+        &m_pCollisionShapes, 
+        &m_RigidBodies
+    );
 
-    // Player Rigidbody | (Note) : Create this first, as the player is currently indexed as [0] in the collision table.
-    {
-        m_pPhysicsManager->CreateCapsuleObject(100.0f, 250.0f, Vec3(0, 1500, 0), 1.0f, 0.5f, 2, 29);
-    }
+    m_pProjectileManager->InitializeProjectiles(
+        m_pCollisionShapes, 
+        &m_currentRayProjectiles, 
+        m_pDynamicsWorld, 
+        m_pPhysicsManager, 
+        &m_RigidBodies, 
+        &m_pRenderer->lights, 
+        &m_Timers,
+        &m_ProjectilesCache, 
+        &m_ProjectilesActive
+    );
+
+    m_pGenerationManager->InitializeGeneration(m_pPhysicsManager);
 
     // Room Collider
     {
@@ -328,6 +347,32 @@ void CGame::RenderFrame() {
 
     m_pRenderer->m_pCamera->SetYaw(yaw);
     m_pRenderer->m_pCamera->SetPitch(pitch);
+
+    // This handles the timers tables.
+    std::vector<Entity> toRemove;
+    for every(index, m_Timers.Size()) {
+        m_Timers.Components()[index] -= m_pTimer->GetFrameTime();
+    }
+
+    // This handles projectiles and lighting.
+    for every(index, m_ProjectilesActive.Size()) {
+        Entity e = m_ProjectilesActive.Entities()[index];
+        btTransform trans;
+
+        (*m_RigidBodies.Get(e))->getMotionState()->getWorldTransform(trans);
+        m_pRenderer->lights.Get(e)->position = *(Vec4*)&trans.getOrigin();
+        
+        if (*m_Timers.Get(e) < 0.0) {
+            toRemove.push_back(e);
+        }
+    }
+
+    // Removes the proper
+    for every(index, toRemove.size()) {
+        m_pProjectileManager->StripProjectile(toRemove[index]);
+        std::cout << "hello \n";
+        std::cout.flush();
+    }
 
     if (!flycam_enabled) {
         btCollisionObject* obj = m_pDynamicsWorld->getCollisionObjectArray()[0];

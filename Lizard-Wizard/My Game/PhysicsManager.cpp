@@ -39,7 +39,7 @@ btTransform PhysicsManager::NewTransform(btCollisionShape* shape, Vec3 origin) {
     return startTransform;
 }
 
-btRigidBody PhysicsManager::NewRigidBody(btCollisionShape* shape, btTransform startTransform, f32 mass, f32 friction, i32 group, i32 mask) {
+btRigidBody* PhysicsManager::NewRigidBody(btCollisionShape* shape, btTransform startTransform, f32 mass, f32 friction, i32 group, i32 mask) {
     btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
     Vec3 localInertia(Vec3(0, 0, 0));
     btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, shape, localInertia);
@@ -47,7 +47,7 @@ btRigidBody PhysicsManager::NewRigidBody(btCollisionShape* shape, btTransform st
     btRigidBody* body = new btRigidBody(rbInfo);
     body->setAngularFactor(Vec3(0., 0., 0.));
     CurrentWorld->addRigidBody(body, group, mask);
-    return *body;
+    return body;
 }
 
 // Note(Ethan) : Will speed up the creation of commonly used shapes.
@@ -57,7 +57,7 @@ btRigidBody* PhysicsManager::CreateSphereObject(btScalar radius, Vec3 origin, f3
     CurrentShapes.push_back(shape);
 
     // Create object and return the pointer so further adjustments can be made.
-    return &NewRigidBody(shape, NewTransform(shape, origin), mass, friction, group, mask);
+    return NewRigidBody(shape, NewTransform(shape, origin), mass, friction, group, mask);
 }
 
 btRigidBody* PhysicsManager::CreateBoxObject(Vec3 size, Vec3 origin, f32 mass, f32 friction, i32 group, i32 mask) {
@@ -66,7 +66,7 @@ btRigidBody* PhysicsManager::CreateBoxObject(Vec3 size, Vec3 origin, f32 mass, f
     CurrentShapes.push_back(shape);
 
     // Create object and return the pointer so further adjustments can be made.
-    return &NewRigidBody(shape, NewTransform(shape, origin), mass, friction, group, mask);
+    return NewRigidBody(shape, NewTransform(shape, origin), mass, friction, group, mask);
 }
 
 
@@ -76,7 +76,7 @@ btRigidBody* PhysicsManager::CreateCapsuleObject(btScalar radius, btScalar heigh
     CurrentShapes.push_back(shape);
 
     // Create object and return the pointer so further adjustments can be made.
-    return &NewRigidBody(shape, NewTransform(shape, origin), mass, friction, group, mask);
+    return NewRigidBody(shape, NewTransform(shape, origin), mass, friction, group, mask);
 }
 
 btRigidBody* PhysicsManager::CreateConvexObject(f32 mass, f32 friction, i32 group, i32 mask) {
@@ -89,7 +89,7 @@ void PhysicsManager::DestroyPhysicsObject() {
 
 }
 
-void PhysicsManager::InitializePhysics(btDiscreteDynamicsWorld** GameWorld, btAlignedObjectArray<btCollisionShape*>* GameShapes) {
+void PhysicsManager::InitializePhysics(btDiscreteDynamicsWorld** GameWorld, btAlignedObjectArray<btCollisionShape*>* GameShapes, Table<btRigidBody*>* GameRigidBodies) {
     // Note(Ethan) : Effectively works the same as before, just call this function and it will handle the initialization.
     CurrentConfiguration = new btDefaultCollisionConfiguration();
     CurrentDispatcher = new btCollisionDispatcher(CurrentConfiguration);
@@ -97,6 +97,7 @@ void PhysicsManager::InitializePhysics(btDiscreteDynamicsWorld** GameWorld, btAl
     CurrentSolver = new btSequentialImpulseConstraintSolver;
     *GameWorld = new btDiscreteDynamicsWorld(CurrentDispatcher, CurrentBroadphaseCache, CurrentSolver, CurrentConfiguration);
     *GameShapes = btAlignedObjectArray<btCollisionShape*>();
+    CurrentRigidBodies = GameRigidBodies;
     CurrentWorld = *GameWorld;
     CurrentShapes = *GameShapes;
     CurrentWorld->setGravity(btVector3(0.0, -5000.0, 0.0));
@@ -104,4 +105,11 @@ void PhysicsManager::InitializePhysics(btDiscreteDynamicsWorld** GameWorld, btAl
     // Collision Callback
     btOverlapFilterCallback* filterCallback = new ProjectileCollisionFilter();
     CurrentWorld->getPairCache()->setOverlapFilterCallback(filterCallback);
+
+    // Player Rigidbody | (Note) : Create this first, as the player is currently indexed as [0] in the collision table.
+    {
+        Entity e = Entity();
+        CurrentRigidBodies->AddExisting(e, CreateCapsuleObject(100.0f, 250.0f, Vec3(0, 1500, 0), 1.0f, 0.5f, 2, 29));
+
+    }
 }

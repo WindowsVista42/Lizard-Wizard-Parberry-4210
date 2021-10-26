@@ -32,35 +32,38 @@ void ProjectileManager::GenerateSimProjectile(btCollisionObject* caster, const V
        model, texture.
     */
     for (i32 i = 0; i < projectileCount; i++) {
-
-        // PUSH TO COLLISION ARRAY
-        btCollisionShape* projectile = new btSphereShape(btScalar(50.f));
-        currentSimProjectiles.push_back(projectile);
-        Vec3 newDirection = JitterVec3(lookDirection, -0.3, 0.3);
-
-        // CREATE DYNAMIC OBJECT
-        btTransform startTransform;
-        startTransform.setIdentity();
-        f32 mass = 0.1f; //NOTE(sean): for things that the player might be able to interact with, we want the mass to be smaller
-        f32 friction = 0.5f;
-        bool isDynamic = (mass != 0.0f);
-        Vec3 localInertia(lookDirection * 500.0f);
-        if (isDynamic) {
-            projectile->calculateLocalInertia(mass, btVector3(0.0f, 0.0f, 0.0f));
+        // New Projectile System, uses caching to improve stuff.
+        if (CurrentProjectilesCache->Size() < projectileCount - i) {
+            return;
         }
-        Vec3 projectilePos = Vec3(startPos + newDirection * 250.0f);
-        startTransform.setOrigin(projectilePos);
+        Entity e = CurrentProjectilesCache->RemoveTail();
+        CurrentProjectilesActive->AddExisting(e);
+        CurrentTimers->AddExisting(e, 2.0f);
+        btRigidBody* projectile = *CurrentRigidBodies->Get(e);
+        Vec3 newDirection = JitterVec3(lookDirection, -0.3f, 0.3f);
+        f32 newVelocity = projectileVelocity * 50000.0f;
 
-        // MOTIONSTATE AND RIGIDBODY
-        btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
-        btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, projectile, localInertia);
-        rbInfo.m_friction = friction;
-        btRigidBody* body = new btRigidBody(rbInfo);
-        body->setAngularFactor(Vec3(0., 0., 0.));
-        f32 newVelocity = projectileVelocity * 15000.0f;
-        body->applyForce(Vec3(lookDirection * newVelocity), startPos);
-        body->setIgnoreCollisionCheck(caster, ignoreCaster);
-        currentWorld->addRigidBody(body, 3, 31);
+        // Removes rigidbody from world to edit.
+        CurrentWorld->removeRigidBody(projectile);
+        projectile->clearForces();
+
+        btTransform trans;
+        trans.setOrigin(Vec3(startPos + newDirection * 300.0f));
+        f32 mass = 0.5f;
+        f32 friction = 0.5f;
+        btVector3 inertia;
+
+        // Set attributes.
+        projectile->getMotionState()->setWorldTransform(trans);
+        projectile->setWorldTransform(trans);
+        projectile->getCollisionShape()->calculateLocalInertia(mass, inertia);
+        projectile->setMassProps(mass, inertia);
+        projectile->applyForce(Vec3(lookDirection * newVelocity), startPos);
+        projectile->setFriction(friction);
+
+        // Re-add regidbody to world after edit.
+        CurrentWorld->addRigidBody(projectile);
+        projectile->activate();
     }
 }
 
@@ -73,7 +76,7 @@ void ProjectileManager::CalculateRay(btCollisionObject* caster, RayProjectile& n
         rayResults.m_collisionFilterMask = 31;
 
     }
-    currentWorld->rayTest(Pos1, Vec3(Pos1 + btLookDirection * 5000.), rayResults);
+    CurrentWorld->rayTest(Pos1, Vec3(Pos1 + btLookDirection * 5000.), rayResults);
 
     if (rayResults.hasHit()) {
         // Note (Ethan) : this is neccesary to get the object being hit, for some reason this pointer is const; this isn't problematic as long as we DO NOT EDIT at this pointer.
@@ -106,17 +109,70 @@ void ProjectileManager::GenerateRayProjectile(btCollisionObject* caster, const V
         Vec3 newDirection = JitterVec3(lookDirection, -0.03, 0.03);
         CalculateRay(caster, newRay, startPos, newDirection, rayBounces, Colors::Peru, ignoreCaster);
 
-        currentRayProjectiles->push_back(newRay);
+        CurrentRayProjectiles->push_back(newRay);
     }
 }
 
-void ProjectileManager::InitializeProjectiles(btAlignedObjectArray<btCollisionShape*> gameSimProjectiles, std::vector<RayProjectile>* gameRayProjectiles, btDiscreteDynamicsWorld* gameWorld) {
-    currentSimProjectiles = gameSimProjectiles;
-    currentRayProjectiles = gameRayProjectiles;
-    currentWorld = gameWorld;
+void ProjectileManager::InitializeProjectiles(
+    btAlignedObjectArray<btCollisionShape*> GameSimProjectiles, 
+    std::vector<RayProjectile>* GameRayProjectiles,
+    btDiscreteDynamicsWorld* GameWorld,
+    PhysicsManager* GamePhysicsManager,
+    Table<btRigidBody*>* GameRigidBodies,
+    Table<Light>* GameLights,
+    Table<f32>* GameTimers,
+    Group* GameProjectilesCached, 
+    Group* GameProjectilesActive
+) {
+
+    CurrentSimProjectiles = GameSimProjectiles;
+    CurrentRayProjectiles = GameRayProjectiles;
+    CurrentPhysicsManager = GamePhysicsManager;
+    CurrentRigidBodies = GameRigidBodies;
+    CurrentLights = GameLights;
+    CurrentTimers = GameTimers;
+    CurrentProjectilesCache = GameProjectilesCached;
+    CurrentProjectilesActive = GameProjectilesActive;
+    CurrentWorld = GameWorld;
+
+    for every(index, 64) {
+        Entity e = Entity();
+        btRigidBody* newBody = CurrentPhysicsManager->CreateSphereObject(50.f, Vec3(99999.f, 99999.f, 99999.f), 0.0f, 0.0f, 3, 31);
+        Light newLight = { Vec4(99999.f,99999.f,99999.f,0), Vec4{150.0f, 200.0f, 0.0f, 0} };
+        CurrentLights->AddExisting(e, newLight);
+        CurrentRigidBodies->AddExisting(e, newBody);
+        CurrentProjectilesCache->AddExisting(e);
+    }
 }
 
-void ProjectileManager::DestroyAllProjectiles() {
+void ProjectileManager::StripProjectile(Entity e) {
+    CurrentProjectilesActive->Remove(e);
+    CurrentTimers->Remove(e);
+    CurrentProjectilesCache->AddExisting(e);
+    btRigidBody* projectile = *CurrentRigidBodies->Get(e);
 
+
+    // Removes rigidbody from world to edit.
+    CurrentWorld->removeRigidBody(projectile);
+    projectile->clearForces();
+
+    btTransform trans;
+    trans.setOrigin(Vec3(99999.f, 99999.f, 99999.f));
+    f32 mass = 0.0f;
+    f32 friction = 0.0f;
+    btVector3 inertia;
+
+    // Set attributes.
+    projectile->getMotionState()->setWorldTransform(trans);
+    projectile->setWorldTransform(trans);
+    projectile->getCollisionShape()->calculateLocalInertia(mass, inertia);
+    projectile->setMassProps(mass, inertia);
+    projectile->setFriction(friction);
+
+    // Re-add regidbody to world after edit.
+    CurrentWorld->addRigidBody(projectile);
+
+    // Set light position
+    CurrentLights->Get(e)->position = *(Vec4*)&trans.getOrigin();
 }
 
