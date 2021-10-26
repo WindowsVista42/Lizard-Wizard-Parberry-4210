@@ -8,6 +8,7 @@
 #include "PhysicsManager.h"
 #include "ProjectileManager.h"
 #include "GenerationManager.h"
+#include "NPCManager.h"
 #include "Settings.h"
 #include "CustomBind.h"
 #include "Renderer.h"
@@ -50,8 +51,9 @@ private:
     Group m_ProjectilesActive;
 
     // AI Cache (MAX 24)
-    Group m_EnemiesCache;
-    Group m_EnemiesActive;
+    Table<NPC> m_NPCs;
+    Group m_NPCsCache;
+    Group m_NPCsActive;
 
     // UserInput Vector
     //CustomBind m_currentBinds;

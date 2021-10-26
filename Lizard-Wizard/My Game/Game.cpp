@@ -54,8 +54,8 @@ void CGame::Initialize() {
     m_ProjectilesActive;
 
     // AI Cache (MAX 24)
-    m_EnemiesCache;
-    m_EnemiesActive;
+    m_NPCsCache;
+    m_NPCsActive;
 
     // Create Raycast Vector. Note(Ethan) : Remove this and prepare a raycast-texture pipeline.
     m_currentRayProjectiles = std::vector<RayProjectile>();

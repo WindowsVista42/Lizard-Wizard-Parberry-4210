@@ -172,6 +172,7 @@
     <ClCompile Include="Math.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="LightingEffect.cpp" />
+    <ClCompile Include="NPCManager.cpp" />
     <ClCompile Include="PhysicsManager.cpp" />
     <ClCompile Include="ProjectileManager.cpp" />
     <ClCompile Include="Renderer.cpp" />
@@ -190,6 +191,7 @@
     <ClInclude Include="Math.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="LightingEffect.h" />
+    <ClInclude Include="NPCManager.h" />
     <ClInclude Include="PhysicsManager.h" />
     <ClInclude Include="ProjectileManager.h" />
     <ClInclude Include="Renderer.h" />

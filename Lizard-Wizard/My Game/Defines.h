@@ -139,4 +139,8 @@ namespace ModelIndex { enum e : u32 {
     Count // keep this last
 };}
 
+namespace NPCBehavior { enum e : u32 { 
+    AGGRESSIVE, BALANCED, PASSIVE
+};}
+
 #endif
