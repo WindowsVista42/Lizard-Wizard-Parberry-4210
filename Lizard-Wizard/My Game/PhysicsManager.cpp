@@ -109,7 +109,7 @@ void PhysicsManager::InitializePhysics(btDiscreteDynamicsWorld** GameWorld, btAl
     // Player Rigidbody | (Note) : Create this first, as the player is currently indexed as [0] in the collision table.
     {
         Entity e = Entity();
-        CurrentRigidBodies->AddExisting(e, CreateCapsuleObject(100.0f, 250.0f, Vec3(0, 1500, 0), 1.0f, 0.5f, 2, 29));
-
+        btRigidBody* rb = CreateCapsuleObject(100.0f, 250.0f, Vec3(0, 1500, 0), 1.0f, 0.5f, 2, 29);
+        CurrentRigidBodies->AddExisting(e, rb);
     }
 }

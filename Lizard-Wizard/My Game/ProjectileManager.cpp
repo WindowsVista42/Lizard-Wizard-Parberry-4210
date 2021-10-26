@@ -41,24 +41,30 @@ void ProjectileManager::GenerateSimProjectile(btCollisionObject* caster, const V
         CurrentTimers->AddExisting(e, 2.0f);
         btRigidBody* projectile = *CurrentRigidBodies->Get(e);
         Vec3 newDirection = JitterVec3(lookDirection, -0.3f, 0.3f);
-        f32 newVelocity = projectileVelocity * 50000.0f;
 
         // Removes rigidbody from world to edit.
-        CurrentWorld->removeRigidBody(projectile);
+        //CurrentWorld->removeRigidBody(projectile);
         projectile->clearForces();
 
+        Vec3 offset = Vec3(100.0f, 100.0f, 50.0f);
+
         btTransform trans;
-        trans.setOrigin(Vec3(startPos + newDirection * 300.0f));
+        // UPDATE(sean): changed 300.0f to 100.0f, if you looked down, projectiles were spawning in the ground which would cause crashes on debug builds.
+        // Because the projectiles are spawning so close to the camera it looks really jarring, so we're shifting them up 100 units.
+        // In the future, we can probably tell the projectiles to spawn from the players wand.
+        trans.setOrigin(Vec3(Vec3(startPos + newDirection * 100.0f) + Vec3(0, 100.0f, 0)));
         f32 mass = 0.5f;
         f32 friction = 0.5f;
         btVector3 inertia;
+
+        Vec3 velDirection = JitterVec3(lookDirection, -0.02f, 0.02f);
 
         // Set attributes.
         projectile->getMotionState()->setWorldTransform(trans);
         projectile->setWorldTransform(trans);
         projectile->getCollisionShape()->calculateLocalInertia(mass, inertia);
         projectile->setMassProps(mass, inertia);
-        projectile->applyForce(Vec3(lookDirection * newVelocity), startPos);
+        projectile->setLinearVelocity(Vec3(velDirection * projectileVelocity));
         projectile->setFriction(friction);
 
         // Re-add regidbody to world after edit.
@@ -138,7 +144,8 @@ void ProjectileManager::InitializeProjectiles(
     for every(index, 64) {
         Entity e = Entity();
         btRigidBody* newBody = CurrentPhysicsManager->CreateSphereObject(50.f, Vec3(99999.f, 99999.f, 99999.f), 0.0f, 0.0f, 3, 31);
-        Light newLight = { Vec4(99999.f,99999.f,99999.f,0), Vec4{150.0f, 200.0f, 0.0f, 0} };
+        CurrentWorld->removeRigidBody(newBody);
+        Light newLight = { Vec4(99999.f,99999.f,99999.f,0), Vec4{150.0f, 30.0f, 10.0f, 0} };
         CurrentLights->AddExisting(e, newLight);
         CurrentRigidBodies->AddExisting(e, newBody);
         CurrentProjectilesCache->AddExisting(e);
@@ -170,7 +177,7 @@ void ProjectileManager::StripProjectile(Entity e) {
     projectile->setFriction(friction);
 
     // Re-add regidbody to world after edit.
-    CurrentWorld->addRigidBody(projectile);
+    //CurrentWorld->addRigidBody(projectile);
 
     // Set light position
     CurrentLights->Get(e)->position = *(Vec4*)&trans.getOrigin();

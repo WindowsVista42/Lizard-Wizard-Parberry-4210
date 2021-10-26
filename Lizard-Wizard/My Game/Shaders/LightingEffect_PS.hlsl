@@ -1,6 +1,8 @@
 #include "LightingEffect_Common.hlsli"
 #include "PostProcess_Common.hlsli"
 
+static const float PI = 3.14159265f;
+
 [RootSignature(LightingEffectRS)]
 PixelOutput main(VertexOutput input) {
     PixelOutput output;
@@ -17,7 +19,9 @@ PixelOutput main(VertexOutput input) {
         float3 position_diff = LIGHT_POSITION - pixel_position;
         float light_strength = 1.0f / sqrt(dot(position_diff, position_diff));
         float3 light_direction = normalize(position_diff);
-        float3 light_color = LIGHT_COLOR * light_strength * clamp((dot(pixel_normal, light_direction) + 1.1) * 0.5, 0.0, 1.0);
+        const float dotprod = dot(pixel_normal, light_direction);
+        float3 shape = clamp((dotprod + 2.0) / 2.0, 0.0, 1.0);
+        float3 light_color = LIGHT_COLOR * light_strength * shape;
         output_color += light_color * pixel_color;
     }
 

@@ -298,7 +298,7 @@ Vec3(1.0, 1.0, 1.0);
         m_rightClick.UpdateState();
 
         if (m_leftClick.pressed) {
-            m_pProjectileManager->GenerateSimProjectile(m_pDynamicsWorld->getCollisionObjectArray()[0], m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), 3, 4.0, 5.0, Colors::IndianRed, true);
+            m_pProjectileManager->GenerateSimProjectile(m_pDynamicsWorld->getCollisionObjectArray()[0], m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), 3, 8000.0, 5.0, Colors::IndianRed, true);
         }
 
         if (m_rightClick.pressed) {
@@ -370,8 +370,6 @@ void CGame::RenderFrame() {
     // Removes the proper
     for every(index, toRemove.size()) {
         m_pProjectileManager->StripProjectile(toRemove[index]);
-        std::cout << "hello \n";
-        std::cout.flush();
     }
 
     if (!flycam_enabled) {

@@ -251,7 +251,7 @@ void RenderPostProcess(ID3D12GraphicsCommandList* command_list, RenderPass<A, B>
 /// End Rendering a frame.
 /// Put all DrawXYZ() or other functions in between this and BeginFrame()
 void Renderer::EndDrawing() {
-    static Entity e = lights.Add({ Vec4(500.0f, 200.0f, 0.0f, 0.0f), Vec4(2000.0f, 1000.0f, 3000.0f, 0.0f) * 2.0f });
+    static Entity e = lights.Add({ Vec4(500.0f, 200.0f, 0.0f, 0.0f), Vec4(100.0f, 2000.0f, 3000.0f, 0.0f) });
 
     assert(lights.Size() < 254);
     m_lighting.effect->SetLightCount(lights.Size());
