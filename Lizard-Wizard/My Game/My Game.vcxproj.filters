@@ -16,6 +16,7 @@
     <ClCompile Include="GenerationManager.cpp" />
     <ClCompile Include="RenderTexture.cpp" />
     <ClCompile Include="StagedBuffer.cpp" />
+    <ClCompile Include="NPCManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CustomBind.h" />
@@ -35,6 +36,7 @@
     <ClInclude Include="GraphicsHelpers.h" />
     <ClInclude Include="StagedBuffer.h" />
     <ClInclude Include="Ecs.h" />
+    <ClInclude Include="NPCManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="My Game.rc" />
