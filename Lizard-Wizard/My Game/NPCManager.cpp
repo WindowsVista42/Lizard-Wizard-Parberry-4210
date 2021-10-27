@@ -28,18 +28,28 @@
 
 */
 
-btQuaternion LookAt(Vec3 origin, Vec3 lookAt) {
-    Vec3 forwardVector = XMVector3Normalize(origin - lookAt);
-    Vec3 rotAxis = XMVector3Cross(Vec3(1.0f, 0, 0), forwardVector);
-    float dot = forwardVector.Dot(Vec3(1.0f, 0, 0));
+void NPCManager::Sleep(Entity) {
 
-    btQuaternion q;
-    q.setX(rotAxis.x);
-    q.setY(rotAxis.y);
-    q.setZ(rotAxis.z);
-    q.setW(dot + 1);
+}
 
-    return q.normalize();
+void NPCManager::Wander(Entity) {
+
+}
+
+void NPCManager::Move(Entity) {
+
+}
+
+void NPCManager::Pathfind(Entity) {
+
+}
+
+void NPCManager::Attack(Entity) {
+
+}
+
+void NPCManager::Search(Entity) {
+
 }
 
 // Contains most of the logical code for handling NPCs

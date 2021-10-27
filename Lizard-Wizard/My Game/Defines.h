@@ -159,7 +159,11 @@ namespace TextureIndex { enum e : u32 {
 };}
 
 namespace NPCBehavior { enum e : u32 { 
-    MELEE, RANGED, TURRET
+    MELEE, RANGED, TURRET, BOSS
+};}
+
+namespace NPCState { enum e : u32 {
+    SLEEPING, WANDER, MOVING, PATHFINDING, ATTACKING, SEARCHING
 };}
 
 #endif

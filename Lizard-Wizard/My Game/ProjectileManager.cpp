@@ -83,7 +83,16 @@ void ProjectileManager::GenerateSimProjectile(
     }
 }
 
-void ProjectileManager::CalculateRay(btCollisionObject* caster, RayProjectile& newRay, Vec3 Pos1, Vec3 btLookDirection, i32 rayBounces, Vec4 color, b8 ignoreCaster) {
+void ProjectileManager::CalculateRay(
+    btCollisionObject* caster, 
+    RayProjectile& newRay, 
+    Vec3 Pos1, 
+    Vec3 btLookDirection,
+    i32 rayBounces,
+    Vec4 color,
+    b8 ignoreCaster
+) {
+
     newRay.Pos1 = Pos1;
 
     btCollisionWorld::ClosestRayResultCallback rayResults(Pos1, Vec3(Pos1 + btLookDirection * 5000.));
@@ -111,7 +120,18 @@ void ProjectileManager::CalculateRay(btCollisionObject* caster, RayProjectile& n
     }
 }
 
-void ProjectileManager::GenerateRayProjectile(btCollisionObject* caster, const Vec3 startPos, const Vec3 lookDirection, const i32 rayCount, const i32 rayBounces, const f32 rayAccuracy, const Vec4 rayColor, const b8 recursed, const b8 ignoreCaster) {
+void ProjectileManager::GenerateRayProjectile(
+    btCollisionObject* caster, 
+    const Vec3 startPos, 
+    const Vec3 lookDirection, 
+    const i32 rayCount, 
+    const i32 rayBounces, 
+    const f32 rayAccuracy, 
+    const Vec4 rayColor, 
+    const b8 recursed, 
+    const b8 ignoreCaster
+) {
+
     /* Note(Ethan) :
        will expand to include :
        texture.

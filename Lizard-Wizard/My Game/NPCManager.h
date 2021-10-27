@@ -21,6 +21,7 @@ struct NPC {
     Vec3 Orientation;
 
     NPCBehavior::e Behavior;
+    NPCState::e State;
 
     btRigidBody* Body;
     //ModelIndex::e Model;
@@ -30,7 +31,8 @@ struct NPC {
         Speed(0),
         Position(Vec3(0, 0, 0)),
         Orientation(Vec3(0, 0, 0)),
-        Behavior(NPCBehavior::TURRET)
+        Behavior(NPCBehavior::TURRET),
+        State(NPCState::SLEEPING)
     {}
 };
 
@@ -38,6 +40,12 @@ struct NPC {
 class NPCManager {
 
 public:
+    void Sleep(Entity);
+    void Wander(Entity);
+    void Move(Entity);
+    void Pathfind(Entity);
+    void Attack(Entity);
+    void Search(Entity);
     void DirectNPC(Entity, btRigidBody*);
     void PlaceNPC(Entity, Vec3);
     void InitializeNPCs(
