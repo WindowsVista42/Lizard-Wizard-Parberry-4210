@@ -58,6 +58,7 @@ void Renderer::Initialize() {
         m_lighting.InitDescs(m_pD3DDevice, m_nWinWidth, m_nWinHeight);
     }
 
+    /*
     //NOTE(sean): Bloom Effects
     {
         RenderTargetState render_target_state = {};
@@ -94,7 +95,7 @@ void Renderer::Initialize() {
             height /= 2;
         }
     }
-
+    */
 
     // This is very similar to vulkan :)
     {
@@ -278,6 +279,7 @@ void RenderPostProcess(ID3D12GraphicsCommandList* command_list, RenderPass<A, B>
     command_list->DrawInstanced(3, 1, 0, 0);
 }
 
+/*
 namespace BloomOutput {enum e : u32 {
     Lighting,
     Combine0, // <-- Blur1 + Combine1
@@ -292,6 +294,7 @@ namespace BloomOutput {enum e : u32 {
     Output, // <-- Lighting + Combine0 
     Count
 };}
+*/
 
 /// End Rendering a frame.
 /// Put all DrawXYZ() or other functions in between this and BeginFrame()
@@ -304,6 +307,7 @@ void Renderer::EndDrawing() {
 
     RenderPostProcess(m_pCommandList, &m_deferred, &m_lighting);
 
+    /*
     //NOTE(sean): bloom extract
     {
         m_bloomExtract.effect->SetSourceTexture(m_lighting.renders.get()->GetGpuHandle(0), m_lighting.textures[0].m_resource.Get());
@@ -366,6 +370,7 @@ void Renderer::EndDrawing() {
         m_bloomCombine[1].SetAsOutput(m_pCommandList);
         m_bloomCombine[1].effect->Process(m_pCommandList);
     }
+    */
 
     // Render Tonemap Effect
     {
@@ -374,7 +379,7 @@ void Renderer::EndDrawing() {
 
         m_pCommandList->OMSetRenderTargets(1, &m_pDeviceResources->GetRenderTargetView(), FALSE, 0);
 
-        m_pTonemapEffect->SetTextures(m_bloomCombine[1].resources.get());
+        m_pTonemapEffect->SetTextures(m_lighting.resources.get());
         m_pTonemapEffect->UpdateConstants(m_nWinWidth, m_nWinHeight, tint_color, blur_amount, saturation_amount);
 
         m_pTonemapEffect->Apply(m_pCommandList);
