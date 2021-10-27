@@ -100,7 +100,13 @@ void PhysicsManager::DestroyPhysicsOBject(btCollisionShape* shape) {
 }
 
 
-void PhysicsManager::InitializePhysics(btDiscreteDynamicsWorld** GameWorld, btAlignedObjectArray<btCollisionShape*>* GameShapes, Table<btRigidBody*>* GameRigidBodies) {
+void PhysicsManager::InitializePhysics(
+    btDiscreteDynamicsWorld** GameWorld, 
+    btAlignedObjectArray<btCollisionShape*>* GameShapes, 
+    Table<btRigidBody*>* GameRigidBodies,
+    Entity* GamePlayer
+
+) {
     // Note(Ethan) : Effectively works the same as before, just call this function and it will handle the initialization.
     CurrentConfiguration = new btDefaultCollisionConfiguration();
     CurrentDispatcher = new btCollisionDispatcher(CurrentConfiguration);
@@ -112,6 +118,7 @@ void PhysicsManager::InitializePhysics(btDiscreteDynamicsWorld** GameWorld, btAl
     CurrentWorld = *GameWorld;
     CurrentShapes = *GameShapes;
     CurrentWorld->setGravity(btVector3(0.0, -5000.0, 0.0));
+    CurrentPlayer = GamePlayer;
 
     // Collision Callback
     btOverlapFilterCallback* filterCallback = new ProjectileCollisionFilter();
@@ -119,8 +126,7 @@ void PhysicsManager::InitializePhysics(btDiscreteDynamicsWorld** GameWorld, btAl
 
     // Player Rigidbody | (Note) : Create this first, as the player is currently indexed as [0] in the collision table.
     {
-        Entity e = Entity();
         btRigidBody* rb = CreateCapsuleObject(100.0f, 250.0f, Vec3(0, 1500, 0), 1.0f, 0.5f, 2, 0b00001);
-        CurrentRigidBodies->AddExisting(e, rb);
+        CurrentRigidBodies->AddExisting(*CurrentPlayer, rb);
     }
 }

@@ -53,10 +53,12 @@ void CGame::Initialize() {
     m_currentRayProjectiles = std::vector<RayProjectile>();
 
     // Initialize Managers
+    player = Entity();
     m_pPhysicsManager->InitializePhysics(
         &m_pDynamicsWorld,
         &m_pCollisionShapes,
-        &m_RigidBodies
+        &m_RigidBodies,
+        &player
     );
 
     m_pGenerationManager->InitializeGeneration(m_pPhysicsManager);
@@ -78,6 +80,7 @@ void CGame::Initialize() {
         m_pProjectileManager,
         &m_NPCs,
         &m_pRenderer->lights,
+        &m_Timers,
         &m_NPCsCache,
         &m_NPCsActive
     );
@@ -363,6 +366,17 @@ void CGame::RenderFrame() {
         m_Timers.Components()[index] -= m_pTimer->GetFrameTime();
     }
 
+    // This handles NPCs and lighting.
+    for every(index, m_NPCsActive.Size()) {
+        Entity e = m_NPCsActive.Entities()[index];
+        btTransform trans;
+
+        (*m_NPCs.Get(e)).Body->getMotionState()->getWorldTransform(trans);
+        m_pRenderer->lights.Get(e)->position = *(Vec4*)&trans.getOrigin();
+
+        m_pNPCManager->DirectNPC(e, *m_RigidBodies.Get(player));
+    }
+
     // This handles projectiles and lighting.
     for every(index, m_ProjectilesActive.Size()) {
         Entity e = m_ProjectilesActive.Entities()[index];
@@ -374,15 +388,6 @@ void CGame::RenderFrame() {
         if (*m_Timers.Get(e) < 0.0) {
             toRemove.push_back(e);
         }
-    }
-
-    // This handles NPCs and lighting.
-    for every(index, m_NPCsActive.Size()) {
-        Entity e = m_NPCsActive.Entities()[index];
-        btTransform trans;
-
-        (*m_NPCs.Get(e)).Body->getMotionState()->getWorldTransform(trans);
-        m_pRenderer->lights.Get(e)->position = *(Vec4*)&trans.getOrigin();
     }
 
     // Strip Projectiles.
@@ -454,7 +459,8 @@ void CGame::RenderFrame() {
 
                         ModelInstance instance = {};
                         instance.model = (u32)ModelIndex::Cube;
-                        instance.world = MoveScaleMatrix(trans.getOrigin(), castratedObject->getHalfExtentsWithMargin());
+                        //instance.world = MoveScaleMatrix(trans.getOrigin(), castratedObject->getHalfExtentsWithMargin());
+                        instance.world = MoveRotateScaleMatrix(trans.getOrigin(), *(Quat*)&trans.getRotation(), castratedObject->getHalfExtentsWithMargin());
                         instance.texture = 0;
                         m_pRenderer->DrawModelInstance(&instance);
                     } break;

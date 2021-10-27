@@ -8,8 +8,8 @@
 #include <vector>
 
 // Room Configuration Defines
-#define X_ROOMS 6
-#define Y_ROOMS 6
+#define X_ROOMS 12
+#define Y_ROOMS 36
 
 // Respective Structs
 namespace RoomTag {

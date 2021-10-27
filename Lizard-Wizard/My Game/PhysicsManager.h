@@ -41,7 +41,7 @@ public:
     void RemoveRigidBody(btRigidBody*);
     void AddRigidBody(btRigidBody*, i32, i32);
     void DestroyPhysicsOBject(btCollisionShape*);
-    void InitializePhysics(btDiscreteDynamicsWorld**, btAlignedObjectArray<btCollisionShape*>*, Table<btRigidBody*>*);
+    void InitializePhysics(btDiscreteDynamicsWorld**, btAlignedObjectArray<btCollisionShape*>*, Table<btRigidBody*>*, Entity*);
 
 private:
     btDefaultCollisionConfiguration* CurrentConfiguration;
@@ -51,6 +51,7 @@ private:
     btAlignedObjectArray<btCollisionShape*> CurrentShapes;
     btDiscreteDynamicsWorld* CurrentWorld;
     Table<btRigidBody*>* CurrentRigidBodies;
+    Entity* CurrentPlayer;
 };
 
 

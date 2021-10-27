@@ -26,7 +26,16 @@
 
 */
 
-void ProjectileManager::GenerateSimProjectile(btCollisionObject* caster, const Vec3 startPos, const Vec3 lookDirection, const i32 projectileCount, const f32 projectileVelocity, const f32 projectileAccuracy, const Vec4 projectileColor, const b8 ignoreCaster) {
+void ProjectileManager::GenerateSimProjectile(
+    btCollisionObject* caster, 
+    const Vec3 startPos, 
+    const Vec3 lookDirection, 
+    const i32 projectileCount, 
+    const f32 projectileVelocity, 
+    const f32 projectileAccuracy, 
+    const Vec4 projectileColor, 
+    const b8 ignoreCaster
+) {
     /* Note(Ethan) :
        will expand to include :
        model, texture.
@@ -69,6 +78,7 @@ void ProjectileManager::GenerateSimProjectile(btCollisionObject* caster, const V
 
         // Re-add regidbody to world after edit.
         CurrentWorld->addRigidBody(projectile, 2, 0b00001);
+        CurrentLights->Get(e)->color = Vec4(projectileColor.x * 100.0f, projectileColor.y * 100.0f, projectileColor.z * 100.0f, 0);
         projectile->activate();
     }
 }

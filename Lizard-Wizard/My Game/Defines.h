@@ -153,7 +153,7 @@ namespace ModelIndex { enum e : u32 {
 };}
 
 namespace NPCBehavior { enum e : u32 { 
-    AGGRESSIVE, BALANCED, PASSIVE
+    MELEE, RANGED, TURRET
 };}
 
 #endif

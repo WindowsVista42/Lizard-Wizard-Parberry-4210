@@ -78,7 +78,7 @@ private:
 
 public:
     Renderer* m_pRenderer; ///< Pointer to renderer.
-
+    Entity player;
     // Bullet3 Declarationsstatic 
     btAlignedObjectArray<btCollisionShape*> m_pCollisionShapes;
     btDiscreteDynamicsWorld* m_pDynamicsWorld;

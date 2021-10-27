@@ -30,7 +30,7 @@ struct NPC {
         Speed(0),
         Position(Vec3(0, 0, 0)),
         Orientation(Vec3(0, 0, 0)),
-        Behavior(NPCBehavior::PASSIVE)
+        Behavior(NPCBehavior::TURRET)
     {}
 };
 
@@ -38,13 +38,14 @@ struct NPC {
 class NPCManager {
 
 public:
-    void GenerateNPC();
+    void DirectNPC(Entity, btRigidBody*);
     void PlaceNPC(Entity, Vec3);
     void InitializeNPCs(
         PhysicsManager*,
         ProjectileManager*,
         Table<NPC>*,
         Table<Light>*,
+        Table<f32>*,
         Group*,
         Group* 
     );
@@ -55,6 +56,7 @@ private:
     ProjectileManager* CurrentProjectileManager;
     Table<NPC>* CurrentNPCs;
     Table<Light>* CurrentLights;
+    Table<f32>* CurrentTimers;
     Group* CurrentNPCsCache;
     Group* CurrentNPCsActive;
 };
