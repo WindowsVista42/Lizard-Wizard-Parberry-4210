@@ -39,47 +39,54 @@ CGame::~CGame() {}
 void CGame::Initialize() {
     m_pRenderer = new Renderer();
     m_pRenderer->Initialize();
-  
+
     LoadImages(); //load images from xml file list
     LoadModels(); //load models from xml file list
 
     // Create Managers
     m_pPhysicsManager = new PhysicsManager();
-    m_pProjectileManager = new ProjectileManager(); // set up projectile manager
-    m_pGenerationManager = new GenerationManager(); // sEts up the generation manager
+    m_pGenerationManager = new GenerationManager();
+    m_pProjectileManager = new ProjectileManager();
+    m_pNPCManager = new NPCManager();
     LoadSounds(); //load the sounds for this game
-
-    // Projectile Cache (MAX 64)
-    m_ProjectilesCache;
-    m_ProjectilesActive;
-
-    // AI Cache (MAX 24)
-    m_NPCsCache;
-    m_NPCsActive;
-
     // Create Raycast Vector. Note(Ethan) : Remove this and prepare a raycast-texture pipeline.
     m_currentRayProjectiles = std::vector<RayProjectile>();
 
     // Initialize Managers
     m_pPhysicsManager->InitializePhysics(
-        &m_pDynamicsWorld, 
-        &m_pCollisionShapes, 
+        &m_pDynamicsWorld,
+        &m_pCollisionShapes,
         &m_RigidBodies
     );
 
+    m_pGenerationManager->InitializeGeneration(m_pPhysicsManager);
+
     m_pProjectileManager->InitializeProjectiles(
-        m_pCollisionShapes, 
-        &m_currentRayProjectiles, 
-        m_pDynamicsWorld, 
-        m_pPhysicsManager, 
-        &m_RigidBodies, 
-        &m_pRenderer->lights, 
+        m_pCollisionShapes,
+        &m_currentRayProjectiles,
+        m_pDynamicsWorld,
+        m_pPhysicsManager,
+        &m_RigidBodies,
+        &m_pRenderer->lights,
         &m_Timers,
-        &m_ProjectilesCache, 
+        &m_ProjectilesCache,
         &m_ProjectilesActive
     );
 
-    m_pGenerationManager->InitializeGeneration(m_pPhysicsManager);
+    m_pNPCManager->InitializeNPCs(
+        m_pPhysicsManager,
+        m_pProjectileManager,
+        &m_NPCs,
+        &m_pRenderer->lights,
+        &m_NPCsCache,
+        &m_NPCsActive
+    );
+
+    // Test NPC
+    {
+        Entity e = m_NPCs.Entities()[0];
+        m_pNPCManager->PlaceNPC(e, Vec3(6000.0f, 500.0f,0));
+    }
 
     // Room Collider
     {
@@ -291,11 +298,11 @@ void CGame::InputHandler() {
         m_rightClick.UpdateState();
 
         if (m_leftClick.pressed) {
-            m_pProjectileManager->GenerateSimProjectile(m_pDynamicsWorld->getCollisionObjectArray()[0], m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), 3, 8000.0, 5.0, Colors::IndianRed, true);
+            m_pProjectileManager->GenerateSimProjectile(m_pDynamicsWorld->getCollisionObjectArray()[0], m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), 3, 8000.0, 0.5, Colors::IndianRed, true);
         }
 
         if (m_rightClick.pressed) {
-            m_pProjectileManager->GenerateRayProjectile(m_pDynamicsWorld->getCollisionObjectArray()[0], m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), 3, 2, 5.0, Colors::IndianRed, false, true);
+            m_pProjectileManager->GenerateRayProjectile(m_pDynamicsWorld->getCollisionObjectArray()[0], m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), 3, 2, 0.05, Colors::IndianRed, false, true);
         }
 
         Vector2 delta = { (f32)(cursor_pos.x - center.x), (f32)(cursor_pos.y - center.y) };
@@ -360,7 +367,16 @@ void CGame::RenderFrame() {
         }
     }
 
-    // Removes the proper
+    // This handles NPCs and lighting.
+    for every(index, m_NPCsActive.Size()) {
+        Entity e = m_NPCsActive.Entities()[index];
+        btTransform trans;
+
+        (*m_NPCs.Get(e)).Body->getMotionState()->getWorldTransform(trans);
+        m_pRenderer->lights.Get(e)->position = *(Vec4*)&trans.getOrigin();
+    }
+
+    // Strip Projectiles.
     for every(index, toRemove.size()) {
         m_pProjectileManager->StripProjectile(toRemove[index]);
     }

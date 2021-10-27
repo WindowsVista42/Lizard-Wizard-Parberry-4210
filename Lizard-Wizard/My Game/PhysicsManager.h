@@ -38,7 +38,9 @@ public:
     btRigidBody* CreateBoxObject(Vec3, Vec3, f32, f32, i32, i32);
     btRigidBody* CreateCapsuleObject(btScalar, btScalar, Vec3, f32, f32, i32, i32);
     btRigidBody* CreateConvexObject(f32, f32, i32, i32);
-    void DestroyPhysicsObject();
+    void RemoveRigidBody(btRigidBody*);
+    void AddRigidBody(btRigidBody*, i32, i32);
+    void DestroyPhysicsOBject(btCollisionShape*);
     void InitializePhysics(btDiscreteDynamicsWorld**, btAlignedObjectArray<btCollisionShape*>*, Table<btRigidBody*>*);
 
 private:

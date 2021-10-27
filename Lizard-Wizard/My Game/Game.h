@@ -38,9 +38,10 @@ private:
     CustomBind m_rightClick;
 
     // Managers
-    ProjectileManager* m_pProjectileManager;
     PhysicsManager* m_pPhysicsManager;
     GenerationManager* m_pGenerationManager;
+    ProjectileManager* m_pProjectileManager;
+    NPCManager* m_pNPCManager;
 
     // Model Table
     Table<ModelInstance> m_ModelInstances;
