@@ -1,7 +1,7 @@
 #include "LightingEffect.h"
-#include "Renderer.h"
+#include "../Renderer.h"
 #include <ReadData.h>
-#include "Defines.h"
+#include "../Defines.h"
 
 //NOTE(sean): this is actually a really nice way to do a bitset,
 //courtesy of --> https://github.com/microsoft/DirectXTK12/wiki/Authoring-an-Effect

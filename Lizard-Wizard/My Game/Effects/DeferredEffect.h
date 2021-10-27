@@ -1,6 +1,7 @@
 #ifndef GAMEEFFECT_H
 #define GAMEFFECT_H
 
+#include "../Defines.h"
 #include <Effects.h>
 #include <Renderer3D.h>
 

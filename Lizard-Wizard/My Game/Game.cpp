@@ -139,16 +139,7 @@ void CGame::LoadModels() {
     m_pRenderer->LoadModel("suzanne", ModelIndex::Suzanne);
 }
 
-void CGame::LoadImages(){
-    /*
-    m_pRenderer->BeginResourceUpload();
-
-    m_pRenderer->Load(eSprite::Background, "background"); 
-    m_pRenderer->Load(eSprite::TextWheel,  "textwheel"); 
-
-    m_pRenderer->EndResourceUpload();
-    */
-}
+void CGame::LoadImages(){}
 
 /// Initialize the audio player and load game sounds.
 
@@ -197,7 +188,7 @@ void CGame::InputHandler() {
         btVector3 jumpVector = {0, 5000, 0};
         pBody->applyCentralImpulse(jumpVector);
     }
-Vec3(1.0, 1.0, 1.0);
+
     if (m_pKeyboard->TriggerUp(VK_SPACE)) //play sound
         //m_pAudio->play(eSound::Grunt);
 
@@ -286,7 +277,7 @@ Vec3(1.0, 1.0, 1.0);
             }
         }
     }
-Vec3(1.0, 1.0, 1.0);
+
     //TODO(sean): Ignore input if user has just refocused on the window
     if(m_pRenderer->GetHwnd() == GetFocus()) { // check if focused window is us
         // I see you looking at 
@@ -434,28 +425,27 @@ void CGame::RenderFrame() {
                 instance.texture = 0;
                 f32 xoff = 400.0f * cosf(m_pTimer->GetTime());
                 f32 zoff = 400.0f * sinf(m_pTimer->GetTime());
-                instance.world = MoveScaleMatrix(Vector3(xoff, 100.0f, zoff), Vector3(100.0f, 100.0f, 100.0f));
+                instance.world = MoveScaleMatrix(Vector3(xoff, 50.0f, zoff), Vector3(100.0f, 100.0f, 100.0f));
                 m_pRenderer->DrawModelInstance(&instance);
             }
 
             //NOTE(sean): test for rendering model instances onto bullet objects
-            {
-                for every(j, m_pDynamicsWorld->getNumCollisionObjects()) {
-                    btCollisionObject* obj = m_pDynamicsWorld->getCollisionObjectArray()[j];
-                    btCollisionShape* shape = obj->getCollisionShape();
-                    btRigidBody* body = btRigidBody::upcast(obj);
-                    btTransform trans;
+            for every(j, m_pDynamicsWorld->getNumCollisionObjects()) {
+                btCollisionObject* obj = m_pDynamicsWorld->getCollisionObjectArray()[j];
+                btCollisionShape* shape = obj->getCollisionShape();
+                btRigidBody* body = btRigidBody::upcast(obj);
+                btTransform trans;
 
-                    if (body && body->getMotionState()) {
-                        body->getMotionState()->getWorldTransform(trans);
-                    }
-                    else {
-                        trans = obj->getWorldTransform();
-                    }
+                if (body && body->getMotionState()) {
+                    body->getMotionState()->getWorldTransform(trans);
+                }
+                else {
+                    trans = obj->getWorldTransform();
+                }
 
-                    switch (shape->getShapeType()) {
-                    case(BT_SHAPE_TYPE_BOX): {
-                        btBoxShape* castratedObject = reinterpret_cast<btBoxShape*>(shape);
+                switch (shape->getShapeType()) {
+                case(BT_SHAPE_TYPE_BOX): {
+                    btBoxShape* castratedObject = reinterpret_cast<btBoxShape*>(shape);
 
                         ModelInstance instance = {};
                         instance.model = (u32)ModelIndex::Cube;
@@ -465,16 +455,15 @@ void CGame::RenderFrame() {
                         m_pRenderer->DrawModelInstance(&instance);
                     } break;
 
-                    case(BT_SHAPE_TYPE_CAPSULE): {} break;
+                case(BT_SHAPE_TYPE_CAPSULE): {} break;
 
-                    default: {
-                        ModelInstance instance = {};
-                        instance.model = ModelIndex::Suzanne;
-                        instance.world = MoveScaleMatrix(trans.getOrigin(), Vector3(25.0f));
-                        instance.texture = 0;
-                        m_pRenderer->DrawModelInstance(&instance);
-                    } break;
-                    }
+                default: {
+                    ModelInstance instance = {};
+                    instance.model = ModelIndex::Suzanne;
+                    instance.world = MoveScaleMatrix(trans.getOrigin(), Vector3(25.0f));
+                    instance.texture = 0;
+                    m_pRenderer->DrawModelInstance(&instance);
+                } break;
                 }
             }
         }

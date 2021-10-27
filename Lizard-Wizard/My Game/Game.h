@@ -43,6 +43,9 @@ private:
     ProjectileManager* m_pProjectileManager;
     NPCManager* m_pNPCManager;
 
+    // Model Table
+    Table<ModelInstance> m_ModelInstances;
+
     // Timing Table
     Table<f32> m_Timers;
 

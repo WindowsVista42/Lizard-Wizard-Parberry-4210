@@ -1,6 +1,7 @@
 #ifndef TONEMAP_EFFECT_H
 #define TONEMAP_EFFECT_H
 
+#include "../Defines.h"
 #include "LightingEffect.h"
 #include <Effects.h>
 #include <Renderer3D.h>

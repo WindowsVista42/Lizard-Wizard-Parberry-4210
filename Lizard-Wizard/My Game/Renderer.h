@@ -4,19 +4,25 @@
 #include "Defines.h"
 #include "Model.h"
 #include "StagedBuffer.h"
-#include "DeferredEffect.h"
-#include "LightingEffect.h"
-#include "TonemapEffect.h"
+
+#include "Effects/DeferredEffect.h"
+#include "Effects/LightingEffect.h"
+#include "Effects/TonemapEffect.h"
+#include "Effects/BloomEffect.h"
+
 #include "RenderTexture.h"
 #include "Ecs.h"
 #include <Renderer3D.h>
 #include <array>
 
+#include <PostProcess.h>
+
 #define MAX_LIGHTS 254
+#define BLOOM_PASS_COUNT 4
 
 // All the benefits of enum class, without having to cast to the type :)
 namespace DeferredOutput { enum e : u32 {
-    Color, Normal, Position, Depth,
+    Color, Normal, Position,
     Count
 };}
 
@@ -25,9 +31,14 @@ namespace LightingOutput { enum e : u32 {
     Count
 };}
 
+namespace BloomOutput { enum e : u32 {
+    Color,
+    Count
+};}
+
 template <typename E, const usize N>
 struct RenderPass {
-    std::unique_ptr<E> effect;
+    std::shared_ptr<E> effect;
     std::unique_ptr<DescriptorHeap> resources;
     std::unique_ptr<DescriptorHeap> renders;
     std::array<RenderTexture, N> textures;
@@ -115,6 +126,8 @@ struct RenderPass {
     }
 };
 
+struct BloomEffect {};
+
 //NOTE(sean): A lot of this implementation is reverse-engineered based on what LSpriteRenderer does
 //The DirectXTK12 docs are super helpful for all of this as well :)
 class Renderer: public LRenderer3D {
@@ -125,14 +138,23 @@ private:
     std::unique_ptr<BasicEffect> m_pDebugLineEffect;
     std::unique_ptr<BasicEffect> m_pDebugTriangleEffect;
     std::vector<DebugModel> m_debugModels;
-    std::vector<ModelInstance> m_debugModelInstances;
 
-    std::unique_ptr<TonemapEffect> m_pTonemapEffect;
     RenderPass<DeferredEffect, DeferredOutput::Count> m_deferred;
     RenderPass<LightingEffect, LightingOutput::Count> m_lighting;
 
-    std::vector<GameModel> m_models;
-    std::vector<ModelInstance> m_modelInstances;
+    // Bloom Pass
+    // We require multiple of these because of the downsample + blurring
+    RenderPass<BasicPostProcess, BloomOutput::Count> m_bloomExtract;
+    std::array<RenderPass<BasicPostProcess, BloomOutput::Count>, BLOOM_PASS_COUNT> m_bloomBlur;
+    std::array<RenderPass<DualPostProcess, BloomOutput::Count>, BLOOM_PASS_COUNT> m_bloomCombine;
+
+    //std::unique_ptr<BasicPostProcess> m_bloomExtract;
+    //std::unique_ptr<BasicPostProcess> m_bloomBlur;
+    //std::unique_ptr<DualPostProcess> m_bloomCombine;
+
+    std::unique_ptr<TonemapEffect> m_pTonemapEffect;
+
+    std::array<GameModel, ModelIndex::Count> m_models;
 
     void BetterScreenShot();
 
@@ -202,6 +224,7 @@ public:
 
     void DrawModelInstance(ModelInstance* instance);
     void LoadModel(const char* name, u32 model_index);
+    void LoadTexture(const char* name, u32 texture_index);
 
     //TODO(sean): Implement this
     //NOTE(sean): Frustum Culling -- Don't render things behind the cameras near clip plane

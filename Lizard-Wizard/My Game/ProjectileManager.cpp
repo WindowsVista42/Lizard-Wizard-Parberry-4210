@@ -88,7 +88,7 @@ void ProjectileManager::CalculateRay(btCollisionObject* caster, RayProjectile& n
 
     btCollisionWorld::ClosestRayResultCallback rayResults(Pos1, Vec3(Pos1 + btLookDirection * 5000.));
     if (ignoreCaster) {
-        rayResults.m_collisionFilterGroup = 3;
+        rayResults.m_collisionFilterGroup = 0b00100;
 		rayResults.m_collisionFilterMask = 0b00001;
 
     }
