@@ -84,10 +84,21 @@ btRigidBody* PhysicsManager::CreateConvexObject(f32 mass, f32 friction, i32 grou
 }
 
 
-void PhysicsManager::DestroyPhysicsObject() {
-    // Note(Ethan) : This lets us destroy objects much easier than before.
-
+// Helper Functions, these will be helpful when we don't want to keep passing the dynamics world to managers.
+void PhysicsManager::RemoveRigidBody(btRigidBody* body) {
+    CurrentWorld->removeRigidBody(body);
 }
+
+
+void PhysicsManager::AddRigidBody(btRigidBody* body, i32 group, i32 mask) {
+    CurrentWorld->addRigidBody(body, group, mask);
+}
+
+
+void PhysicsManager::DestroyPhysicsOBject(btCollisionShape* shape) {
+    // Nothing for now, figure out a good way to destroy any given Bullet3 objects.
+}
+
 
 void PhysicsManager::InitializePhysics(btDiscreteDynamicsWorld** GameWorld, btAlignedObjectArray<btCollisionShape*>* GameShapes, Table<btRigidBody*>* GameRigidBodies) {
     // Note(Ethan) : Effectively works the same as before, just call this function and it will handle the initialization.

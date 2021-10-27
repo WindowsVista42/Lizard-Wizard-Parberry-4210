@@ -40,7 +40,7 @@ void ProjectileManager::GenerateSimProjectile(btCollisionObject* caster, const V
         CurrentProjectilesActive->AddExisting(e);
         CurrentTimers->AddExisting(e, 2.0f);
         btRigidBody* projectile = *CurrentRigidBodies->Get(e);
-        Vec3 newDirection = JitterVec3(lookDirection, -0.3f, 0.3f);
+        Vec3 newDirection = JitterVec3(lookDirection, -projectileAccuracy, projectileAccuracy);
 
         // Removes rigidbody from world to edit.
         //CurrentWorld->removeRigidBody(projectile);
@@ -112,7 +112,7 @@ void ProjectileManager::GenerateRayProjectile(btCollisionObject* caster, const V
     newRay.Color = rayColor;
 
     for (i32 i = 0; i < rayCount; i++) {
-        Vec3 newDirection = JitterVec3(lookDirection, -0.03, 0.03);
+        Vec3 newDirection = JitterVec3(lookDirection, -rayAccuracy, rayAccuracy);
         CalculateRay(caster, newRay, startPos, newDirection, rayBounces, Colors::Peru, ignoreCaster);
 
         CurrentRayProjectiles->push_back(newRay);
@@ -141,7 +141,7 @@ void ProjectileManager::InitializeProjectiles(
     CurrentProjectilesActive = GameProjectilesActive;
     CurrentWorld = GameWorld;
 
-    for every(index, 64) {
+    for every(index, PROJECTILE_CACHE_SIZE) {
         Entity e = Entity();
         btRigidBody* newBody = CurrentPhysicsManager->CreateSphereObject(50.f, Vec3(99999.f, 99999.f, 99999.f), 0.0f, 0.0f, 3, 0b00001);
         CurrentWorld->removeRigidBody(newBody);

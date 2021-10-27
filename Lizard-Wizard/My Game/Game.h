@@ -38,9 +38,10 @@ private:
     CustomBind m_rightClick;
 
     // Managers
-    ProjectileManager* m_pProjectileManager;
     PhysicsManager* m_pPhysicsManager;
     GenerationManager* m_pGenerationManager;
+    ProjectileManager* m_pProjectileManager;
+    NPCManager* m_pNPCManager;
 
     // Timing Table
     Table<f32> m_Timers;

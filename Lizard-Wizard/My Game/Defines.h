@@ -31,6 +31,11 @@ typedef VertexPositionColor VertexPC;
 #define BT_SHAPE_TYPE_BOX 0
 #define BT_SHAPE_TYPE_CAPSULE 10
 
+/// These are for Cache size configurations
+#define MAX_RENDERED_LIGHTS 255
+#define PROJECTILE_CACHE_SIZE 64
+#define NPC_CACHE_SIZE 24
+
 /// Formatted abort when (lhs == rhs)
 #define ABORT_EQ_FORMAT(lhs, rhs, format, ...) \
 if((lhs) == (rhs)) { \
