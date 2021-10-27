@@ -3,7 +3,6 @@
 #include "Helpers.h"
 #include <iostream>
 #include "Keyboard.h"
-#include "GraphicsHelpers.h"
 #include <ScreenGrab.h>
 #include <BufferHelpers.h>
 
@@ -11,7 +10,7 @@ Renderer::Renderer():
     LRenderer3D(),
     m_pCamera(new LBaseCamera),
     m_debugScratch(16 * 1024), // 16k
-    m_models(ModelIndex::Count)
+    m_models()
 {
     //NOTE(sean): Windows window stuff
     m_f32BgColor = Colors::Black; // NOTE(sean): set the clear color
@@ -43,25 +42,59 @@ void Renderer::Initialize() {
 
     //TODO(sean): resource cleanup
     //NOTE(sean): Deferred Effect
+
     {
         m_deferred.CreateHeaps(m_pD3DDevice);
-
-        m_deferred.textures[DeferredOutput::Color] = RenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, Colors::Black);
-        m_deferred.textures[DeferredOutput::Normal] = RenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, Colors::Black);
+        m_deferred.textures[DeferredOutput::Color] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
+        m_deferred.textures[DeferredOutput::Normal] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
         m_deferred.textures[DeferredOutput::Position] = RenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, Colors::Black);
-        m_deferred.textures[DeferredOutput::Depth] = RenderTexture(DXGI_FORMAT_R32_FLOAT, Colors::White);
-
         m_deferred.InitDescs(m_pD3DDevice, m_nWinWidth, m_nWinHeight);
     }
 
-    //NOTE(sean): Tonemap Effect16
+    //NOTE(sean): Tonemap Effect
     {
         m_lighting.CreateHeaps(m_pD3DDevice);
-
-        m_lighting.textures[LightingOutput::Color] = RenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, Colors::Black);
-
+        m_lighting.textures[LightingOutput::Color] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
         m_lighting.InitDescs(m_pD3DDevice, m_nWinWidth, m_nWinHeight);
     }
+
+    //NOTE(sean): Bloom Effects
+    {
+        RenderTargetState render_target_state = {};
+        render_target_state.dsvFormat = m_pDeviceResources->GetDepthBufferFormat();
+        render_target_state.numRenderTargets = 1;
+        render_target_state.rtvFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
+        render_target_state.sampleMask = ~0u;
+        render_target_state.sampleDesc.Count = 1;
+
+        auto bloom_extract = std::make_shared<BasicPostProcess>(m_pD3DDevice, render_target_state, BasicPostProcess::BloomExtract);
+        auto bloom_blur = std::make_shared<BasicPostProcess>(m_pD3DDevice, render_target_state, BasicPostProcess::BloomBlur);
+        auto bloom_combine = std::make_shared<DualPostProcess>(m_pD3DDevice, render_target_state, DualPostProcess::BloomCombine);
+
+        usize width = m_nWinWidth;
+        usize height = m_nWinHeight;
+
+        m_bloomExtract.CreateHeaps(m_pD3DDevice);
+        m_bloomExtract.effect = bloom_extract;
+        m_bloomExtract.textures[0] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
+        m_bloomExtract.InitDescs(m_pD3DDevice, width, height);
+
+        for every(index, BLOOM_PASS_COUNT) {
+            m_bloomBlur[index].CreateHeaps(m_pD3DDevice);
+            m_bloomBlur[index].effect = bloom_blur;
+            m_bloomBlur[index].textures[0] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
+            m_bloomBlur[index].InitDescs(m_pD3DDevice, width, height);
+
+            m_bloomCombine[index].CreateHeaps(m_pD3DDevice);
+            m_bloomCombine[index].effect = bloom_combine;
+            m_bloomCombine[index].textures[0] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
+            m_bloomCombine[index].InitDescs(m_pD3DDevice, width, height);
+
+            width /= 2;
+            height /= 2;
+        }
+    }
+
 
     // This is very similar to vulkan :)
     {
@@ -99,7 +132,6 @@ void Renderer::Initialize() {
         render_target_state.rtvFormats[DeferredOutput::Color] = m_deferred.textures[DeferredOutput::Color].m_format;
         render_target_state.rtvFormats[DeferredOutput::Normal] = m_deferred.textures[DeferredOutput::Normal].m_format;
         render_target_state.rtvFormats[DeferredOutput::Position] = m_deferred.textures[DeferredOutput::Position].m_format;
-        render_target_state.rtvFormats[DeferredOutput::Depth] = m_deferred.textures[DeferredOutput::Depth].m_format;
         render_target_state.sampleMask = ~0u;
         render_target_state.sampleDesc.Count = 1;
 
@@ -246,6 +278,21 @@ void RenderPostProcess(ID3D12GraphicsCommandList* command_list, RenderPass<A, B>
     command_list->DrawInstanced(3, 1, 0, 0);
 }
 
+namespace BloomOutput {enum e : u32 {
+    Lighting,
+    Combine0, // <-- Blur1 + Combine1
+    Extract, // <-- Lighting
+    Blur0, // <-- Extract
+    Blur1, // <-- Blur0
+    Combine1, // <-- Blur2 + Combine2
+    Blur2, // <-- Blur1
+    Combine2, // <-- Blur3 + Blur4
+    Blur3, // <-- Blur2
+    Blur4, // <-- Blur3
+    Output, // <-- Lighting + Combine0 
+    Count
+};}
+
 /// End Rendering a frame.
 /// Put all DrawXYZ() or other functions in between this and BeginFrame()
 void Renderer::EndDrawing() {
@@ -255,17 +302,70 @@ void Renderer::EndDrawing() {
     m_lighting.effect->SetLightCount(lights.Size());
     memcpy(m_lighting.effect->Lights(), lights.Components(), sizeof(Light) * lights.Size()); 
 
+    RenderPostProcess(m_pCommandList, &m_deferred, &m_lighting);
+
+    //NOTE(sean): bloom extract
     {
-        m_deferred.textures[DeferredOutput::Depth].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_COPY_DEST);
-        TransitionResource(m_pCommandList, m_pDeviceResources->GetDepthStencil(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_COPY_SOURCE);
+        m_bloomExtract.effect->SetSourceTexture(m_lighting.renders.get()->GetGpuHandle(0), m_lighting.textures[0].m_resource.Get());
+        m_bloomExtract.effect->SetBloomExtractParameter(2.0f);
 
-        m_pCommandList->CopyResource(m_deferred.textures[DeferredOutput::Depth].m_resource.Get(), m_pDeviceResources->GetDepthStencil());
-
-        TransitionResource(m_pCommandList, m_pDeviceResources->GetDepthStencil(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
-        m_deferred.textures[DeferredOutput::Depth].TransitionTo(m_pCommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        m_lighting.SetAsInput(m_pCommandList);
+        m_bloomExtract.SetAsOutput(m_pCommandList);
+        m_bloomExtract.effect->Process(m_pCommandList);
     }
 
-    RenderPostProcess(m_pCommandList, &m_deferred, &m_lighting);
+    //NOTE(sean): bloom blur
+    {
+        m_bloomBlur[0].effect->SetSourceTexture(m_bloomExtract.resources->GetGpuHandle(0), m_bloomExtract.textures[0].m_resource.Get());
+        m_bloomBlur[0].effect->SetBloomBlurParameters(false, 4.0f, 1.0f);
+
+        m_bloomExtract.SetAsInput(m_pCommandList);
+        m_bloomBlur[0].SetAsOutput(m_pCommandList);
+        m_bloomBlur[0].effect->Process(m_pCommandList);
+    }
+
+    {
+        m_bloomBlur[1].effect->SetSourceTexture(m_bloomBlur[0].resources->GetGpuHandle(1), m_bloomBlur[0].textures[0].m_resource.Get());
+        m_bloomBlur[1].effect->SetBloomBlurParameters(false, 4.0f, 1.0f);
+
+        m_bloomBlur[0].SetAsInput(m_pCommandList);
+        m_bloomBlur[1].SetAsOutput(m_pCommandList);
+        m_bloomBlur[1].effect->Process(m_pCommandList);
+    }
+
+    {
+        m_bloomBlur[2].effect->SetSourceTexture(m_bloomBlur[1].resources->GetGpuHandle(2), m_bloomBlur[1].textures[0].m_resource.Get());
+        m_bloomBlur[2].effect->SetBloomBlurParameters(false, 4.0f, 1.0f);
+
+        m_bloomBlur[1].SetAsInput(m_pCommandList);
+        m_bloomBlur[2].SetAsOutput(m_pCommandList);
+        m_bloomBlur[2].effect->Process(m_pCommandList);
+    }
+
+    //NOTE(sean): bloom combine
+    {
+        m_bloomCombine[2].effect->SetSourceTexture(m_bloomBlur[2].resources->GetGpuHandle(1));
+        m_bloomCombine[2].effect->SetSourceTexture2(m_bloomBlur[1].resources->GetGpuHandle(2));
+        m_bloomCombine[2].effect->SetBloomCombineParameters(1.25f, 1.0f, 1.0f, 1.0f);
+
+        m_bloomBlur[2].SetAsInput(m_pCommandList);
+        m_bloomBlur[1].SetAsInput(m_pCommandList);
+
+        m_bloomCombine[2].SetAsOutput(m_pCommandList);
+        m_bloomCombine[2].effect->Process(m_pCommandList);
+    }
+
+    {
+        m_bloomCombine[1].effect->SetSourceTexture(m_bloomCombine[2].resources->GetGpuHandle(0));
+        m_bloomCombine[1].effect->SetSourceTexture2(m_bloomBlur[0].resources->GetGpuHandle(0));
+        m_bloomCombine[1].effect->SetBloomCombineParameters(1.25f, 1.0f, 1.0f, 1.0f);
+
+        m_bloomCombine[2].SetAsInput(m_pCommandList);
+        m_bloomBlur[0].SetAsInput(m_pCommandList);
+
+        m_bloomCombine[1].SetAsOutput(m_pCommandList);
+        m_bloomCombine[1].effect->Process(m_pCommandList);
+    }
 
     // Render Tonemap Effect
     {
@@ -274,7 +374,7 @@ void Renderer::EndDrawing() {
 
         m_pCommandList->OMSetRenderTargets(1, &m_pDeviceResources->GetRenderTargetView(), FALSE, 0);
 
-        m_pTonemapEffect->SetTextures(m_lighting.resources.get());
+        m_pTonemapEffect->SetTextures(m_bloomCombine[1].resources.get());
         m_pTonemapEffect->UpdateConstants(m_nWinWidth, m_nWinHeight, tint_color, blur_amount, saturation_amount);
 
         m_pTonemapEffect->Apply(m_pCommandList);
@@ -659,6 +759,63 @@ u32 Renderer::GetResolutionWidth() {
 /// Get the vertical resolution
 u32 Renderer::GetResolutionHeight() {
     return m_nWinHeight;
+}
+
+//NOTE(sean): VBO file format: https://github.com/microsoft/DirectXMesh/blob/master/Meshconvert/Mesh.cpp
+struct VBOData {
+    u32 vertex_count;
+    u32 index_count;
+    VertexPNT* vertices;
+    u16* indices;
+
+    void VBOData::free() {
+        delete[] vertices;
+        delete[] indices;
+    }
+};
+
+//NOTE(sean): VBO file format: https://github.com/microsoft/DirectXMesh/blob/master/Meshconvert/Mesh.cpp
+void LoadVBO(const char* fpath, VBOData* model) {
+    #define CHECK(value) ABORT_EQ_FORMAT((value), 0, "Corrupt VBO file!")
+
+    FILE* fp = fopen(fpath, "rb"); CHECK(fp);
+
+    CHECK(fread(&model->vertex_count, sizeof(u32), 1, fp));
+    CHECK(fread(&model->index_count, sizeof(u32), 1, fp));
+
+    model->vertices = new VertexPNT[model->vertex_count]; CHECK(model->vertices); 
+    model->indices = new u16[model->index_count]; CHECK(model->indices);
+
+    CHECK(fread(model->vertices, sizeof(VertexPNT), model->vertex_count, fp));
+    CHECK(fread(model->indices, sizeof(u16), model->index_count, fp));
+
+    fclose(fp);
+}
+
+template <typename T>
+inline void CreateBufferAndView(T* data, usize count, GraphicsResource& resource, std::shared_ptr<D3D12_VERTEX_BUFFER_VIEW>& view) {
+    isize size = sizeof(T) * count;
+
+    resource = GraphicsMemory::Get().Allocate(size);
+    memcpy(resource.Memory(), data, size); // i like this function
+
+    view = std::make_shared<D3D12_VERTEX_BUFFER_VIEW>();
+    view->BufferLocation = resource.GpuAddress();
+    view->StrideInBytes = sizeof(T);
+    view->SizeInBytes = (u32)resource.Size();
+}
+
+template <typename T>
+inline void CreateBufferAndView(T* data, usize count, GraphicsResource& resource, std::shared_ptr<D3D12_INDEX_BUFFER_VIEW>& view) {
+    isize size = sizeof(T) * count;
+
+    resource = GraphicsMemory::Get().Allocate(size);
+    memcpy(resource.Memory(), data, size);
+    
+    view = std::make_shared<D3D12_INDEX_BUFFER_VIEW>();
+    view->BufferLocation = resource.GpuAddress();
+    view->SizeInBytes = (u32)resource.Size();
+    view->Format = DXGI_FORMAT_R32_UINT;
 }
 
 /// Load a debug model with the name.

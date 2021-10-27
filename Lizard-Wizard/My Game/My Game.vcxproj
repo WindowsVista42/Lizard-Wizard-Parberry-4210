@@ -165,13 +165,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Effects\BloomEffect.cpp" />
+    <ClCompile Include="Effects\EffectsCommon.cpp" />
     <ClCompile Include="GenerationManager.cpp" />
     <ClCompile Include="Helpers.cpp" />
     <ClCompile Include="CustomBind.cpp" />
-    <ClCompile Include="DeferredEffect.cpp" />
+    <ClCompile Include="Effects\DeferredEffect.cpp" />
     <ClCompile Include="Math.cpp" />
     <ClCompile Include="Model.cpp" />
-    <ClCompile Include="LightingEffect.cpp" />
+    <ClCompile Include="Effects\LightingEffect.cpp" />
     <ClCompile Include="NPCManager.cpp" />
     <ClCompile Include="PhysicsManager.cpp" />
     <ClCompile Include="ProjectileManager.cpp" />
@@ -180,17 +182,18 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="RenderTexture.cpp" />
     <ClCompile Include="StagedBuffer.cpp" />
-    <ClCompile Include="TonemapEffect.cpp" />
+    <ClCompile Include="Effects\TonemapEffect.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Effects\BloomEffect.h" />
+    <ClInclude Include="Effects\EffectsCommon.h" />
     <ClInclude Include="GenerationManager.h" />
-    <ClInclude Include="GraphicsHelpers.h" />
     <ClInclude Include="Helpers.h" />
     <ClInclude Include="CustomBind.h" />
-    <ClInclude Include="DeferredEffect.h" />
+    <ClInclude Include="Effects\DeferredEffect.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="Model.h" />
-    <ClInclude Include="LightingEffect.h" />
+    <ClInclude Include="Effects\LightingEffect.h" />
     <ClInclude Include="NPCManager.h" />
     <ClInclude Include="PhysicsManager.h" />
     <ClInclude Include="ProjectileManager.h" />
@@ -200,7 +203,7 @@
     <ClInclude Include="RenderTexture.h" />
     <ClInclude Include="StagedBuffer.h" />
     <ClInclude Include="Ecs.h" />
-    <ClInclude Include="TonemapEffect.h" />
+    <ClInclude Include="Effects\TonemapEffect.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="My Game.rc" />

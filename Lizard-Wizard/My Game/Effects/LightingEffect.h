@@ -1,7 +1,7 @@
 #ifndef POST_PROCESS_EFFECT_H
 #define POST_PROCESS_EFFECT_H
 
-#include "Defines.h"
+#include "../Defines.h"
 #include <Effects.h>
 #include <vector>
 
@@ -32,9 +32,7 @@ private:
     u32 m_dirtyFlags;
     DirectX::GraphicsResource m_constantBuffer;
 
-    D3D12_GPU_DESCRIPTOR_HANDLE m_colorTexture;
-    D3D12_GPU_DESCRIPTOR_HANDLE m_normalTexture;
-    D3D12_GPU_DESCRIPTOR_HANDLE m_positionTexture;
+    D3D12_GPU_DESCRIPTOR_HANDLE m_firstTexture;
 
     u32 light_count;
     Light lights[254];

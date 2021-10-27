@@ -42,6 +42,9 @@ private:
     PhysicsManager* m_pPhysicsManager;
     GenerationManager* m_pGenerationManager;
 
+    // Model Table
+    Table<ModelInstance> m_ModelInstances;
+
     // Timing Table
     Table<f32> m_Timers;
 

@@ -68,7 +68,7 @@ void ProjectileManager::GenerateSimProjectile(btCollisionObject* caster, const V
         projectile->setFriction(friction);
 
         // Re-add regidbody to world after edit.
-        CurrentWorld->addRigidBody(projectile, 2, 0b00001);
+        CurrentWorld->addRigidBody(projectile, 0b00100, 0b00001);
         projectile->activate();
     }
 }
@@ -78,7 +78,7 @@ void ProjectileManager::CalculateRay(btCollisionObject* caster, RayProjectile& n
 
     btCollisionWorld::ClosestRayResultCallback rayResults(Pos1, Vec3(Pos1 + btLookDirection * 5000.));
     if (ignoreCaster) {
-        rayResults.m_collisionFilterGroup = 3;
+        rayResults.m_collisionFilterGroup = 0b00100;
 		rayResults.m_collisionFilterMask = 0b00001;
 
     }

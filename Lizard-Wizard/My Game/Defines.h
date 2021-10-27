@@ -2,6 +2,7 @@
 #include <Renderer3D.h>
 #include <btBulletCollisionCommon.h>
 #include "Random.h"
+#include <Abort.h>
 
 //NOTE(sean): if you read this and youre wondering why on earth i would do this i just like the type names better
 
@@ -144,6 +145,11 @@ namespace SoundIndex { enum e : u32 {
 
 namespace ModelIndex { enum e : u32 {
     Cube, Suzanne,
+    Count // keep this last
+};}
+
+namespace TextureIndex { enum e : u32 {
+    Sample,
     Count // keep this last
 };}
 
