@@ -1,7 +1,7 @@
 #ifndef BLOOMEXTRACT_H
 #define BLOOMEXTRACT_H
 
-#include "Defines.h"
+#include "../Defines.h"
 #include "EffectsCommon.h"
 
 class BloomExtractEffect : public DirectX::IEffect {
