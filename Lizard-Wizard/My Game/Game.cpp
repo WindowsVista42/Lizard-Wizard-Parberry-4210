@@ -85,10 +85,14 @@ void CGame::Initialize() {
         &m_NPCsActive
     );
 
-    // Test NPC
+    // Test NPC(s)
     {
-        Entity e = m_NPCs.Entities()[0];
-        m_pNPCManager->PlaceNPC(e, Vec3(6000.0f, 500.0f,0));
+        Entity turret1 = m_NPCs.Entities()[0];
+        m_pNPCManager->PlaceNPC(turret1, Vec3(6000.0f, 500.0f,0));
+        Entity turret2 = m_NPCs.Entities()[1];
+        m_pNPCManager->PlaceNPC(turret2, Vec3(6000.0f, 500.0f, 1500.0f));
+        Entity turret3 = m_NPCs.Entities()[2];
+        m_pNPCManager->PlaceNPC(turret3, Vec3(6000.0f, 500.0f, -1500.0f));
     }
 
     // Room Collider
@@ -530,12 +534,12 @@ void CGame::RenderFrame() {
             }
             m_pRenderer->EndDebugBatch();
         }
-
-        m_pRenderer->tint_color = Vec3(1.0f, 1.0f, 1.0f);
-        m_pRenderer->blur_amount = 0.0f;
-        m_pRenderer->saturation_amount = 1.0f;
         m_pRenderer->EndDebugDrawing();
     }
+
+    m_pRenderer->tint_color = Vec3(1.0f, 1.0f, 1.0f);
+    m_pRenderer->blur_amount = 0.0f;
+    m_pRenderer->saturation_amount = 1.0f;
 
     m_pRenderer->EndFrame();
 }

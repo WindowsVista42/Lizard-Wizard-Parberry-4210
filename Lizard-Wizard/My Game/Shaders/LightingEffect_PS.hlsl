@@ -3,7 +3,7 @@
 
 static const float PI = 3.14159265f;
 
-static const int AO_SAMPLE_COUNT = 4;
+static const int AO_SAMPLE_COUNT = 1;
 static const float AO_TOTAL_SAMPLE_DISTANCE = 0.02f;
 static const float AO_SAMPLE_DISTANCE = AO_TOTAL_SAMPLE_DISTANCE / float(AO_SAMPLE_COUNT * 2 + 1);
 static const float DIVI = float((AO_SAMPLE_COUNT * 2 + 1) * (AO_SAMPLE_COUNT * 2 + 1));
@@ -33,7 +33,7 @@ PixelOutput main(VertexOutput input) {
             const float x = -dot(pixel_normal, sample_normal);
             const float normal_weight = clamp((1.0f - pow(abs(x), 8.0)), -1.0, 1.0);
 
-            ao_strength -= (position_weight * normal_weight) / (DIVI + 64.0f);
+            ao_strength -= (position_weight * normal_weight) / (DIVI + 16.0f);
         }
     }
 

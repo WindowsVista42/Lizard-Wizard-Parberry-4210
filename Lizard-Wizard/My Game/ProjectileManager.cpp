@@ -78,7 +78,7 @@ void ProjectileManager::GenerateSimProjectile(
 
         // Re-add regidbody to world after edit.
         CurrentWorld->addRigidBody(projectile, 2, 0b00001);
-        CurrentLights->Get(e)->color = Vec4(projectileColor.x * 100.0f, projectileColor.y * 100.0f, projectileColor.z * 100.0f, 0);
+        CurrentLights->Get(e)->color = Vec4(projectileColor.x * 300.0f, projectileColor.y * 300.0f, projectileColor.z * 300.0f, 0);
         projectile->activate();
     }
 }

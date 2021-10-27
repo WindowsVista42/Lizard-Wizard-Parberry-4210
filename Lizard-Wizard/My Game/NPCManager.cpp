@@ -29,19 +29,6 @@
 */
 
 btQuaternion LookAt(Vec3 origin, Vec3 lookAt) {
-    /*
-    Vec3 angles = XMVector3AngleBetweenVectors(origin, lookAt);
-    btQuaternion q;
-
-    // Quartenion Conversion
-    q.setY(angles.x * sin(angles.x * .5f));
-    q.setZ(angles.y * sin(angles.y * .5f));
-    q.setW(angles.z * sin(angles.z * .5f));
-    q.setX(cos(0));
-
-    return q;
-    */
-
     Vec3 forwardVector = XMVector3Normalize(origin - lookAt);
     Vec3 rotAxis = XMVector3Cross(Vec3(1.0f, 0, 0), forwardVector);
     float dot = forwardVector.Dot(Vec3(1.0f, 0, 0));
