@@ -15,7 +15,7 @@ public:
     );
 
     void Apply(ID3D12GraphicsCommandList* command_list) override;
-    void SetTextures(DescriptorHeap* textures);
+    void SetTextures(D3D12_GPU_DESCRIPTOR_HANDLE first_texture);
     void UpdateConstants(
         u32 width,
         u32 height,
@@ -40,7 +40,7 @@ private:
     u32 m_dirtyFlags;
     DirectX::GraphicsResource m_constantBuffer;
 
-    D3D12_GPU_DESCRIPTOR_HANDLE m_colorTexture;
+    D3D12_GPU_DESCRIPTOR_HANDLE m_firstTexture;
 };
 
 #endif

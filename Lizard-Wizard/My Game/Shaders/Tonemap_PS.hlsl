@@ -1,18 +1,38 @@
-#include "TonemapEffect_Common.hlsli"
 #include "PostProcess_Common.hlsli"
 
-//=================================================================================================
-//
-//  Baking Lab
-//  by MJP and David Neubelt
-//  http://mynameismjp.wordpress.com/
-//
-//  All code licensed under the MIT license
-//
-//=================================================================================================
+#define RS \
+"RootFlags ("\
+"    DENY_DOMAIN_SHADER_ROOT_ACCESS |"\
+"    DENY_GEOMETRY_SHADER_ROOT_ACCESS |"\
+"    DENY_HULL_SHADER_ROOT_ACCESS ),"\
+"DescriptorTable(SRV(t0), visibility = SHADER_VISIBILITY_PIXEL)," \
+"CBV(b0, visibility = SHADER_VISIBILITY_PIXEL)," \
+"StaticSampler(s0," \
+"    filter = FILTER_MIN_MAG_MIP_LINEAR," \
+"    addressU = TEXTURE_ADDRESS_CLAMP," \
+"    addressV = TEXTURE_ADDRESS_CLAMP," \
+"    addressW = TEXTURE_ADDRESS_CLAMP," \
+"    visibility = SHADER_VISIBILITY_PIXEL)"
 
-// The code in this file was originally written by Stephen Hill (@self_shadow), who deserves all
-// credit for coming up with this fit and implementing it. Buy him a beer next time you see him. :)
+Texture2D<float4> Color : register(t0);
+
+sampler Sampler : register(s0);
+
+cbuffer Constants : register(b0) {
+    uint DimensionsX;
+    uint DimensionsY;
+    float TintR;
+    float TintG;
+    float TintB;
+    float Glasses;
+    float Saturation;
+}
+
+struct PixelOutput {
+    float4 Color : SV_TARGET0;
+};
+
+// https://github.com/TheRealMJP/BakingLab/blob/master/BakingLab/ACES.hlsl
 
 // sRGB => XYZ => D65_2_D60 => AP1 => RRT_SAT
 static const float3x3 ACESInputMat =
@@ -52,6 +72,8 @@ float3 ACESFitted(float3 color)
     return color;
 }
 
+//
+
 float Luminance(float3 color) {
     return dot(color, float3(0.299f, 0.587f, 0.114f));
 }
@@ -76,7 +98,7 @@ float3 BoxBlur3x3(uint2 dim, float2 uv, float intensity) {
     return output;
 }
 
-[RootSignature(TonemapEffectRS)]
+[RootSignature(RS)]
 PixelOutput main(VertexOutput input) {
     PixelOutput output;
 

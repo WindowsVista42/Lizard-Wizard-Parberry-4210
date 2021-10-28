@@ -4,14 +4,14 @@
 
 void GenerationManager::CreateNormalRoom(Vec3 roomCenter) {
     // Ground then roof.
-    currentPhysicsManager->CreateBoxObject(Vec3(3000.0f, 50.0f, 3000.0f), roomCenter + Vec3(0.0f, 0.0f, 0.0f), 0.0f, 1.5f, 1, 0b11111);
-    currentPhysicsManager->CreateBoxObject(Vec3(3000.0f, 50.0f, 3000.0f), roomCenter + Vec3(0.0f, 2000.0f, 0.0f), 0.0f, 1.5f, 1, 0b11111);
+    currentPhysicsManager->CreateBoxObject(Vec3(3000.0f, 1.0f, 3000.0f), roomCenter + Vec3(0.0f, 0.0f, 0.0f), 0.0f, 1.5f, 1, 0b11111);
+    currentPhysicsManager->CreateBoxObject(Vec3(3000.0f, 1.0f, 3000.0f), roomCenter + Vec3(0.0f, 2000.0f, 0.0f), 0.0f, 1.5f, 1, 0b11111);
 
     // Four walls.
-    //currentPhysicsManager->CreateBoxObject(Vec3(50.0f, 1000.0f, 3000.0f), roomCenter + Vec3(3000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 0, 0b11111); // North Wall
-    currentPhysicsManager->CreateBoxObject(Vec3(3000.0f, 1000.0f, 50.0f), roomCenter + Vec3(0.0f, 1000.0f, 3000.0f), 0.0f, 1.5f, 1, 0b11111); // West Wall
-    currentPhysicsManager->CreateBoxObject(Vec3(50.0f, 1000.0f, 3000.0f), roomCenter + Vec3(-3000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 1, 0b11111); // South Wall
-    currentPhysicsManager->CreateBoxObject(Vec3(3000.0f, 1000.0f, 50.0f), roomCenter + Vec3(0.0f, 1000.0f, -3000.0f), 0.0f, 1.5f, 1, 0b11111); // East Wall
+    //currentPhysicsManager->CreateBoxObject(Vec3(1.0f, 1000.0f, 3000.0f), roomCenter + Vec3(3000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 0, 0b11111); // North Wall
+    currentPhysicsManager->CreateBoxObject(Vec3(3000.0f, 1000.0f, 1.0f), roomCenter + Vec3(0.0f, 1000.0f, 3000.0f), 0.0f, 1.5f, 1, 0b11111); // West Wall
+    currentPhysicsManager->CreateBoxObject(Vec3(1.0f, 1000.0f, 3000.0f), roomCenter + Vec3(-3000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 1, 0b11111); // South Wall
+    currentPhysicsManager->CreateBoxObject(Vec3(3000.0f, 1000.0f, 1.0f), roomCenter + Vec3(0.0f, 1000.0f, -3000.0f), 0.0f, 1.5f, 1, 0b11111); // East Wall
 
     Room newRoom;
     newRoom.currentTag = RoomTag::tag::NORMAL;
@@ -21,14 +21,14 @@ void GenerationManager::CreateNormalRoom(Vec3 roomCenter) {
 
 void GenerationManager::CreateHallway(Vec3 roomCenter) {
     // Ground then roof.
-    currentPhysicsManager->CreateBoxObject(Vec3(3000.0f, 50.0f, 3000.0f), roomCenter + Vec3(0.0f, 0.0f, 0.0f), 0.0f, 1.5f, 1, 31);
-    currentPhysicsManager->CreateBoxObject(Vec3(3000.0f, 50.0f, 3000.0f), roomCenter + Vec3(0.0f, 2000.0f, 0.0f), 0.0f, 1.5f, 1, 31);
+    currentPhysicsManager->CreateBoxObject(Vec3(3000.0f, 1.0f, 3000.0f), roomCenter + Vec3(0.0f, 0.0f, 0.0f), 0.0f, 1.5f, 1, 31);
+    currentPhysicsManager->CreateBoxObject(Vec3(3000.0f, 1.0f, 3000.0f), roomCenter + Vec3(0.0f, 2000.0f, 0.0f), 0.0f, 1.5f, 1, 31);
 
     // Four walls.
-   // currentPhysicsManager->CreateBoxObject(Vec3(50.0f, 1000.0f, 3000.0f), roomCenter + Vec3(3000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 1, 31); // North Wall
-    currentPhysicsManager->CreateBoxObject(Vec3(3000.0f, 1000.0f, 50.0f), roomCenter + Vec3(0.0f, 1000.0f, 3000.0f), 0.0f, 1.5f, 1, 31); // West Wall
-    //currentPhysicsManager->CreateBoxObject(Vec3(50.0f, 1000.0f, 3000.0f), roomCenter + Vec3(-3000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 1, 31); // South Wall
-    currentPhysicsManager->CreateBoxObject(Vec3(3000.0f, 1000.0f, 50.0f), roomCenter + Vec3(0.0f, 1000.0f, -3000.0f), 0.0f, 1.5f, 1, 31); // East Wall
+   // currentPhysicsManager->CreateBoxObject(Vec3(1.0f, 1000.0f, 3000.0f), roomCenter + Vec3(3000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 1, 31); // North Wall
+    currentPhysicsManager->CreateBoxObject(Vec3(3000.0f, 1000.0f, 1.0f), roomCenter + Vec3(0.0f, 1000.0f, 3000.0f), 0.0f, 1.5f, 1, 31); // West Wall
+    //currentPhysicsManager->CreateBoxObject(Vec3(1.0f, 1000.0f, 3000.0f), roomCenter + Vec3(-3000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 1, 31); // South Wall
+    currentPhysicsManager->CreateBoxObject(Vec3(3000.0f, 1000.0f, 1.0f), roomCenter + Vec3(0.0f, 1000.0f, -3000.0f), 0.0f, 1.5f, 1, 31); // East Wall
 
     Room newRoom;
     newRoom.currentTag = RoomTag::tag::NORMAL;
@@ -38,14 +38,14 @@ void GenerationManager::CreateHallway(Vec3 roomCenter) {
 
 void GenerationManager::CreateBossRoom(Vec3 roomCenter) {
     // Ground then roof
-    currentPhysicsManager->CreateBoxObject(Vec3(5000.0f, 50.0f, 5000.0f), roomCenter + Vec3(10.0f, 10.0f, 0.0f), 0.0f, 1.5f, 1, 31);
-    currentPhysicsManager->CreateBoxObject(Vec3(5000.0f, 50.0f, 5000.0f), roomCenter + Vec3(0.0f, 2000.0f, 0.0f), 0.0f, 1.5f, 1, 31);
+    currentPhysicsManager->CreateBoxObject(Vec3(5000.0f, 1.0f, 5000.0f), roomCenter + Vec3(10.0f, 10.0f, 0.0f), 0.0f, 1.5f, 1, 31);
+    currentPhysicsManager->CreateBoxObject(Vec3(5000.0f, 1.0f, 5000.0f), roomCenter + Vec3(0.0f, 2000.0f, 0.0f), 0.0f, 1.5f, 1, 31);
 
     // Four Walls
-    currentPhysicsManager->CreateBoxObject(Vec3(50.0f, 1000.0f, 5000.0f), roomCenter + Vec3(5000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 1, 31);
-    currentPhysicsManager->CreateBoxObject(Vec3(5000.0f, 1000.0f, 50.0f), roomCenter + Vec3(0.0f, 1000.0f, 5000.0f), 0.0f, 1.5f, 1, 31);
-    currentPhysicsManager->CreateBoxObject(Vec3(50.0f, 1000.0f, 5000.0f), roomCenter + Vec3(-5000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 1, 31);
-    currentPhysicsManager->CreateBoxObject(Vec3(5000.0f, 1000.0f, 50.0f), roomCenter + Vec3(-0.0f, 1000.0f, -5000.0f), 0.0f, 1.5f, 1, 31);
+    currentPhysicsManager->CreateBoxObject(Vec3(1.0f, 1000.0f, 5000.0f), roomCenter + Vec3(5000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 1, 31);
+    currentPhysicsManager->CreateBoxObject(Vec3(5000.0f, 1000.0f, 1.0f), roomCenter + Vec3(0.0f, 1000.0f, 5000.0f), 0.0f, 1.5f, 1, 31);
+    currentPhysicsManager->CreateBoxObject(Vec3(1.0f, 1000.0f, 5000.0f), roomCenter + Vec3(-5000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 1, 31);
+    currentPhysicsManager->CreateBoxObject(Vec3(5000.0f, 1000.0f, 1.0f), roomCenter + Vec3(-0.0f, 1000.0f, -5000.0f), 0.0f, 1.5f, 1, 31);
 
     Room newRoom;
     newRoom.currentTag = RoomTag::tag::BOSS;
@@ -55,14 +55,14 @@ void GenerationManager::CreateBossRoom(Vec3 roomCenter) {
 
 void GenerationManager::CreateSpawnRoom(Vec3 roomCenter) {
     //Ground then roof
-    currentPhysicsManager->CreateBoxObject(Vec3(4000.0f, 50.0f, 4000.0f), roomCenter + Vec3(0.0f, 0.0f, 0.0f), 0.0f, 1.5f, 1, 31);
-    currentPhysicsManager->CreateBoxObject(Vec3(4000.0f, 50.0f, 4000.0f), roomCenter + Vec3(0.0f, 2000.0f, 0.0f), 0.0f, 1.5f, 1, 31);
+    currentPhysicsManager->CreateBoxObject(Vec3(4000.0f, 1.0f, 4000.0f), roomCenter + Vec3(0.0f, 0.0f, 0.0f), 0.0f, 1.5f, 1, 31);
+    currentPhysicsManager->CreateBoxObject(Vec3(4000.0f, 1.0f, 4000.0f), roomCenter + Vec3(0.0f, 2000.0f, 0.0f), 0.0f, 1.5f, 1, 31);
 
     // Four Walls
-    currentPhysicsManager->CreateBoxObject(Vec3(50.0f, 1000.0f, 4000.0f), roomCenter + Vec3(4000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 1, 31); // North Wall
-    currentPhysicsManager->CreateBoxObject(Vec3(4000.0f, 1000.0f, 50.0f), roomCenter + Vec3(0.0f, 1000.0f, 4000.0f), 0.0f, 1.5f, 1, 31); // West Wall
-    currentPhysicsManager->CreateBoxObject(Vec3(50.0f, 1000.0f, 4000.0f), roomCenter + Vec3(-4000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 1, 31); // South Wall
-    currentPhysicsManager->CreateBoxObject(Vec3(4000.0f, 1000.0f, 50.0f), roomCenter + Vec3(0.0f, 1000.0f, -4000.0f), 0.0f, 1.5f, 1, 31); // East Wall
+    currentPhysicsManager->CreateBoxObject(Vec3(1.0f, 1000.0f, 4000.0f), roomCenter + Vec3(4000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 1, 31); // North Wall
+    currentPhysicsManager->CreateBoxObject(Vec3(4000.0f, 1000.0f, 1.0f), roomCenter + Vec3(0.0f, 1000.0f, 4000.0f), 0.0f, 1.5f, 1, 31); // West Wall
+    currentPhysicsManager->CreateBoxObject(Vec3(1.0f, 1000.0f, 4000.0f), roomCenter + Vec3(-4000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 1, 31); // South Wall
+    currentPhysicsManager->CreateBoxObject(Vec3(4000.0f, 1000.0f, 1.0f), roomCenter + Vec3(0.0f, 1000.0f, -4000.0f), 0.0f, 1.5f, 1, 31); // East Wall
 
 
     Room newRoom;

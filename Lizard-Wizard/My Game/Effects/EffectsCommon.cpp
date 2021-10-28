@@ -35,7 +35,7 @@ void CreatePostProcessPassData(
         CreateRootSignature(device, &root_signature_desc, m_rootSignature.ReleaseAndGetAddressOf())
     );
 
-    auto vs_blob = DX::ReadData(L"PostProcessEffect_VS.cso");
+    auto vs_blob = DX::ReadData(L"PostProcess_VS.cso");
     D3D12_SHADER_BYTECODE vs = { vs_blob.data(), vs_blob.size() };
 
     auto ps_blob = DX::ReadData(pixel_shader);

@@ -55,18 +55,17 @@ DeferredEffect::DeferredEffect(
         CreateRootSignature(device, &root_signature_desc, m_rootSignature.ReleaseAndGetAddressOf())
     );
 
-    auto vs_blob = DX::ReadData(L"DeferredEffect_VS.cso");
+    auto vs_blob = DX::ReadData(L"Deferred_VS.cso");
     D3D12_SHADER_BYTECODE vs = { vs_blob.data(), vs_blob.size() };
 
-    auto ps_blob = DX::ReadData(L"DeferredEffect_PS.cso");
+    auto ps_blob = DX::ReadData(L"Deferred_PS.cso");
     D3D12_SHADER_BYTECODE ps = { ps_blob.data(), ps_blob.size() };
 
     pipeline_state_desc.CreatePipelineState(device, m_rootSignature.Get(), vs, ps, m_pso.ReleaseAndGetAddressOf());
 }
 
-void DeferredEffect::SetTexture(DescriptorHeap* textures, u32 index) {
-    m_colorTexture = textures->GetGpuHandle(index);
-    m_textureIndex = index;
+void DeferredEffect::SetTextures(D3D12_GPU_DESCRIPTOR_HANDLE first_texture) {
+    m_firstTexture = first_texture;
 }
 
 
@@ -105,7 +104,7 @@ void DeferredEffect::Apply(ID3D12GraphicsCommandList* command_list) {
     command_list->SetGraphicsRootSignature(m_rootSignature.Get());
 
     //NOTE(sean): set textures
-    command_list->SetGraphicsRootDescriptorTable(m_textureIndex, m_colorTexture);
+    command_list->SetGraphicsRootDescriptorTable(0, m_firstTexture);
 
     //NOTE(sean): set render constants
     command_list->SetGraphicsRootConstantBufferView(Descriptors::ConstantBuffer, m_constantBuffer.GpuAddress());

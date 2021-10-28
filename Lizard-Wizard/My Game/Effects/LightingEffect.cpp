@@ -8,9 +8,9 @@
 namespace {
     struct __declspec(align(16)) GameEffectConstants {
         u32 light_count;
-        u32 _pad0;
-        u32 _pad1;
-        u32 _pad2;
+        f32 camera_x;
+        f32 camera_y;
+        f32 camera_z;
         Light lights[254];
     };
 
@@ -27,11 +27,11 @@ LightingEffect::LightingEffect(
     m_device(device),
     m_dirtyFlags(u32(-1))
 {
-    CreatePostProcessPassData(device, pipeline_state_desc, m_rootSignature, m_pso, 3, L"LightingEffect_PS.cso");
+    CreatePostProcessPassData(device, pipeline_state_desc, m_rootSignature, m_pso, 3, L"Lighting_PS.cso");
 }
 
-void LightingEffect::SetTextures(DescriptorHeap* textures) {
-    m_firstTexture = textures->GetFirstGpuHandle();
+void LightingEffect::SetTextures(D3D12_GPU_DESCRIPTOR_HANDLE first_texture) {
+    m_firstTexture = first_texture;
 }
 
 void LightingEffect::SetLightCount(u32 light_count) {
@@ -39,11 +39,18 @@ void LightingEffect::SetLightCount(u32 light_count) {
     m_dirtyFlags |= DirtyConstantBuffer;
 }
 
+void LightingEffect::SetCameraPosition(Vec3 camera_position) {
+    this->camera_position = camera_position;
+    m_dirtyFlags |= DirtyConstantBuffer;
+}
+
 void LightingEffect::SetLight(usize index, Light light) {
     lights[index] = light;
+    m_dirtyFlags |= DirtyConstantBuffer;
 }
 
 Light* LightingEffect::Lights() {
+    m_dirtyFlags |= DirtyConstantBuffer;
     return lights;
 }
 
@@ -54,10 +61,13 @@ void LightingEffect::Apply(ID3D12GraphicsCommandList* command_list) {
         auto constant_buffer = GraphicsMemory::Get(m_device.Get()).AllocateConstant<GameEffectConstants>();
 
         GameEffectConstants data = {
-            light_count
+            light_count,
+            camera_position.x,
+            camera_position.y,
+            camera_position.z
         };
 
-        memcpy((u8*)constant_buffer.Memory(), &data, sizeof(u32));
+        memcpy((u8*)constant_buffer.Memory(), &data, sizeof(u32) * 4);
         memcpy((u8*)constant_buffer.Memory() + offsetof(GameEffectConstants, lights), lights, sizeof(Light) * _countof(lights));
         std::swap(m_constantBuffer, constant_buffer);
 

@@ -1,4 +1,4 @@
-#include "DeferredEffect_Common.hlsli"
+#include "Deferred_Common.hlsli"
 
 [RootSignature(DeferredEffectRS)]
 VertexOutput main(VertexInput input) {

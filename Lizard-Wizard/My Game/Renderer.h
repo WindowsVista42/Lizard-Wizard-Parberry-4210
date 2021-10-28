@@ -20,28 +20,12 @@
 #define MAX_LIGHTS 254
 #define BLOOM_PASS_COUNT 4
 
-// All the benefits of enum class, without having to cast to the type :)
-namespace DeferredOutput { enum e : u32 {
-    Color, Normal, Position,
-    Count
-};}
-
-namespace LightingOutput { enum e : u32 {
-    Color,
-    Count
-};}
-
-namespace BloomOutput { enum e : u32 {
-    Color,
-    Count
-};}
-
 template <typename E, const usize N>
 struct RenderPass {
     std::shared_ptr<E> effect;
-    std::unique_ptr<DescriptorHeap> resources;
-    std::unique_ptr<DescriptorHeap> renders;
-    std::array<RenderTexture, N> textures;
+    //std::unique_ptr<DescriptorHeap> resources;
+    //std::unique_ptr<DescriptorHeap> renders;
+    //std::array<RenderTexture, N> textures;
 
     void InitDescs(
         ID3D12Device* device,
@@ -60,9 +44,9 @@ struct RenderPass {
     }
 
     void SetAsInput(ID3D12GraphicsCommandList* command_list) {
-        ID3D12DescriptorHeap* heaps[] = { resources->Heap() };
-        command_list->SetDescriptorHeaps(_countof(heaps), heaps);
-
+//        ID3D12DescriptorHeap* heaps[] = { resources->Heap() };
+//        command_list->SetDescriptorHeaps(_countof(heaps), heaps);
+//
         for every(index, N) {
             textures[index].TransitionTo(command_list, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         }
@@ -103,10 +87,6 @@ struct RenderPass {
     }
 
     void CreateHeaps(ID3D12Device* device) {
-        resources = std::make_unique<DescriptorHeap>(
-            device, N 
-        );
-        
         renders = std::make_unique<DescriptorHeap>(
             device,
             D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
@@ -119,14 +99,27 @@ struct RenderPass {
         const auto n = N;
         return n;
     }
-
-    const usize m() {
-        const auto m = M;
-        return m;
-    }
 };
 
-struct BloomEffect {};
+namespace Descriptors { enum e : u32 {
+    DeferredColor, // <-- Input
+    DeferredNormal, // <-- Input
+    DeferredPosition, // <-- Input
+    LightingColor, // <-- DeferredColor + DeferredNormal + DeferredPosition
+    BloomCombine0, // <-- Blur1 + Combine1
+    BloomExtract, // <-- Lighting
+    BloomBlur0, // <-- Extract
+    BloomBlur1, // <-- Blur0
+    BloomCombine1, // <-- Blur2 + Combine2
+    BloomBlur2, // <-- Blur1
+    BloomCombine2, // <-- Blur3 + Blur4
+    BloomBlur3, // <-- Blur2
+    BloomCombine3, // <-- Blur3 + Blur4
+    BloomBlur4, // <-- Blur3
+    BloomBlur5, // <-- Blur3
+    BloomOutput, // <-- Lighting + Combine0 | Output --> Tonemap --> Backbuffer
+    Count
+};}
 
 //NOTE(sean): A lot of this implementation is reverse-engineered based on what LSpriteRenderer does
 //The DirectXTK12 docs are super helpful for all of this as well :)
@@ -134,29 +127,29 @@ class Renderer: public LRenderer3D {
 private:
     usize m_frameNumber = 0;
 
+    // Normal Rendering 
+    std::unique_ptr<DeferredEffect> m_deferred;
+    std::unique_ptr<LightingEffect> m_lighting;
+    std::unique_ptr<BloomExtractEffect> m_bloomExtract;
+    std::unique_ptr<BloomBlurEffect> m_bloomBlur;
+    std::unique_ptr<BloomCombineEffect> m_bloomCombine;
+    std::unique_ptr<TonemapEffect> m_pTonemapEffect;
+
+    std::unique_ptr<DescriptorHeap> m_pResourcesHeap;
+    std::unique_ptr<DescriptorHeap> m_pRendersHeap;
+    std::array<RenderTexture, Descriptors::Count> m_renderTextures;
+
+    // Debug Rendering
     StagedBuffer m_debugScratch;
     std::unique_ptr<BasicEffect> m_pDebugLineEffect;
     std::unique_ptr<BasicEffect> m_pDebugTriangleEffect;
-    std::vector<DebugModel> m_debugModels;
 
-    RenderPass<DeferredEffect, DeferredOutput::Count> m_deferred;
-    RenderPass<LightingEffect, LightingOutput::Count> m_lighting;
-
-    // Bloom Pass
-    // We require multiple of these because of the downsample + blurring
-    RenderPass<BasicPostProcess, BloomOutput::Count> m_bloomExtract;
-    std::array<RenderPass<BasicPostProcess, BloomOutput::Count>, BLOOM_PASS_COUNT> m_bloomBlur;
-    std::array<RenderPass<DualPostProcess, BloomOutput::Count>, BLOOM_PASS_COUNT> m_bloomCombine;
-
-    //std::unique_ptr<BasicPostProcess> m_bloomExtract;
-    //std::unique_ptr<BasicPostProcess> m_bloomBlur;
-    //std::unique_ptr<DualPostProcess> m_bloomCombine;
-
-    std::unique_ptr<TonemapEffect> m_pTonemapEffect;
-
-    std::array<GameModel, ModelIndex::Count> m_models;
+    // Text Rendering
 
     void BetterScreenShot();
+
+    std::vector<DebugModel> m_debugModels;
+    std::array<GameModel, ModelIndex::Count> m_models;
 
 public:
     bool m_screenShot = false; // TODO(sean): implement

@@ -14,7 +14,7 @@
 "    addressU = TEXTURE_ADDRESS_CLAMP," \
 "    addressV = TEXTURE_ADDRESS_CLAMP," \
 "    addressW = TEXTURE_ADDRESS_CLAMP," \
-"    visibility = SHADER_VISIBILITY_PIXEL)" \
+"    visibility = SHADER_VISIBILITY_PIXEL)"
 
 Texture2D<float4> Color : register(t0);
 

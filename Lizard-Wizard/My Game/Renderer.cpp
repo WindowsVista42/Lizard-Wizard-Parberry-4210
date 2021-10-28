@@ -40,62 +40,84 @@ Renderer::~Renderer() {
 void Renderer::Initialize() {
     LRenderer3D::Initialize(true);
 
-    //TODO(sean): resource cleanup
-    //NOTE(sean): Deferred Effect
-
     {
-        m_deferred.CreateHeaps(m_pD3DDevice);
-        m_deferred.textures[DeferredOutput::Color] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
-        m_deferred.textures[DeferredOutput::Normal] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
-        m_deferred.textures[DeferredOutput::Position] = RenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, Colors::Black);
-        m_deferred.InitDescs(m_pD3DDevice, m_nWinWidth, m_nWinHeight);
-    }
+        m_pResourcesHeap = std::make_unique<DescriptorHeap>(
+            m_pD3DDevice,
+            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+            D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+            Descriptors::Count
+        );
 
-    //NOTE(sean): Tonemap Effect
-    {
-        m_lighting.CreateHeaps(m_pD3DDevice);
-        m_lighting.textures[LightingOutput::Color] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
-        m_lighting.InitDescs(m_pD3DDevice, m_nWinWidth, m_nWinHeight);
-    }
+        m_pRendersHeap = std::make_unique<DescriptorHeap>(
+            m_pD3DDevice,
+            D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
+            D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+            Descriptors::Count
+        );
 
-    /*
-    //NOTE(sean): Bloom Effects
-    {
-        RenderTargetState render_target_state = {};
-        render_target_state.dsvFormat = m_pDeviceResources->GetDepthBufferFormat();
-        render_target_state.numRenderTargets = 1;
-        render_target_state.rtvFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-        render_target_state.sampleMask = ~0u;
-        render_target_state.sampleDesc.Count = 1;
+        // Deferred Pass Output RT
+        m_renderTextures[Descriptors::DeferredColor] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
+        m_renderTextures[Descriptors::DeferredNormal] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
+        m_renderTextures[Descriptors::DeferredPosition] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
 
-        auto bloom_extract = std::make_shared<BasicPostProcess>(m_pD3DDevice, render_target_state, BasicPostProcess::BloomExtract);
-        auto bloom_blur = std::make_shared<BasicPostProcess>(m_pD3DDevice, render_target_state, BasicPostProcess::BloomBlur);
-        auto bloom_combine = std::make_shared<DualPostProcess>(m_pD3DDevice, render_target_state, DualPostProcess::BloomCombine);
+        // Lighting Pass Output RT
+        m_renderTextures[Descriptors::LightingColor] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black); 
 
-        usize width = m_nWinWidth;
-        usize height = m_nWinHeight;
+        // Bloom Pass Output RT
+        m_renderTextures[Descriptors::BloomCombine0] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
+        m_renderTextures[Descriptors::BloomExtract] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
+        m_renderTextures[Descriptors::BloomBlur0] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
+        m_renderTextures[Descriptors::BloomBlur1] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
+        m_renderTextures[Descriptors::BloomCombine1] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
+        m_renderTextures[Descriptors::BloomBlur2] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
+        m_renderTextures[Descriptors::BloomCombine2] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
+        m_renderTextures[Descriptors::BloomBlur3] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
+        m_renderTextures[Descriptors::BloomCombine3] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
+        m_renderTextures[Descriptors::BloomBlur4] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
+        m_renderTextures[Descriptors::BloomBlur5] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
+        m_renderTextures[Descriptors::BloomOutput] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
 
-        m_bloomExtract.CreateHeaps(m_pD3DDevice);
-        m_bloomExtract.effect = bloom_extract;
-        m_bloomExtract.textures[0] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
-        m_bloomExtract.InitDescs(m_pD3DDevice, width, height);
-
-        for every(index, BLOOM_PASS_COUNT) {
-            m_bloomBlur[index].CreateHeaps(m_pD3DDevice);
-            m_bloomBlur[index].effect = bloom_blur;
-            m_bloomBlur[index].textures[0] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
-            m_bloomBlur[index].InitDescs(m_pD3DDevice, width, height);
-
-            m_bloomCombine[index].CreateHeaps(m_pD3DDevice);
-            m_bloomCombine[index].effect = bloom_combine;
-            m_bloomCombine[index].textures[0] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
-            m_bloomCombine[index].InitDescs(m_pD3DDevice, width, height);
-
-            width /= 2;
-            height /= 2;
+        // Deferred + Lighting Pass Output Res
+        for every(index, Descriptors::LightingColor + 1) {
+            m_renderTextures[index].Init(
+                m_pD3DDevice, 
+                m_pResourcesHeap->GetCpuHandle(index), 
+                m_pRendersHeap->GetCpuHandle(index), 
+                m_nWinWidth, 
+                m_nWinHeight
+            );
         }
+
+        #define FILL(device, res, ren, rt, index, width, height) \
+        rt[index].Init(device, res->GetCpuHandle(index), ren->GetCpuHandle(index), width, height);
+
+        // Bloom Pass Output Res
+        u32 resx = m_nWinWidth;
+        u32 resy = m_nWinHeight;
+
+        FILL(m_pD3DDevice, m_pResourcesHeap.get(), m_pRendersHeap.get(), m_renderTextures.data(), Descriptors::BloomOutput, resx, resy);
+        FILL(m_pD3DDevice, m_pResourcesHeap.get(), m_pRendersHeap.get(), m_renderTextures.data(), Descriptors::BloomExtract, resx, resy);
+        FILL(m_pD3DDevice, m_pResourcesHeap.get(), m_pRendersHeap.get(), m_renderTextures.data(), Descriptors::BloomBlur0, resx, resy);
+        FILL(m_pD3DDevice, m_pResourcesHeap.get(), m_pRendersHeap.get(), m_renderTextures.data(), Descriptors::BloomCombine0, resx, resy);
+
+        resx /= 2; resy /= 2;
+        FILL(m_pD3DDevice, m_pResourcesHeap.get(), m_pRendersHeap.get(), m_renderTextures.data(), Descriptors::BloomBlur1, resx, resy);
+        FILL(m_pD3DDevice, m_pResourcesHeap.get(), m_pRendersHeap.get(), m_renderTextures.data(), Descriptors::BloomCombine1, resx, resy);
+
+        resx /= 2; resy /= 2;
+        FILL(m_pD3DDevice, m_pResourcesHeap.get(), m_pRendersHeap.get(), m_renderTextures.data(), Descriptors::BloomBlur2, resx, resy);
+        FILL(m_pD3DDevice, m_pResourcesHeap.get(), m_pRendersHeap.get(), m_renderTextures.data(), Descriptors::BloomCombine2, resx, resy);
+
+        resx /= 2; resy /= 2;
+        FILL(m_pD3DDevice, m_pResourcesHeap.get(), m_pRendersHeap.get(), m_renderTextures.data(), Descriptors::BloomCombine3, resx, resy);
+        FILL(m_pD3DDevice, m_pResourcesHeap.get(), m_pRendersHeap.get(), m_renderTextures.data(), Descriptors::BloomBlur3, resx, resy);
+
+        resx /= 2; resy /= 2;
+        FILL(m_pD3DDevice, m_pResourcesHeap.get(), m_pRendersHeap.get(), m_renderTextures.data(), Descriptors::BloomBlur4, resx, resy);
+
+        resx /= 2; resy /= 2;
+        FILL(m_pD3DDevice, m_pResourcesHeap.get(), m_pRendersHeap.get(), m_renderTextures.data(), Descriptors::BloomBlur5, resx, resy);
     }
-    */
 
     // This is very similar to vulkan :)
     {
@@ -129,10 +151,10 @@ void Renderer::Initialize() {
     {
         RenderTargetState render_target_state = {};
         render_target_state.dsvFormat = m_pDeviceResources->GetDepthBufferFormat();
-        render_target_state.numRenderTargets = DeferredOutput::Count;
-        render_target_state.rtvFormats[DeferredOutput::Color] = m_deferred.textures[DeferredOutput::Color].m_format;
-        render_target_state.rtvFormats[DeferredOutput::Normal] = m_deferred.textures[DeferredOutput::Normal].m_format;
-        render_target_state.rtvFormats[DeferredOutput::Position] = m_deferred.textures[DeferredOutput::Position].m_format;
+        render_target_state.numRenderTargets = 3;
+        render_target_state.rtvFormats[0] = m_renderTextures[Descriptors::DeferredColor].m_format;
+        render_target_state.rtvFormats[1] = m_renderTextures[Descriptors::DeferredNormal].m_format;
+        render_target_state.rtvFormats[2] = m_renderTextures[Descriptors::DeferredPosition].m_format;
         render_target_state.sampleMask = ~0u;
         render_target_state.sampleDesc.Count = 1;
 
@@ -144,15 +166,15 @@ void Renderer::Initialize() {
             render_target_state
         );
 
-        m_deferred.effect = std::make_unique<DeferredEffect>(m_pD3DDevice, pipeline_state_desc);
-        m_deferred.effect->SetProjection(XMLoadFloat4x4(&m_projection));
+        m_deferred = std::make_unique<DeferredEffect>(m_pD3DDevice, pipeline_state_desc);
+        m_deferred->SetProjection(XMLoadFloat4x4(&m_projection));
     }
 
     {
         RenderTargetState render_target_state = {};
         render_target_state.dsvFormat = m_pDeviceResources->GetDepthBufferFormat();
-        render_target_state.numRenderTargets = LightingOutput::Count;
-        render_target_state.rtvFormats[LightingOutput::Color] = m_lighting.textures[LightingOutput::Color].m_format;
+        render_target_state.numRenderTargets = 1;
+        render_target_state.rtvFormats[0] = m_renderTextures[Descriptors::LightingColor].m_format;
         render_target_state.sampleMask = ~0u;
         render_target_state.sampleDesc.Count = 1;
 
@@ -164,7 +186,66 @@ void Renderer::Initialize() {
             render_target_state
         );
 
-        m_lighting.effect = std::make_unique<LightingEffect>(m_pD3DDevice, pipeline_state_desc);
+        m_lighting = std::make_unique<LightingEffect>(m_pD3DDevice, pipeline_state_desc);
+        m_lighting->SetTextures(m_pResourcesHeap->GetGpuHandle(Descriptors::DeferredColor));
+    }
+
+    {
+        RenderTargetState render_target_state = {};
+        render_target_state.dsvFormat = m_pDeviceResources->GetDepthBufferFormat();
+        render_target_state.numRenderTargets = 1;
+        render_target_state.rtvFormats[0] = m_renderTextures[Descriptors::BloomExtract].m_format;
+        render_target_state.sampleMask = ~0u;
+        render_target_state.sampleDesc.Count = 1;
+
+        EffectPipelineStateDescription pipeline_state_desc(
+            0,
+            CommonStates::Opaque,
+            CommonStates::DepthNone,
+            CommonStates::CullNone,
+            render_target_state
+        );
+
+        m_bloomExtract = std::make_unique<BloomExtractEffect>(m_pD3DDevice, pipeline_state_desc);
+        m_bloomExtract->SetTextures(m_pResourcesHeap->GetGpuHandle(Descriptors::LightingColor));
+    }
+
+    {
+        RenderTargetState render_target_state = {};
+        render_target_state.dsvFormat = m_pDeviceResources->GetDepthBufferFormat();
+        render_target_state.numRenderTargets = 1;
+        render_target_state.rtvFormats[0] = m_renderTextures[Descriptors::BloomBlur0].m_format;
+        render_target_state.sampleMask = ~0u;
+        render_target_state.sampleDesc.Count = 1;
+
+        EffectPipelineStateDescription pipeline_state_desc(
+            0,
+            CommonStates::Opaque,
+            CommonStates::DepthNone,
+            CommonStates::CullNone,
+            render_target_state
+        );
+
+        m_bloomBlur = std::make_unique<BloomBlurEffect>(m_pD3DDevice, pipeline_state_desc);
+    }
+
+    {
+        RenderTargetState render_target_state = {};
+        render_target_state.dsvFormat = m_pDeviceResources->GetDepthBufferFormat();
+        render_target_state.numRenderTargets = 1;
+        render_target_state.rtvFormats[0] = m_renderTextures[Descriptors::BloomCombine0].m_format;
+        render_target_state.sampleMask = ~0u;
+        render_target_state.sampleDesc.Count = 1;
+
+        EffectPipelineStateDescription pipeline_state_desc(
+            0,
+            CommonStates::Opaque,
+            CommonStates::DepthNone,
+            CommonStates::CullNone,
+            render_target_state
+        );
+
+        m_bloomCombine = std::make_unique<BloomCombineEffect>(m_pD3DDevice, pipeline_state_desc);
     }
 
     {
@@ -177,6 +258,7 @@ void Renderer::Initialize() {
         );
 
         m_pTonemapEffect = std::make_unique<TonemapEffect>(m_pD3DDevice, pipeline_state_desc);
+        m_pTonemapEffect->SetTextures(m_pResourcesHeap->GetGpuHandle(Descriptors::BloomOutput));
     }
 }
 
@@ -237,9 +319,6 @@ void Renderer::BeginDebugDrawing() {
     // because we only want to render the color to the output,
     // without any intermittent processing
 
-    //ID3D12DescriptorHeap* pHeaps[] = {};
-    //m_pCommandList->SetDescriptorHeaps(_countof(pHeaps), pHeaps);
-
     auto dsvDescBackBuffer = m_pDeviceResources->GetDepthStencilView();
     auto rtvDescBackBuffer = m_pDeviceResources->GetRenderTargetView();
 
@@ -257,129 +336,201 @@ void Renderer::EndDebugDrawing() {
     //NOTE(sean): Stub for now
 }
 
+template <const u32 Start, const u32 End>
+void clear_render_target_views(ID3D12GraphicsCommandList* command_list, DescriptorHeap* renders, RenderTexture* textures) {
+    for every(index, End - Start + 1) {
+        D3D12_CPU_DESCRIPTOR_HANDLE handle = renders->GetCpuHandle(index + Start);
+        Vec4 clear_color = textures[index + Start].m_clearColor;
+        command_list->ClearRenderTargetView(handle, clear_color, 0, 0);
+    }
+}
+
+template <const u32 Start, const u32 End>
+void set_outputs(ID3D12GraphicsCommandList* command_list, DescriptorHeap* renders, RenderTexture* textures, D3D12_CPU_DESCRIPTOR_HANDLE* depth) {
+    std::array<CD3DX12_CPU_DESCRIPTOR_HANDLE, End - Start + 1> descriptors;
+    for every(index, End - Start + 1) {
+        descriptors[index] = renders->GetCpuHandle(Start + index);
+    }
+
+    command_list->OMSetRenderTargets(End - Start + 1, descriptors.data(), FALSE, depth);
+
+    for every(index, End - Start + 1) {
+        textures[index + Start].TransitionTo(command_list, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    }
+}
+
+template <const u32 Start, const u32 End>
+void set_inputs(ID3D12GraphicsCommandList* command_list, RenderTexture* textures) {
+    for every(index, End - Start + 1) {
+        textures[index + Start].TransitionTo(command_list, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    }
+}
+
 /// Begin rendering a frame.
 /// Put all DrawXYZ() or other functions in between this and EndFrame()
 void Renderer::BeginDrawing() {
     ID3D12DescriptorHeap* heap[] = { m_pDescriptorHeap->Heap() };
     m_pCommandList->SetDescriptorHeaps(1, heap);
-    CD3DX12_CPU_DESCRIPTOR_HANDLE dsvDescBackBuffer = m_pDeviceResources->GetDepthStencilView();
-    m_deferred.SetAsOutput(m_pCommandList, dsvDescBackBuffer);
-    m_deferred.ClearRenderTargetViews(m_pCommandList);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE depth = m_pDeviceResources->GetDepthStencilView();
+    set_outputs<Descriptors::DeferredColor, Descriptors::DeferredPosition>(m_pCommandList, m_pRendersHeap.get(), m_renderTextures.data(), &depth);
+    clear_render_target_views<Descriptors::DeferredColor, Descriptors::DeferredPosition>(m_pCommandList, m_pRendersHeap.get(), m_renderTextures.data());
     m_pCommandList->ClearRenderTargetView(m_pDeviceResources->GetRenderTargetView(), m_f32BgColor, 0, 0);
-    m_pCommandList->ClearDepthStencilView(dsvDescBackBuffer, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, 0);
+    m_pCommandList->ClearDepthStencilView(depth, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, 0);
 }
 
-template <typename A, const usize B, typename D, const usize E>
-void RenderPostProcess(ID3D12GraphicsCommandList* command_list, RenderPass<A, B>* input, RenderPass<D, E>* output) {
-    input->SetAsInput(command_list);
-    output->SetAsOutput(command_list);
-    output->effect->SetTextures(input->resources.get());
-    output->effect->Apply(command_list);
+struct PPResourcesBundle {
+    DescriptorHeap* resources;
+    DescriptorHeap* renders;
+    RenderTexture* textures;
+};
+
+template <typename E, const u32 ResStart, const u32 ResEnd, const u32 RenStart, const u32 RenEnd>
+static inline void render_post_process(
+    ID3D12GraphicsCommandList* command_list, 
+    E* effect, 
+    PPResourcesBundle bundle,
+    D3D12_CPU_DESCRIPTOR_HANDLE* depth
+) {
+    set_inputs<ResStart, ResEnd>(command_list, bundle.textures);
+    set_outputs<RenStart, RenEnd>(command_list, bundle.renders, bundle.textures, depth);
+    clear_render_target_views<RenStart, RenEnd>(command_list, bundle.renders, bundle.textures);
+    effect->SetTextures(bundle.resources->GetGpuHandle(ResStart));
+    effect->Apply(command_list);
     command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     command_list->DrawInstanced(3, 1, 0, 0);
 }
 
-/*
-namespace BloomOutput {enum e : u32 {
-    Lighting,
-    Combine0, // <-- Blur1 + Combine1
-    Extract, // <-- Lighting
-    Blur0, // <-- Extract
-    Blur1, // <-- Blur0
-    Combine1, // <-- Blur2 + Combine2
-    Blur2, // <-- Blur1
-    Combine2, // <-- Blur3 + Blur4
-    Blur3, // <-- Blur2
-    Blur4, // <-- Blur3
-    Output, // <-- Lighting + Combine0 
-    Count
-};}
-*/
-
 /// End Rendering a frame.
 /// Put all DrawXYZ() or other functions in between this and BeginFrame()
 void Renderer::EndDrawing() {
-    static Entity e = lights.Add({ Vec4(500.0f, 200.0f, 0.0f, 0.0f), Vec4(100.0f, 2000.0f, 3000.0f, 0.0f) });
+    static Entity e = lights.Add({ Vec4(500.0f, 200.0f, 0.0f, 0.0f), Vec4(200.0f, 800.0f, 1200.0f, 0.0f) });
 
     assert(lights.Size() < 254);
-    m_lighting.effect->SetLightCount(lights.Size());
-    memcpy(m_lighting.effect->Lights(), lights.Components(), sizeof(Light) * lights.Size()); 
+    m_lighting->SetLightCount(lights.Size());
+    memcpy(m_lighting->Lights(), lights.Components(), sizeof(Light) * lights.Size()); 
 
-    RenderPostProcess(m_pCommandList, &m_deferred, &m_lighting);
+    m_lighting->SetCameraPosition(m_pCamera->GetPos());
 
-    /*
-    //NOTE(sean): bloom extract
-    {
-        m_bloomExtract.effect->SetSourceTexture(m_lighting.renders.get()->GetGpuHandle(0), m_lighting.textures[0].m_resource.Get());
-        m_bloomExtract.effect->SetBloomExtractParameter(2.0f);
+    ID3D12DescriptorHeap* pHeap[1] = { m_pResourcesHeap->Heap() };
+    m_pCommandList->SetDescriptorHeaps(1, pHeap);
 
-        m_lighting.SetAsInput(m_pCommandList);
-        m_bloomExtract.SetAsOutput(m_pCommandList);
-        m_bloomExtract.effect->Process(m_pCommandList);
-    }
+    PPResourcesBundle bundle = {};
+    bundle.resources = m_pResourcesHeap.get();
+    bundle.renders = m_pRendersHeap.get();
+    bundle.textures = m_renderTextures.data();
 
-    //NOTE(sean): bloom blur
-    {
-        m_bloomBlur[0].effect->SetSourceTexture(m_bloomExtract.resources->GetGpuHandle(0), m_bloomExtract.textures[0].m_resource.Get());
-        m_bloomBlur[0].effect->SetBloomBlurParameters(false, 4.0f, 1.0f);
+    auto viewport = m_pDeviceResources->GetScreenViewport();
+    auto scissorRect = m_pDeviceResources->GetScissorRect();
 
-        m_bloomExtract.SetAsInput(m_pCommandList);
-        m_bloomBlur[0].SetAsOutput(m_pCommandList);
-        m_bloomBlur[0].effect->Process(m_pCommandList);
-    }
+    f32 scale = 1.0;
 
-    {
-        m_bloomBlur[1].effect->SetSourceTexture(m_bloomBlur[0].resources->GetGpuHandle(1), m_bloomBlur[0].textures[0].m_resource.Get());
-        m_bloomBlur[1].effect->SetBloomBlurParameters(false, 4.0f, 1.0f);
+    render_post_process<
+        LightingEffect, 
+        Descriptors::DeferredColor, Descriptors::DeferredPosition,
+        Descriptors::LightingColor, Descriptors::LightingColor
+    >(m_pCommandList, m_lighting.get(), bundle, 0);
 
-        m_bloomBlur[0].SetAsInput(m_pCommandList);
-        m_bloomBlur[1].SetAsOutput(m_pCommandList);
-        m_bloomBlur[1].effect->Process(m_pCommandList);
-    }
+    // Render Bloom Extract Effect
+    render_post_process<
+        BloomExtractEffect,
+        Descriptors::LightingColor, Descriptors::LightingColor,
+        Descriptors::BloomExtract, Descriptors::BloomExtract
+    >(m_pCommandList, m_bloomExtract.get(), bundle, 0);
 
-    {
-        m_bloomBlur[2].effect->SetSourceTexture(m_bloomBlur[1].resources->GetGpuHandle(2), m_bloomBlur[1].textures[0].m_resource.Get());
-        m_bloomBlur[2].effect->SetBloomBlurParameters(false, 4.0f, 1.0f);
+    // Render Bloom Blur Effect
+    render_post_process<
+        BloomBlurEffect,
+        Descriptors::BloomExtract, Descriptors::BloomExtract,
+        Descriptors::BloomBlur0, Descriptors::BloomBlur0
+    >(m_pCommandList, m_bloomBlur.get(), bundle, 0);
 
-        m_bloomBlur[1].SetAsInput(m_pCommandList);
-        m_bloomBlur[2].SetAsOutput(m_pCommandList);
-        m_bloomBlur[2].effect->Process(m_pCommandList);
-    }
+    viewport.Width /= 2; viewport.Height /= 2;
+    m_pCommandList->RSSetViewports(1, &viewport);
+    render_post_process<
+        BloomBlurEffect,
+        Descriptors::BloomBlur0, Descriptors::BloomBlur0,
+        Descriptors::BloomBlur1, Descriptors::BloomBlur1
+    >(m_pCommandList, m_bloomBlur.get(), bundle, 0);
 
-    //NOTE(sean): bloom combine
-    {
-        m_bloomCombine[2].effect->SetSourceTexture(m_bloomBlur[2].resources->GetGpuHandle(1));
-        m_bloomCombine[2].effect->SetSourceTexture2(m_bloomBlur[1].resources->GetGpuHandle(2));
-        m_bloomCombine[2].effect->SetBloomCombineParameters(1.25f, 1.0f, 1.0f, 1.0f);
+    viewport.Width /= 2; viewport.Height /= 2;
+    m_pCommandList->RSSetViewports(1, &viewport);
+    render_post_process<
+        BloomBlurEffect,
+        Descriptors::BloomBlur1, Descriptors::BloomBlur1,
+        Descriptors::BloomBlur2, Descriptors::BloomBlur2
+    >(m_pCommandList, m_bloomBlur.get(), bundle, 0);
 
-        m_bloomBlur[2].SetAsInput(m_pCommandList);
-        m_bloomBlur[1].SetAsInput(m_pCommandList);
+    viewport.Width /= 2; viewport.Height /= 2;
+    m_pCommandList->RSSetViewports(1, &viewport);
+    render_post_process<
+        BloomBlurEffect,
+        Descriptors::BloomBlur2, Descriptors::BloomBlur2,
+        Descriptors::BloomBlur3, Descriptors::BloomBlur3
+    >(m_pCommandList, m_bloomBlur.get(), bundle, 0);
 
-        m_bloomCombine[2].SetAsOutput(m_pCommandList);
-        m_bloomCombine[2].effect->Process(m_pCommandList);
-    }
+    viewport.Width /= 2; viewport.Height /= 2;
+    m_pCommandList->RSSetViewports(1, &viewport);
+    render_post_process<
+        BloomBlurEffect,
+        Descriptors::BloomBlur3, Descriptors::BloomBlur3,
+        Descriptors::BloomBlur4, Descriptors::BloomBlur4
+    >(m_pCommandList, m_bloomBlur.get(), bundle, 0);
 
-    {
-        m_bloomCombine[1].effect->SetSourceTexture(m_bloomCombine[2].resources->GetGpuHandle(0));
-        m_bloomCombine[1].effect->SetSourceTexture2(m_bloomBlur[0].resources->GetGpuHandle(0));
-        m_bloomCombine[1].effect->SetBloomCombineParameters(1.25f, 1.0f, 1.0f, 1.0f);
+    viewport.Width /= 2; viewport.Height /= 2;
+    m_pCommandList->RSSetViewports(1, &viewport);
+    render_post_process<
+        BloomBlurEffect,
+        Descriptors::BloomBlur4, Descriptors::BloomBlur4,
+        Descriptors::BloomBlur5, Descriptors::BloomBlur5
+    >(m_pCommandList, m_bloomBlur.get(), bundle, 0);
 
-        m_bloomCombine[2].SetAsInput(m_pCommandList);
-        m_bloomBlur[0].SetAsInput(m_pCommandList);
+    // Render Bloom Combine Effect
+    viewport.Width *= 4; viewport.Height *= 4;
+    m_pCommandList->RSSetViewports(1, &viewport);
+    render_post_process<
+        BloomCombineEffect,
+        Descriptors::BloomBlur4, Descriptors::BloomBlur5,
+        Descriptors::BloomCombine3, Descriptors::BloomCombine3
+    >(m_pCommandList, m_bloomCombine.get(), bundle, 0);
 
-        m_bloomCombine[1].SetAsOutput(m_pCommandList);
-        m_bloomCombine[1].effect->Process(m_pCommandList);
-    }
-    */
+    viewport.Width *= 2; viewport.Height *= 2;
+    m_pCommandList->RSSetViewports(1, &viewport);
+    render_post_process<
+        BloomCombineEffect,
+        Descriptors::BloomBlur3, Descriptors::BloomCombine3,
+        Descriptors::BloomCombine2, Descriptors::BloomCombine2
+    >(m_pCommandList, m_bloomCombine.get(), bundle, 0);
+
+    viewport.Width *= 2; viewport.Height *= 2;
+    m_pCommandList->RSSetViewports(1, &viewport);
+    render_post_process<
+        BloomCombineEffect,
+        Descriptors::BloomBlur2, Descriptors::BloomCombine2,
+        Descriptors::BloomCombine1, Descriptors::BloomCombine1
+    >(m_pCommandList, m_bloomCombine.get(), bundle, 0);
+
+    viewport.Width *= 2; viewport.Height *= 2;
+    m_pCommandList->RSSetViewports(1, &viewport);
+    render_post_process<
+        BloomCombineEffect,
+        Descriptors::BloomBlur1, Descriptors::BloomCombine1,
+        Descriptors::BloomCombine0, Descriptors::BloomCombine0
+    >(m_pCommandList, m_bloomCombine.get(), bundle, 0);
+
+    render_post_process<
+        BloomCombineEffect,
+        Descriptors::LightingColor, Descriptors::BloomCombine0,
+        Descriptors::BloomOutput, Descriptors::BloomOutput
+    >(m_pCommandList, m_bloomCombine.get(), bundle, 0);
 
     // Render Tonemap Effect
     {
         //NOTE(sean): This is an identical process to the previous block of code, so check that for details
-        m_lighting.SetAsInput(m_pCommandList);
+        set_inputs<Descriptors::BloomOutput, Descriptors::BloomOutput>(m_pCommandList, bundle.textures);
 
         m_pCommandList->OMSetRenderTargets(1, &m_pDeviceResources->GetRenderTargetView(), FALSE, 0);
 
-        m_pTonemapEffect->SetTextures(m_lighting.resources.get());
+        m_pTonemapEffect->SetTextures(m_pResourcesHeap->GetGpuHandle(Descriptors::BloomOutput));
         m_pTonemapEffect->UpdateConstants(m_nWinWidth, m_nWinHeight, tint_color, blur_amount, saturation_amount);
 
         m_pTonemapEffect->Apply(m_pCommandList);
@@ -881,11 +1032,11 @@ void Renderer::LoadModel(const char* name, u32 model_index) {
 
 void Renderer::DrawModelInstance(ModelInstance* instance) {
     //TODO(sean): check if this can be moved out when we finalize the debug and game drawing APIs
-    m_deferred.effect->SetWorld(instance->world);
-    m_deferred.effect->SetView(XMLoadFloat4x4(&m_view));
-    m_deferred.effect->SetTexture(m_pDescriptorHeap.get(), instance->texture);
+    m_deferred->SetWorld(instance->world);
+    m_deferred->SetView(XMLoadFloat4x4(&m_view));
+    m_deferred->SetTextures(m_pDescriptorHeap->GetGpuHandle(instance->texture));
 
-    m_deferred.effect->Apply(m_pCommandList);
+    m_deferred->Apply(m_pCommandList);
 
     GameModel* pmodel = &m_models[instance->model];
     m_pCommandList->IASetVertexBuffers(0, 1, pmodel->vertex_view.get());

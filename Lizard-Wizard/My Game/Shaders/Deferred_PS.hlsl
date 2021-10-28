@@ -1,4 +1,4 @@
-#include "DeferredEffect_Common.hlsli"
+#include "Deferred_Common.hlsli"
 
 // Passthrough to G-Buffer
 [RootSignature(DeferredEffectRS)]

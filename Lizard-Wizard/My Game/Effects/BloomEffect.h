@@ -5,13 +5,14 @@
 #include "EffectsCommon.h"
 
 class BloomExtractEffect : public DirectX::IEffect {
+public:
     BloomExtractEffect(
         ID3D12Device* device,
         const DirectX::EffectPipelineStateDescription& pipeline_state_desc
     );
 
     void Apply(ID3D12GraphicsCommandList* command_list) override;
-    void SetTextures(DescriptorHeap* textures);
+    void SetTextures(D3D12_GPU_DESCRIPTOR_HANDLE first_texture);
 private:
     Microsoft::WRL::ComPtr<ID3D12Device> m_device;
     Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature;
@@ -31,13 +32,14 @@ private:
 //#include "Defines.h"
 
 class BloomBlurEffect : public DirectX::IEffect {
+public:
     BloomBlurEffect(
         ID3D12Device* device,
         const DirectX::EffectPipelineStateDescription& pipeline_state_desc
     );
 
     void Apply(ID3D12GraphicsCommandList* command_list) override;
-    void SetTextures(DescriptorHeap* textures);
+    void SetTextures(D3D12_GPU_DESCRIPTOR_HANDLE first_texture);
 
 private:
     Microsoft::WRL::ComPtr<ID3D12Device> m_device;
@@ -58,13 +60,15 @@ private:
 //#include "Defines.h"
 
 class BloomCombineEffect : public DirectX::IEffect {
+public:
     BloomCombineEffect(
         ID3D12Device* device,
         const DirectX::EffectPipelineStateDescription& pipeline_state_desc
     );
 
     void Apply(ID3D12GraphicsCommandList* command_list) override;
-    void SetTextures(DescriptorHeap* textures);
+    void SetTextures(D3D12_GPU_DESCRIPTOR_HANDLE first_texture);
+    void SetScale(f32 scale);
 
 private:
     Microsoft::WRL::ComPtr<ID3D12Device> m_device;
@@ -74,6 +78,7 @@ private:
     u32 m_dirtyFlags;
     DirectX::GraphicsResource m_constantBuffer;
 
+    f32 scale;
     D3D12_GPU_DESCRIPTOR_HANDLE m_firstTexture;
 };
 

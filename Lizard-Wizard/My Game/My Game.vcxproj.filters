@@ -53,34 +53,31 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\DeferredEffect_Common.hlsli">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Shaders\LightingEffect_Common.hlsli">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Shaders\TonemapEffect_Common.hlsli">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="Shaders\PostProcess_Common.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\Deferred_Common.hlsli">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Shaders\DeferredEffect_VS.hlsl">
+    <FxCompile Include="Shaders\BloomExtract_PS.hlsl" />
+    <FxCompile Include="Shaders\Deferred_PS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\DeferredEffect_PS.hlsl">
+    <FxCompile Include="Shaders\Deferred_VS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\LightingEffect_PS.hlsl">
+    <FxCompile Include="Shaders\Lighting_PS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\TonemapEffect_PS.hlsl">
+    <FxCompile Include="Shaders\PostProcess_VS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\PostProcessEffect_VS.hlsl">
+    <FxCompile Include="Shaders\Tonemap_PS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="Shaders\BloomBlur_PS.hlsl" />
+    <FxCompile Include="Shaders\BloomCombine_PS.hlsl" />
   </ItemGroup>
 </Project>
