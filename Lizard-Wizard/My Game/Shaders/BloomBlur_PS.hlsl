@@ -32,17 +32,17 @@ float3 BoxBlur3x3(float2 uv, float intensity) {
     const float kernel = 1.0f / 9.0f;
 
     float3 output;
-    output  = kernel * Color.Sample(Sampler, float2(uv.x - d.x, uv.y - d.y)).xyz;
-    output += kernel * Color.Sample(Sampler, float2(uv.x      , uv.y - d.y)).xyz;
-    output += kernel * Color.Sample(Sampler, float2(uv.x + d.x, uv.y - d.y)).xyz;
+    output  = kernel * Color.Sample(Sampler, float2(uv.x - 2.0 * d.x, uv.y - d.y)).xyz;
+    output += kernel * Color.Sample(Sampler, float2(uv.x            , uv.y - d.y)).xyz;
+    output += kernel * Color.Sample(Sampler, float2(uv.x + 2.0 * d.x, uv.y - d.y)).xyz;
 
-    output += kernel * Color.Sample(Sampler, float2(uv.x - d.x, uv.y      )).xyz;
-    output += kernel * Color.Sample(Sampler, float2(uv.x      , uv.y      )).xyz;
-    output += kernel * Color.Sample(Sampler, float2(uv.x + d.x, uv.y      )).xyz;
+    output += kernel * Color.Sample(Sampler, float2(uv.x - 2.0 * d.x, uv.y      )).xyz;
+    output += kernel * Color.Sample(Sampler, float2(uv.x            , uv.y      )).xyz;
+    output += kernel * Color.Sample(Sampler, float2(uv.x + 2.0 * d.x, uv.y      )).xyz;
 
-    output += kernel * Color.Sample(Sampler, float2(uv.x - d.x, uv.y + d.y)).xyz;
-    output += kernel * Color.Sample(Sampler, float2(uv.x      , uv.y + d.y)).xyz;
-    output += kernel * Color.Sample(Sampler, float2(uv.x + d.x, uv.y + d.y)).xyz;
+    output += kernel * Color.Sample(Sampler, float2(uv.x - 2.0 * d.x, uv.y + d.y)).xyz;
+    output += kernel * Color.Sample(Sampler, float2(uv.x            , uv.y + d.y)).xyz;
+    output += kernel * Color.Sample(Sampler, float2(uv.x + 2.0 * d.x, uv.y + d.y)).xyz;
 
     return output;
 }

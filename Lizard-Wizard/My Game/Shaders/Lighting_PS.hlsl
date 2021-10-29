@@ -54,70 +54,46 @@ static const float DIVI = float((AO_SAMPLE_COUNT * 2 + 1) * (AO_SAMPLE_COUNT * 2
 
 static const float kernel[9] = { -1.0, -1.0, -1.0, -1.0, 8.0, -1.0, -1.0, -1.0, -1.0 };
 static const float2 samples[9] = {
-    float2(-0.002,  0.002),
-    float2( 0.000,  0.002),
-    float2( 0.002,  0.002),
-    float2(-0.002,  0.000),
+    float2(-0.001,  0.001),
+    float2( 0.000,  0.001),
+    float2( 0.001,  0.001),
+    float2(-0.001,  0.000),
     float2( 0.000,  0.000),
-    float2( 0.002,  0.000),
-    float2(-0.002, -0.002),
-    float2( 0.000, -0.002),
-    float2( 0.002, -0.002)
+    float2( 0.001,  0.000),
+    float2(-0.001, -0.001),
+    float2( 0.000, -0.001),
+    float2( 0.001, -0.001)
 };
 
 [RootSignature(RS)]
 PixelOutput main(VertexOutput input) {
     PixelOutput output;
 
-    float3 pixel_color = Color.Sample(Sampler, input.Texture).rgb;
-    float3 pixel_normal = Normal.Sample(Sampler, input.Texture).xyz;
-    float3 pixel_position = Position.Sample(Sampler, input.Texture).xyz;
-
-    /*
-    // Calculate Ambient Occlusion
-    float ao_strength = 1.0f;
-    for (int x = -AO_SAMPLE_COUNT; x < AO_SAMPLE_COUNT; x += 1) {
-        const float xf = float(x);
-        for (int y = -AO_SAMPLE_COUNT; y < AO_SAMPLE_COUNT; y += 1) {
-            const float yf = float(y);
-            const float2 sample_uv = float2(xf * AO_SAMPLE_DISTANCE, yf * AO_SAMPLE_DISTANCE);
-
-            const float3 sample_position = Position.Sample(Sampler, input.Texture + sample_uv).xyz;
-            const float3 sample_normal = Normal.Sample(Sampler, input.Texture + sample_uv).xyz;
-
-            const float3 position_diff = pixel_position - sample_position;
-            const float position_weight = 1.0f / clamp(dot(position_diff, position_diff), 1.0f, 4.0f);
-
-            const float x = dot(pixel_normal, sample_normal);
-            const float normal_weight = x;//pow(cos(PI * x / 2.0), 0.5);
-
-            //ao_strength -= (position_weight * normal_weight) / (DIVI);
-            ao_strength -= normal_weight / (DIVI);
-        }
-    */
-
+    const float3 pixel_color = Color.Sample(Sampler, input.Texture).rgb;
+    const float3 pixel_normal = Normal.Sample(Sampler, input.Texture).xyz;
+    const float3 pixel_position = Position.Sample(Sampler, input.Texture).xyz;
     const float3 camera_position = float3(camera_x, camera_y, camera_z);
+
+    const float3 pixel_camera_diff = pixel_position - camera_position;
+    const float pixel_camera_dist2 = dot(pixel_camera_diff, pixel_camera_diff);
+    const float scl = 0.04;
+
     float ao_strength = 1.0f;
-    //float3 diff1 = float3(0,0,0);
-    float3 diff2 = float3(0,0,0);
     for (uint x = 0; x < 9; x += 1) {
         const float2 sample_uv = samples[x];
     	const float3 sample_position = Position.Sample(Sampler, input.Texture + sample_uv).xyz;
-        //const float3 position_diff = camera_position - sample_position;
     	const float3 sample_normal = Normal.Sample(Sampler, input.Texture + sample_uv).xyz;
 
-        //diff1 += sample_position * kernel[x];
-        diff2 += sample_normal * kernel[x];
-    }
+    	const float3 sample_camera_diff = sample_position - camera_position;
+    	const float sample_camera_dist2 = dot(sample_camera_diff, sample_camera_diff);
 
-    //ao_strength -= dot(diff1, diff1) / 128.0f;//clamp(dot(diff2, diff2), 1.0, 32.0) / 128.0;
+        const float z = dot(sample_normal, pixel_normal);
+        ao_strength -= (1.0 - pow(abs(z), 4.0)) * scl;
 
-    //if (dot(diff1, diff1) > 128.0f) {
-    //    ao_strength -= 0.2f;
-    //}
-
-    if (dot(diff2, diff2) > 1.0f) {
-        ao_strength -= 0.2f;
+        const float distance_div = sample_camera_dist2 / pixel_camera_dist2;
+        if (distance_div > 1.5) {
+            ao_strength -= (scl / 4.0);
+        }
     }
 
     // Calculate Lighting
