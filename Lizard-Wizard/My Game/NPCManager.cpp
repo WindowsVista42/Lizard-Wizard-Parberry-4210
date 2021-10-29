@@ -1,7 +1,4 @@
 // Inclusions
-#include "NPCManager.h"
-#include "ProjectileManager.h"
-#include "PhysicsManager.h"
 #include "Game.h"
 #include "Component.h"
 #include "Settings.h"
@@ -28,39 +25,39 @@
 
 */
 
-void NPCManager::Sleep(Entity) {
+void CGame::Sleep(Entity) {
 
 }
 
-void NPCManager::Wander(Entity) {
+void CGame::Wander(Entity) {
 
 }
 
-void NPCManager::Move(Entity) {
+void CGame::Move(Entity) {
 
 }
 
-void NPCManager::Pathfind(Entity) {
+void CGame::Pathfind(Entity) {
 
 }
 
-void NPCManager::Attack(Entity) {
+void CGame::Attack(Entity) {
 
 }
 
-void NPCManager::Search(Entity) {
+void CGame::Search(Entity) {
 
 }
 
 // Contains most of the logical code for handling NPCs
-void NPCManager::DirectNPC(Entity e, btRigidBody* player) {
-    btRigidBody* body = CurrentNPCs->Get(e)->Body;
+void CGame::DirectNPC(Entity e, btRigidBody* player) {
+    btRigidBody* body = *m_RigidBodies.Get(e);
     Vec3 origin = body->getWorldTransform().getOrigin();
     Vec3 lookAt = player->getWorldTransform().getOrigin() + player->getLinearVelocity() / 4;
     btQuaternion newAngles = LookAt(origin, lookAt);
     btTransform newTransform;
     f32 waitTimer;
-    switch (CurrentNPCs->Get(e)->Behavior) {
+    switch (m_NPCs.Get(e)->Behavior) {
         case NPCBehavior::MELEE :
             printf("Melee Behavior\n");
             break;
@@ -72,18 +69,18 @@ void NPCManager::DirectNPC(Entity e, btRigidBody* player) {
             newTransform.setRotation(newAngles);
             body->getMotionState()->setWorldTransform(newTransform);
             body->setWorldTransform(newTransform);
-            waitTimer = *CurrentTimers->Get(e);
+            waitTimer = *m_Timers.Get(e);
             if (waitTimer < 0.0f) {
-                CurrentTimers->Remove(e);
-                CurrentTimers->AddExisting(e, 3.0);
-                CurrentProjectileManager->GenerateSimProjectile(
+                m_Timers.Remove(e);
+                m_Timers.AddExisting(e, 3.0);
+                GenerateSimProjectile(
                     body, 
                     body->getWorldTransform().getOrigin(), 
                     -XMVector3Normalize(origin - lookAt),
                     1,
                     20000.0, 
                     0.05, 
-                    Vec4(0,0,5,0), 
+                    Vec4(0,0,5.0f,0), 
                     true
                 );
             }
@@ -95,10 +92,10 @@ void NPCManager::DirectNPC(Entity e, btRigidBody* player) {
 }
 
 // Places a cached NPC.
-void NPCManager::PlaceNPC(Entity e, Vec3 origin) {
-    CurrentNPCsCache->RemoveTail();
-    CurrentNPCsActive->AddExisting(e);
-    btRigidBody* body = CurrentNPCs->Get(e)->Body;
+void CGame::PlaceNPC(Entity e, Vec3 origin) {
+    m_NPCsCache.RemoveTail();
+    m_NPCsActive.AddExisting(e);
+    btRigidBody* body = *m_RigidBodies.Get(e);
     btTransform trans;
     trans.setOrigin(origin);
     f32 mass = 0.0f; // For now were making this static until we get a proper NPC movement system.
@@ -113,20 +110,19 @@ void NPCManager::PlaceNPC(Entity e, Vec3 origin) {
     body->setFriction(friction);
 
     // Re-add regidbody to world after edit.
-    CurrentPhysicsManager->AddRigidBody(body, 2, 0b00001);
-    CurrentTimers->AddExisting(e, 10.0f);
+    AddRigidBody(body, 2, 0b00001);
+    m_Timers.AddExisting(e, 10.0f);
     body->activate();
 }
 
 // Strips an NPC and re-adds them to the cache.
-void NPCManager::StripNPC(Entity e) {
-    CurrentNPCsActive->Remove(e);
-    CurrentNPCsCache->AddExisting(e);
-    btRigidBody* body = CurrentNPCs->Get(e)->Body;
-
+void CGame::StripNPC(Entity e) {
+    m_NPCsActive.Remove(e);
+    m_NPCsCache.AddExisting(e);
+    btRigidBody* body = *m_RigidBodies.Get(e);
 
     // Removes rigidbody from world to edit.
-    CurrentPhysicsManager->RemoveRigidBody(body);
+    RemoveRigidBody(body);
     body->clearForces();
 
     btTransform trans;
@@ -146,39 +142,25 @@ void NPCManager::StripNPC(Entity e) {
     //CurrentWorld->addRigidBody(projectile);
 
     // Set light position
-    CurrentLights->Get(e)->position = *(Vec4*)&trans.getOrigin();
+    m_pRenderer->lights.Get(e)->position = *(Vec4*)&trans.getOrigin();
 }
 
 
-void NPCManager::InitializeNPCs(
-    PhysicsManager* GamePhysicsManager,
-    ProjectileManager* GameProjectileManager,
-    Table<NPC>* GameNPCs,
-    Table<Light>* GameLights,
-    Table<f32>* GameTimers,
-    Group* GameNPCsCache,
-    Group* GameNPCsActive
-) {
-
-    CurrentPhysicsManager = GamePhysicsManager;
-    CurrentProjectileManager = GameProjectileManager;
-    CurrentNPCs = GameNPCs;
-    CurrentLights = GameLights;
-    CurrentTimers = GameTimers;
-    CurrentNPCsCache = GameNPCsCache;
-    CurrentNPCsActive = GameNPCsActive;
-
+void CGame::InitializeNPCs() {
     for every(index, NPC_CACHE_SIZE) {
+
+        // Create Rigidbody, get ECS identifier, and create new NPC
+        btRigidBody* newBody = CreateBoxObject(Vec3(150.f, 150.f, 150.f), Vec3(99999.f, 99999.f, 99999.f), 0.0f, 0.0f, 3, 0b00001);
+        Entity e = m_RigidBodyMap.at(newBody);
         NPC newNPC = NPC();
+        RemoveRigidBody(newBody);
 
-        newNPC.Body = CurrentPhysicsManager->CreateBoxObject(Vec3(150.f, 150.f, 150.f), Vec3(99999.f, 99999.f, 99999.f), 0.0f, 0.0f, 3, 0b00001);
-        Entity e = *(Entity*)newNPC.Body->getUserPointer();
-        CurrentPhysicsManager->RemoveRigidBody(newNPC.Body);
-
+        // Prepare light
         Light newLight = { Vec4(99999.f,99999.f,99999.f,0), Vec4{10.0f, 30.0f, 500.0f, 0} };
-        CurrentLights->AddExisting(e, newLight);
 
-        CurrentNPCs->AddExisting(e, newNPC);
-        CurrentNPCsCache->AddExisting(e);
+        // Insert into tables / groups
+        m_pRenderer->lights.AddExisting(e, newLight);
+        m_NPCs.AddExisting(e, newNPC);
+        m_NPCsCache.AddExisting(e);
     }
 }

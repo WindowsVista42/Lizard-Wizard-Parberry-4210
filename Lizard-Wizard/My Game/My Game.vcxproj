@@ -187,16 +187,12 @@
   <ItemGroup>
     <ClInclude Include="Effects\BloomEffect.h" />
     <ClInclude Include="Effects\EffectsCommon.h" />
-    <ClInclude Include="GenerationManager.h" />
     <ClInclude Include="Helpers.h" />
     <ClInclude Include="CustomBind.h" />
     <ClInclude Include="Effects\DeferredEffect.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="Effects\LightingEffect.h" />
-    <ClInclude Include="NPCManager.h" />
-    <ClInclude Include="PhysicsManager.h" />
-    <ClInclude Include="ProjectileManager.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Defines.h" />
     <ClInclude Include="Game.h" />

@@ -1,17 +1,16 @@
-#include "GenerationManager.h"
-#include "PhysicsManager.h"
+#include "Game.h"
 #include "Defines.h"
 
-void GenerationManager::CreateNormalRoom(Vec3 roomCenter) {
+void CGame::CreateNormalRoom(Vec3 roomCenter) {
     // Ground then roof.
-    currentPhysicsManager->CreateBoxObject(Vec3(3000.0f, 1.0f, 3000.0f), roomCenter + Vec3(0.0f, 0.0f, 0.0f), 0.0f, 1.5f, 1, 0b11111);
-    currentPhysicsManager->CreateBoxObject(Vec3(3000.0f, 1.0f, 3000.0f), roomCenter + Vec3(0.0f, 2000.0f, 0.0f), 0.0f, 1.5f, 1, 0b11111);
+    CreateBoxObject(Vec3(3000.0f, 1.0f, 3000.0f), roomCenter + Vec3(0.0f, 0.0f, 0.0f), 0.0f, 1.5f, 1, 0b11111);
+    CreateBoxObject(Vec3(3000.0f, 1.0f, 3000.0f), roomCenter + Vec3(0.0f, 2000.0f, 0.0f), 0.0f, 1.5f, 1, 0b11111);
 
     // Four walls.
-    //currentPhysicsManager->CreateBoxObject(Vec3(1.0f, 1000.0f, 3000.0f), roomCenter + Vec3(3000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 0, 0b11111); // North Wall
-    currentPhysicsManager->CreateBoxObject(Vec3(3000.0f, 1000.0f, 1.0f), roomCenter + Vec3(0.0f, 1000.0f, 3000.0f), 0.0f, 1.5f, 1, 0b11111); // West Wall
-    currentPhysicsManager->CreateBoxObject(Vec3(1.0f, 1000.0f, 3000.0f), roomCenter + Vec3(-3000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 1, 0b11111); // South Wall
-    currentPhysicsManager->CreateBoxObject(Vec3(3000.0f, 1000.0f, 1.0f), roomCenter + Vec3(0.0f, 1000.0f, -3000.0f), 0.0f, 1.5f, 1, 0b11111); // East Wall
+    //CreateBoxObject(Vec3(1.0f, 1000.0f, 3000.0f), roomCenter + Vec3(3000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 0, 0b11111); // North Wall
+    CreateBoxObject(Vec3(3000.0f, 1000.0f, 1.0f), roomCenter + Vec3(0.0f, 1000.0f, 3000.0f), 0.0f, 1.5f, 1, 0b11111); // West Wall
+    CreateBoxObject(Vec3(1.0f, 1000.0f, 3000.0f), roomCenter + Vec3(-3000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 1, 0b11111); // South Wall
+    CreateBoxObject(Vec3(3000.0f, 1000.0f, 1.0f), roomCenter + Vec3(0.0f, 1000.0f, -3000.0f), 0.0f, 1.5f, 1, 0b11111); // East Wall
 
     Room newRoom;
     newRoom.currentTag = RoomTag::tag::NORMAL;
@@ -19,16 +18,16 @@ void GenerationManager::CreateNormalRoom(Vec3 roomCenter) {
     currentRooms.push_back(newRoom);
 }
 
-void GenerationManager::CreateHallway(Vec3 roomCenter) {
+void CGame::CreateHallway(Vec3 roomCenter) {
     // Ground then roof.
-    currentPhysicsManager->CreateBoxObject(Vec3(3000.0f, 1.0f, 3000.0f), roomCenter + Vec3(0.0f, 0.0f, 0.0f), 0.0f, 1.5f, 1, 31);
-    currentPhysicsManager->CreateBoxObject(Vec3(3000.0f, 1.0f, 3000.0f), roomCenter + Vec3(0.0f, 2000.0f, 0.0f), 0.0f, 1.5f, 1, 31);
+    CreateBoxObject(Vec3(3000.0f, 1.0f, 3000.0f), roomCenter + Vec3(0.0f, 0.0f, 0.0f), 0.0f, 1.5f, 1, 31);
+    CreateBoxObject(Vec3(3000.0f, 1.0f, 3000.0f), roomCenter + Vec3(0.0f, 2000.0f, 0.0f), 0.0f, 1.5f, 1, 31);
 
     // Four walls.
-   // currentPhysicsManager->CreateBoxObject(Vec3(1.0f, 1000.0f, 3000.0f), roomCenter + Vec3(3000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 1, 31); // North Wall
-    currentPhysicsManager->CreateBoxObject(Vec3(3000.0f, 1000.0f, 1.0f), roomCenter + Vec3(0.0f, 1000.0f, 3000.0f), 0.0f, 1.5f, 1, 31); // West Wall
-    //currentPhysicsManager->CreateBoxObject(Vec3(1.0f, 1000.0f, 3000.0f), roomCenter + Vec3(-3000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 1, 31); // South Wall
-    currentPhysicsManager->CreateBoxObject(Vec3(3000.0f, 1000.0f, 1.0f), roomCenter + Vec3(0.0f, 1000.0f, -3000.0f), 0.0f, 1.5f, 1, 31); // East Wall
+   // CreateBoxObject(Vec3(1.0f, 1000.0f, 3000.0f), roomCenter + Vec3(3000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 1, 31); // North Wall
+    CreateBoxObject(Vec3(3000.0f, 1000.0f, 1.0f), roomCenter + Vec3(0.0f, 1000.0f, 3000.0f), 0.0f, 1.5f, 1, 31); // West Wall
+    //CreateBoxObject(Vec3(1.0f, 1000.0f, 3000.0f), roomCenter + Vec3(-3000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 1, 31); // South Wall
+    CreateBoxObject(Vec3(3000.0f, 1000.0f, 1.0f), roomCenter + Vec3(0.0f, 1000.0f, -3000.0f), 0.0f, 1.5f, 1, 31); // East Wall
 
     Room newRoom;
     newRoom.currentTag = RoomTag::tag::NORMAL;
@@ -36,16 +35,16 @@ void GenerationManager::CreateHallway(Vec3 roomCenter) {
     currentRooms.push_back(newRoom);
 }
 
-void GenerationManager::CreateBossRoom(Vec3 roomCenter) {
+void CGame::CreateBossRoom(Vec3 roomCenter) {
     // Ground then roof
-    currentPhysicsManager->CreateBoxObject(Vec3(5000.0f, 1.0f, 5000.0f), roomCenter + Vec3(10.0f, 10.0f, 0.0f), 0.0f, 1.5f, 1, 31);
-    currentPhysicsManager->CreateBoxObject(Vec3(5000.0f, 1.0f, 5000.0f), roomCenter + Vec3(0.0f, 2000.0f, 0.0f), 0.0f, 1.5f, 1, 31);
+    CreateBoxObject(Vec3(5000.0f, 1.0f, 5000.0f), roomCenter + Vec3(10.0f, 10.0f, 0.0f), 0.0f, 1.5f, 1, 31);
+    CreateBoxObject(Vec3(5000.0f, 1.0f, 5000.0f), roomCenter + Vec3(0.0f, 2000.0f, 0.0f), 0.0f, 1.5f, 1, 31);
 
     // Four Walls
-    currentPhysicsManager->CreateBoxObject(Vec3(1.0f, 1000.0f, 5000.0f), roomCenter + Vec3(5000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 1, 31);
-    currentPhysicsManager->CreateBoxObject(Vec3(5000.0f, 1000.0f, 1.0f), roomCenter + Vec3(0.0f, 1000.0f, 5000.0f), 0.0f, 1.5f, 1, 31);
-    currentPhysicsManager->CreateBoxObject(Vec3(1.0f, 1000.0f, 5000.0f), roomCenter + Vec3(-5000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 1, 31);
-    currentPhysicsManager->CreateBoxObject(Vec3(5000.0f, 1000.0f, 1.0f), roomCenter + Vec3(-0.0f, 1000.0f, -5000.0f), 0.0f, 1.5f, 1, 31);
+    CreateBoxObject(Vec3(1.0f, 1000.0f, 5000.0f), roomCenter + Vec3(5000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 1, 31);
+    CreateBoxObject(Vec3(5000.0f, 1000.0f, 1.0f), roomCenter + Vec3(0.0f, 1000.0f, 5000.0f), 0.0f, 1.5f, 1, 31);
+    CreateBoxObject(Vec3(1.0f, 1000.0f, 5000.0f), roomCenter + Vec3(-5000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 1, 31);
+    CreateBoxObject(Vec3(5000.0f, 1000.0f, 1.0f), roomCenter + Vec3(-0.0f, 1000.0f, -5000.0f), 0.0f, 1.5f, 1, 31);
 
     Room newRoom;
     newRoom.currentTag = RoomTag::tag::BOSS;
@@ -53,16 +52,16 @@ void GenerationManager::CreateBossRoom(Vec3 roomCenter) {
     currentRooms.push_back(newRoom);
 }
 
-void GenerationManager::CreateSpawnRoom(Vec3 roomCenter) {
+void CGame::CreateSpawnRoom(Vec3 roomCenter) {
     //Ground then roof
-    currentPhysicsManager->CreateBoxObject(Vec3(4000.0f, 1.0f, 4000.0f), roomCenter + Vec3(0.0f, 0.0f, 0.0f), 0.0f, 1.5f, 1, 31);
-    currentPhysicsManager->CreateBoxObject(Vec3(4000.0f, 1.0f, 4000.0f), roomCenter + Vec3(0.0f, 2000.0f, 0.0f), 0.0f, 1.5f, 1, 31);
+    CreateBoxObject(Vec3(4000.0f, 1.0f, 4000.0f), roomCenter + Vec3(0.0f, 0.0f, 0.0f), 0.0f, 1.5f, 1, 31);
+    CreateBoxObject(Vec3(4000.0f, 1.0f, 4000.0f), roomCenter + Vec3(0.0f, 2000.0f, 0.0f), 0.0f, 1.5f, 1, 31);
 
     // Four Walls
-    currentPhysicsManager->CreateBoxObject(Vec3(1.0f, 1000.0f, 4000.0f), roomCenter + Vec3(4000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 1, 31); // North Wall
-    currentPhysicsManager->CreateBoxObject(Vec3(4000.0f, 1000.0f, 1.0f), roomCenter + Vec3(0.0f, 1000.0f, 4000.0f), 0.0f, 1.5f, 1, 31); // West Wall
-    currentPhysicsManager->CreateBoxObject(Vec3(1.0f, 1000.0f, 4000.0f), roomCenter + Vec3(-4000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 1, 31); // South Wall
-    currentPhysicsManager->CreateBoxObject(Vec3(4000.0f, 1000.0f, 1.0f), roomCenter + Vec3(0.0f, 1000.0f, -4000.0f), 0.0f, 1.5f, 1, 31); // East Wall
+    CreateBoxObject(Vec3(1.0f, 1000.0f, 4000.0f), roomCenter + Vec3(4000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 1, 31); // North Wall
+    CreateBoxObject(Vec3(4000.0f, 1000.0f, 1.0f), roomCenter + Vec3(0.0f, 1000.0f, 4000.0f), 0.0f, 1.5f, 1, 31); // West Wall
+    CreateBoxObject(Vec3(1.0f, 1000.0f, 4000.0f), roomCenter + Vec3(-4000.0f, 1000.0f, 0.0f), 0.0f, 1.5f, 1, 31); // South Wall
+    CreateBoxObject(Vec3(4000.0f, 1000.0f, 1.0f), roomCenter + Vec3(0.0f, 1000.0f, -4000.0f), 0.0f, 1.5f, 1, 31); // East Wall
 
 
     Room newRoom;
@@ -72,7 +71,7 @@ void GenerationManager::CreateSpawnRoom(Vec3 roomCenter) {
      
 }
 
-void GenerationManager::GenerateRooms(Vec3 roomCenter, const i32 roomCount) {
+void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount) {
     u32 randomX = GameRandom::Randu32(1, X_ROOMS - 1);
     u32 randomY = GameRandom::Randu32(1, Y_ROOMS - 1);
 
@@ -143,13 +142,11 @@ void GenerationManager::GenerateRooms(Vec3 roomCenter, const i32 roomCount) {
     }
 }
 
-void GenerationManager::DestroyRooms() {
+void CGame::DestroyRooms() {
 
 }
 
-void GenerationManager::InitializeGeneration(PhysicsManager* gamePhysicsManager) {
-    currentPhysicsManager = gamePhysicsManager;
-
+void CGame::InitializeGeneration() {
     for every(indexX, X_ROOMS) {
         for every(indexY, Y_ROOMS) {
             Room instanceRoom;

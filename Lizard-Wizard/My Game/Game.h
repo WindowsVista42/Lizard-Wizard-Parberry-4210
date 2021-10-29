@@ -5,10 +5,6 @@
 #define GAME_H
 
 #include "Component.h"
-#include "PhysicsManager.h"
-#include "ProjectileManager.h"
-#include "GenerationManager.h"
-#include "NPCManager.h"
 #include "Settings.h"
 #include "CustomBind.h"
 #include "Renderer.h"
@@ -28,6 +24,43 @@
 /// next animation frame. `Release()` will be called at game exit but before
 /// any destructors are run.
 
+// Configuration Defines
+#define X_ROOMS 12
+#define Y_ROOMS 36
+
+// Structs
+struct Room {
+    u32 currentTag;
+    Vec3 origin;
+};
+
+struct RayProjectile {
+    Vec3 Pos1;
+    Vec3 Pos2;
+    Vec4 Color;
+};
+
+struct Collision {
+    Vec3 CollisionPos;
+};
+
+struct Transform {
+    Vec3 Position;
+    Quat Rotation;
+    Vec3 Scale;
+};
+
+struct NPC {
+    NPCBehavior::e Behavior;
+    NPCState::e State;
+    NPC() :
+        Behavior(NPCBehavior::TURRET),
+        State(NPCState::SLEEPING)
+    {}
+};
+
+
+// Game Class
 class CGame:
     public LComponent, 
     public LSettings
@@ -37,20 +70,17 @@ private:
     CustomBind m_leftClick;
     CustomBind m_rightClick;
 
-    // Managers
-    PhysicsManager* m_pPhysicsManager;
-    GenerationManager* m_pGenerationManager;
-    ProjectileManager* m_pProjectileManager;
-    NPCManager* m_pNPCManager;
-
     // Model Table
     Table<ModelInstance> m_ModelInstances;
 
     // Timing Table
     Table<f32> m_Timers;
 
-    // Projectile Cache (MAX 64)
+    // Bullet3 Map / Tables
+    std::unordered_map<btRigidBody*, Entity> m_RigidBodyMap;
     Table<btRigidBody*> m_RigidBodies;
+
+    // Projectile Cache (MAX 64)
     Group m_ProjectilesCache;
     Group m_ProjectilesActive;
 
@@ -58,6 +88,10 @@ private:
     Table<NPC> m_NPCs;
     Group m_NPCsCache;
     Group m_NPCsActive;
+
+    // Rooms / Generation Tables
+    std::vector<Room> currentRooms;
+    Room currentMap[X_ROOMS][Y_ROOMS];
 
     // Collision Table (Simply put, we store all currently colliding objects here.)
     Table<Collision> m_CurrentCollisions;
@@ -73,6 +107,10 @@ private:
 
     bool m_bDrawFrameRate = false; ///< Draw the frame rate.
     
+    ////////////////////////
+    // Internal Functions //
+    ////////////////////////
+
     void LoadImages(); ///< Load images.
     void LoadModels(); ///< Load models.
     void LoadSounds(); ///< Load sounds.
@@ -82,13 +120,136 @@ private:
     void RenderFrame(); ///< Render an animation frame.
     void DrawFrameRateText(); ///< Draw frame rate text to screen.
 
+    //////////////////////////////////////
+    // Exterior Functions in load order //
+    //////////////////////////////////////
+
+    // PHYSICS MANAGER //
+    btTransform NewTransform(btCollisionShape*, Vec3);
+    btRigidBody* NewRigidBody(
+        btCollisionShape*, 
+        btTransform, 
+        f32, 
+        f32, 
+        i32, 
+        i32
+    );
+    btRigidBody* CreateSphereObject(
+        btScalar, 
+        Vec3, 
+        f32, 
+        f32, 
+        i32, 
+        i32
+    );
+    btRigidBody* CreateBoxObject(
+        Vec3, 
+        Vec3, 
+        f32, 
+        f32, 
+        i32, 
+        i32
+    );
+    btRigidBody* CreateCapsuleObject(
+        btScalar, 
+        btScalar, 
+        Vec3, 
+        f32, 
+        f32, 
+        i32, 
+        i32
+    );
+    btRigidBody* CreateConvexObject(
+        f32, 
+        f32, 
+        i32, 
+        i32
+    );
+    static void PhysicsCollisionCallBack(btDynamicsWorld*, btScalar);
+    void CustomPhysicsStep();
+    void RemoveRigidBody(btRigidBody*);
+    void AddRigidBody(btRigidBody*, i32, i32);
+    void DestroyPhysicsOBject(btCollisionShape*);
+    void InitializePhysics();
+
+
+    // PLAYER MANAGER //
+
+
+
+    // UI MANAGER //
+
+
+
+    // GENERATION MANAGER //
+    void CreateNormalRoom(Vec3);
+    void CreateBossRoom(Vec3);
+    void CreateSpawnRoom(Vec3);
+    void CreateHallway(Vec3);
+    void GenerateRooms(Vec3, const i32);
+    void DestroyRooms();
+    void InitializeGeneration();
+
+
+    // PROJECTILE MANAGER //
+    void GenerateSimProjectile(
+        btCollisionObject*,
+        const Vec3,
+        const Vec3,
+        const i32,
+        const f32,
+        const f32,
+        const Vec4,
+        const b8
+    );
+    void GenerateRayProjectile(
+        btCollisionObject*,
+        const Vec3,
+        const Vec3,
+        const i32,
+        const i32,
+        const f32,
+        const Vec4,
+        const b8,
+        const b8
+    );
+    void CalculateRay(
+        btCollisionObject*, 
+        RayProjectile&, 
+        Vec3, 
+        Vec3, 
+        i32, 
+        Vec4, 
+        b8
+    );
+    void InitializeProjectiles();
+    void StripProjectile(Entity);
+
+
+
+    // NPC MANAGER //
+    void Sleep(Entity);
+    void Wander(Entity);
+    void Move(Entity);
+    void Pathfind(Entity);
+    void Attack(Entity);
+    void Search(Entity);
+    void DirectNPC(Entity, btRigidBody*);
+    void PlaceNPC(Entity, Vec3);
+    void InitializeNPCs();
+    void StripNPC(Entity);
+
+
 public:
     Renderer* m_pRenderer; ///< Pointer to renderer.
-    Entity player;
-    // Bullet3 Declarationsstatic 
+    Entity m_Player;
+
+    // Bullet3 Declarations
     btAlignedObjectArray<btCollisionShape*> m_pCollisionShapes;
     btDiscreteDynamicsWorld* m_pDynamicsWorld;
     std::vector<RayProjectile> m_currentRayProjectiles;
+
+
     ~CGame(); ///< Destructor.
     void Initialize(); ///< Initialize the game.
     void ProcessFrame(); ///< Process an animation frame.
