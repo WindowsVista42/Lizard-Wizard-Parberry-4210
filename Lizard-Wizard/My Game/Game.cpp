@@ -6,8 +6,6 @@
 #include "Renderer.h"
 #include "SpriteRenderer.h"
 #include "ComponentIncludes.h"
-#include "PhysicsManager.h"
-#include "ProjectileManager.h"
 #include "Helpers.h"
 #include "shellapi.h"
 #include <vector>
@@ -42,59 +40,25 @@ void CGame::Initialize() {
 
     LoadImages(); //load images from xml file list
     LoadModels(); //load models from xml file list
-
-    // Create Managers
-    m_pPhysicsManager = new PhysicsManager();
-    m_pGenerationManager = new GenerationManager();
-    m_pProjectileManager = new ProjectileManager();
-    m_pNPCManager = new NPCManager();
     LoadSounds(); //load the sounds for this game
     // Create Raycast Vector. Note(Ethan) : Remove this and prepare a raycast-texture pipeline.
     m_currentRayProjectiles = std::vector<RayProjectile>();
 
     // Initialize Managers
-    player = Entity();
-    m_pPhysicsManager->InitializePhysics(
-        &m_pDynamicsWorld,
-        &m_pCollisionShapes,
-        &m_RigidBodies,
-        &m_CurrentCollisions,
-        &player,
-        m_pAudio
-    );
-
-    m_pGenerationManager->InitializeGeneration(m_pPhysicsManager);
-
-    m_pProjectileManager->InitializeProjectiles(
-        m_pCollisionShapes,
-        &m_currentRayProjectiles,
-        m_pDynamicsWorld,
-        m_pPhysicsManager,
-        &m_RigidBodies,
-        &m_pRenderer->lights,
-        &m_Timers,
-        &m_ProjectilesCache,
-        &m_ProjectilesActive
-    );
-
-    m_pNPCManager->InitializeNPCs(
-        m_pPhysicsManager,
-        m_pProjectileManager,
-        &m_NPCs,
-        &m_pRenderer->lights,
-        &m_Timers,
-        &m_NPCsCache,
-        &m_NPCsActive
-    );
+    m_Player = Entity();
+    InitializePhysics();
+    InitializeGeneration();
+    InitializeProjectiles();
+    InitializeNPCs();
 
     // Test NPC(s)
     {
         Entity turret1 = m_NPCs.Entities()[0];
-        m_pNPCManager->PlaceNPC(turret1, Vec3(6000.0f, 500.0f,0));
+        PlaceNPC(turret1, Vec3(6000.0f, 500.0f,0));
         Entity turret2 = m_NPCs.Entities()[1];
-        m_pNPCManager->PlaceNPC(turret2, Vec3(6000.0f, 500.0f, 1500.0f));
+        PlaceNPC(turret2, Vec3(6000.0f, 500.0f, 1500.0f));
         Entity turret3 = m_NPCs.Entities()[2];
-        m_pNPCManager->PlaceNPC(turret3, Vec3(6000.0f, 500.0f, -1500.0f));
+        PlaceNPC(turret3, Vec3(6000.0f, 500.0f, -1500.0f));
     }
 
     // Room Collider
@@ -105,24 +69,24 @@ void CGame::Initialize() {
         {
             if (i == 0)
             {
-                m_pGenerationManager->CreateNormalRoom(roomPos);
+                CreateNormalRoom(roomPos);
             }
             
             if(i>0)
             {
-                m_pGenerationManager->CreateHallway(roomPos);
+                CreateHallway(roomPos);
                 roomPos.x = roomPos.x + 6000.0f;
             }
         }
 
         roomPos = Vec3(-10000.0f, 0, -10000.0f);
-        m_pGenerationManager->CreateBossRoom(roomPos);
+        CreateBossRoom(roomPos);
 
         roomPos = Vec3(10000.0f, 0, 10000.0f);
-        m_pGenerationManager->CreateSpawnRoom(roomPos);
+        CreateSpawnRoom(roomPos);
         */
 
-        m_pGenerationManager->GenerateRooms(Vec3(0,0,0), 50);
+        GenerateRooms(Vec3(0,0,0), 50);
     }
 
     // Lets bind this action to to the user's mouse. For key values : https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
@@ -307,11 +271,28 @@ void CGame::InputHandler() {
         m_rightClick.UpdateState();
 
         if (m_leftClick.pressed) {
-            m_pProjectileManager->GenerateSimProjectile(m_pDynamicsWorld->getCollisionObjectArray()[0], m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), 3, 8000.0, 0.5, Vec4(5,0,0,0), true);
+            GenerateSimProjectile(
+                m_pDynamicsWorld->getCollisionObjectArray()[0], 
+                m_pRenderer->m_pCamera->GetPos(),
+                m_pRenderer->m_pCamera->GetViewVector(), 
+                3, 
+                8000.0, 
+                0.5, 
+                Vec4(5.0f,0,0,0),
+                true);
         }
 
         if (m_rightClick.pressed) {
-            m_pProjectileManager->GenerateRayProjectile(m_pDynamicsWorld->getCollisionObjectArray()[0], m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), 3, 2, 0.05, Colors::IndianRed, false, true);
+            GenerateRayProjectile(
+                m_pDynamicsWorld->getCollisionObjectArray()[0], 
+                m_pRenderer->m_pCamera->GetPos(), 
+                m_pRenderer->m_pCamera->GetViewVector(), 
+                3, 
+                2, 
+                0.05, 
+                Colors::IndianRed, 
+                false, 
+                true);
         }
 
         Vector2 delta = { (f32)(cursor_pos.x - center.x), (f32)(cursor_pos.y - center.y) };
@@ -368,10 +349,10 @@ void CGame::RenderFrame() {
         Entity e = m_NPCsActive.Entities()[index];
         btTransform trans;
 
-        (*m_NPCs.Get(e)).Body->getMotionState()->getWorldTransform(trans);
+        (*m_RigidBodies.Get(e))->getMotionState()->getWorldTransform(trans);
         m_pRenderer->lights.Get(e)->position = *(Vec4*)&trans.getOrigin();
 
-        m_pNPCManager->DirectNPC(e, *m_RigidBodies.Get(player));
+        DirectNPC(e, *m_RigidBodies.Get(m_Player));
     }
 
     // This handles projectiles and lighting.
@@ -389,7 +370,7 @@ void CGame::RenderFrame() {
 
     // Strip Projectiles.
     for every(index, toRemove.size()) {
-        m_pProjectileManager->StripProjectile(toRemove[index]);
+        StripProjectile(toRemove[index]);
     }
 
     if (!flycam_enabled) {
@@ -556,7 +537,7 @@ void CGame::ProcessFrame(){
     InputHandler(); //handle keyboard input
     m_pAudio->BeginFrame(); //notify audio player that frame has begun
     m_pTimer->Tick([&]() { //all time-dependent function calls should go here
-    m_pPhysicsManager->PhysicsManagerStep();
+    CustomPhysicsStep();
     m_pDynamicsWorld->stepSimulation(m_pTimer->GetFrameTime(), 10); // Step Physics
     });
     RenderFrame(); //render a frame of animation

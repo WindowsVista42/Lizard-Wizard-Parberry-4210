@@ -166,4 +166,10 @@ namespace NPCState { enum e : u32 {
     SLEEPING, WANDER, MOVING, PATHFINDING, ATTACKING, SEARCHING
 };}
 
+namespace RoomTag {
+    enum tag : u32 {
+        UNFILLED, SPAWN, NORMAL, BOSS
+    };
+}
+
 #endif

@@ -1,5 +1,4 @@
 // Inclusions
-#include "ProjectileManager.h"
 #include "Game.h"
 #include "Component.h"
 #include "Settings.h"
@@ -26,7 +25,7 @@
 
 */
 
-void ProjectileManager::GenerateSimProjectile(
+void CGame::GenerateSimProjectile(
     btCollisionObject* caster, 
     const Vec3 startPos, 
     const Vec3 lookDirection, 
@@ -42,17 +41,17 @@ void ProjectileManager::GenerateSimProjectile(
     */
     for (i32 i = 0; i < projectileCount; i++) {
         // New Projectile System, uses caching to improve stuff.
-        if (CurrentProjectilesCache->Size() < projectileCount - i) {
+        if (m_ProjectilesCache.Size() < projectileCount - i) {
             return;
         }
-        Entity e = CurrentProjectilesCache->RemoveTail();
-        CurrentProjectilesActive->AddExisting(e);
-        CurrentTimers->AddExisting(e, 2.0f);
-        btRigidBody* projectile = *CurrentRigidBodies->Get(e);
+        Entity e = m_ProjectilesCache.RemoveTail();
+        m_ProjectilesActive.AddExisting(e);
+        m_Timers.AddExisting(e, 2.0f);
+        btRigidBody* projectile = *m_RigidBodies.Get(e);
         Vec3 newDirection = JitterVec3(lookDirection, -projectileAccuracy, projectileAccuracy);
 
         // Removes rigidbody from world to edit.
-        //CurrentWorld->removeRigidBody(projectile);
+        //m_pDynamicsWorld->removeRigidBody(projectile);
         projectile->clearForces();
 
         Vec3 offset = Vec3(100.0f, 100.0f, 50.0f);
@@ -77,13 +76,13 @@ void ProjectileManager::GenerateSimProjectile(
         projectile->setFriction(friction);
 
         // Re-add regidbody to world after edit.
-        CurrentWorld->addRigidBody(projectile, 2, 0b00001);
-        CurrentLights->Get(e)->color = Vec4(projectileColor.x * 300.0f, projectileColor.y * 300.0f, projectileColor.z * 300.0f, 0);
+        m_pDynamicsWorld->addRigidBody(projectile, 2, 0b00001);
+        m_pRenderer->lights.Get(e)->color = Vec4(projectileColor.x * 10.0f, projectileColor.y * 10.0f, projectileColor.z * 10.0f, 0);
         projectile->activate();
     }
 }
 
-void ProjectileManager::CalculateRay(
+void CGame::CalculateRay(
     btCollisionObject* caster, 
     RayProjectile& newRay, 
     Vec3 Pos1, 
@@ -101,7 +100,7 @@ void ProjectileManager::CalculateRay(
 		rayResults.m_collisionFilterMask = 0b00001;
 
     }
-    CurrentWorld->rayTest(Pos1, Vec3(Pos1 + btLookDirection * 5000.), rayResults);
+    m_pDynamicsWorld->rayTest(Pos1, Vec3(Pos1 + btLookDirection * 5000.), rayResults);
 
     if (rayResults.hasHit()) {
         // Note (Ethan) : this is neccesary to get the object being hit, for some reason this pointer is const; this isn't problematic as long as we DO NOT EDIT at this pointer.
@@ -120,7 +119,7 @@ void ProjectileManager::CalculateRay(
     }
 }
 
-void ProjectileManager::GenerateRayProjectile(
+void CGame::GenerateRayProjectile(
     btCollisionObject* caster, 
     const Vec3 startPos, 
     const Vec3 lookDirection, 
@@ -145,52 +144,42 @@ void ProjectileManager::GenerateRayProjectile(
         Vec3 newDirection = JitterVec3(lookDirection, -rayAccuracy, rayAccuracy);
         CalculateRay(caster, newRay, startPos, newDirection, rayBounces, Colors::Peru, ignoreCaster);
 
-        CurrentRayProjectiles->push_back(newRay);
+        m_currentRayProjectiles.push_back(newRay);
     }
 }
 
-void ProjectileManager::InitializeProjectiles(
-    btAlignedObjectArray<btCollisionShape*> GameSimProjectiles, 
-    std::vector<RayProjectile>* GameRayProjectiles,
-    btDiscreteDynamicsWorld* GameWorld,
-    PhysicsManager* GamePhysicsManager,
-    Table<btRigidBody*>* GameRigidBodies,
-    Table<Light>* GameLights,
-    Table<f32>* GameTimers,
-    Group* GameProjectilesCached, 
-    Group* GameProjectilesActive
-) {
-
-    CurrentSimProjectiles = GameSimProjectiles;
-    CurrentRayProjectiles = GameRayProjectiles;
-    CurrentPhysicsManager = GamePhysicsManager;
-    CurrentRigidBodies = GameRigidBodies;
-    CurrentLights = GameLights;
-    CurrentTimers = GameTimers;
-    CurrentProjectilesCache = GameProjectilesCached;
-    CurrentProjectilesActive = GameProjectilesActive;
-    CurrentWorld = GameWorld;
-
+void CGame::InitializeProjectiles() {
     for every(index, PROJECTILE_CACHE_SIZE) {
-        btRigidBody* newBody = CurrentPhysicsManager->CreateSphereObject(50.f, Vec3(99999.f, 99999.f, 99999.f), 0.0f, 0.0f, 3, 0b00001);
-        Entity e = *(Entity*)newBody->getUserPointer();
-        CurrentWorld->removeRigidBody(newBody);
+        // Create Rigidbody and get ECS identifier
+        btRigidBody* newBody = CreateSphereObject(50.f, Vec3(99999.f, 99999.f, 99999.f), 0.0f, 0.0f, 3, 0b00001);
+        Entity e = m_RigidBodyMap.at(newBody);
+        m_pDynamicsWorld->removeRigidBody(newBody);
+
+        // Set RigidBody to continuous (Note) Ethan : This causes an unusual btScalar assertion. Look into it later.
+        /*
+        newBody->setCcdMotionThreshold(1.0f);
+        newBody->setCcdSweptSphereRadius(50.0f);
+        */
+
+        // Prepare light
         Light newLight = { Vec4(99999.f,99999.f,99999.f,0), Vec4{150.0f, 30.0f, 10.0f, 0} };
-        CurrentLights->AddExisting(e, newLight);
-        CurrentRigidBodies->AddExisting(e, newBody);
-        CurrentProjectilesCache->AddExisting(e);
+
+        // Insert into tables / groups
+        m_pRenderer->lights.AddExisting(e, newLight);
+        m_RigidBodies.AddExisting(e, newBody);
+        m_ProjectilesCache.AddExisting(e);
     }
 }
 
-void ProjectileManager::StripProjectile(Entity e) {
-    CurrentProjectilesActive->Remove(e);
-    CurrentTimers->Remove(e);
-    CurrentProjectilesCache->AddExisting(e);
-    btRigidBody* projectile = *CurrentRigidBodies->Get(e);
+void CGame::StripProjectile(Entity e) {
+    m_ProjectilesActive.Remove(e);
+    m_Timers.Remove(e);
+    m_ProjectilesCache.AddExisting(e);
+    btRigidBody* projectile = *m_RigidBodies.Get(e);
 
 
     // Removes rigidbody from world to edit.
-    CurrentWorld->removeRigidBody(projectile);
+    m_pDynamicsWorld->removeRigidBody(projectile);
     projectile->clearForces();
 
     btTransform trans;
@@ -207,9 +196,9 @@ void ProjectileManager::StripProjectile(Entity e) {
     projectile->setFriction(friction);
 
     // Re-add regidbody to world after edit.
-    //CurrentWorld->addRigidBody(projectile);
+    //m_pDynamicsWorld->addRigidBody(projectile);
 
     // Set light position
-    CurrentLights->Get(e)->position = *(Vec4*)&trans.getOrigin();
+    m_pRenderer->lights.Get(e)->position = *(Vec4*)&trans.getOrigin();
 }
 
