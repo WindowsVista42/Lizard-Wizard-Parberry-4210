@@ -58,7 +58,9 @@ void CGame::Initialize() {
         &m_pDynamicsWorld,
         &m_pCollisionShapes,
         &m_RigidBodies,
-        &player
+        &m_CurrentCollisions,
+        &player,
+        m_pAudio
     );
 
     m_pGenerationManager->InitializeGeneration(m_pPhysicsManager);
@@ -194,7 +196,7 @@ void CGame::InputHandler() {
     }
 
     if (m_pKeyboard->TriggerUp(VK_SPACE)) //play sound
-        //m_pAudio->play(eSound::Grunt);
+       //m_pAudio->play(eSound::Grunt);
 
     if (m_pKeyboard->TriggerDown(VK_BACK)) //restart game
         BeginGame(); //restart game
@@ -305,7 +307,7 @@ void CGame::InputHandler() {
         m_rightClick.UpdateState();
 
         if (m_leftClick.pressed) {
-            m_pProjectileManager->GenerateSimProjectile(m_pDynamicsWorld->getCollisionObjectArray()[0], m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), 3, 8000.0, 0.5, Colors::IndianRed, true);
+            m_pProjectileManager->GenerateSimProjectile(m_pDynamicsWorld->getCollisionObjectArray()[0], m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), 3, 8000.0, 0.5, Vec4(5,0,0,0), true);
         }
 
         if (m_rightClick.pressed) {
@@ -554,7 +556,8 @@ void CGame::ProcessFrame(){
     InputHandler(); //handle keyboard input
     m_pAudio->BeginFrame(); //notify audio player that frame has begun
     m_pTimer->Tick([&]() { //all time-dependent function calls should go here
-        m_pDynamicsWorld->stepSimulation(m_pTimer->GetFrameTime(), 10); // Step Physics
+    m_pPhysicsManager->PhysicsManagerStep();
+    m_pDynamicsWorld->stepSimulation(m_pTimer->GetFrameTime(), 10); // Step Physics
     });
     RenderFrame(); //render a frame of animation
 }

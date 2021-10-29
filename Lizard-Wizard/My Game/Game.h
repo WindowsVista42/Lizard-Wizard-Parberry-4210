@@ -59,6 +59,9 @@ private:
     Group m_NPCsCache;
     Group m_NPCsActive;
 
+    // Collision Table (Simply put, we store all currently colliding objects here.)
+    Table<Collision> m_CurrentCollisions;
+
     // UserInput Vector
     //CustomBind m_currentBinds;
     

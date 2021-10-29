@@ -83,7 +83,7 @@ void NPCManager::DirectNPC(Entity e, btRigidBody* player) {
                     1,
                     20000.0, 
                     0.05, 
-                    Colors::LightGreen, 
+                    Vec4(0,0,5,0), 
                     true
                 );
             }
@@ -169,10 +169,10 @@ void NPCManager::InitializeNPCs(
     CurrentNPCsActive = GameNPCsActive;
 
     for every(index, NPC_CACHE_SIZE) {
-        Entity e = Entity();
         NPC newNPC = NPC();
 
         newNPC.Body = CurrentPhysicsManager->CreateBoxObject(Vec3(150.f, 150.f, 150.f), Vec3(99999.f, 99999.f, 99999.f), 0.0f, 0.0f, 3, 0b00001);
+        Entity e = *(Entity*)newNPC.Body->getUserPointer();
         CurrentPhysicsManager->RemoveRigidBody(newNPC.Body);
 
         Light newLight = { Vec4(99999.f,99999.f,99999.f,0), Vec4{10.0f, 30.0f, 500.0f, 0} };

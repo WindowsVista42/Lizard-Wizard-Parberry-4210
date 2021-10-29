@@ -172,8 +172,8 @@ void ProjectileManager::InitializeProjectiles(
     CurrentWorld = GameWorld;
 
     for every(index, PROJECTILE_CACHE_SIZE) {
-        Entity e = Entity();
         btRigidBody* newBody = CurrentPhysicsManager->CreateSphereObject(50.f, Vec3(99999.f, 99999.f, 99999.f), 0.0f, 0.0f, 3, 0b00001);
+        Entity e = *(Entity*)newBody->getUserPointer();
         CurrentWorld->removeRigidBody(newBody);
         Light newLight = { Vec4(99999.f,99999.f,99999.f,0), Vec4{150.0f, 30.0f, 10.0f, 0} };
         CurrentLights->AddExisting(e, newLight);
