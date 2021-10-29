@@ -2,12 +2,14 @@
 #include "PhysicsManager.h"
 #include "Game.h"
 #include "Component.h"
+#include "ComponentIncludes.h"
 #include "Settings.h"
 #include "CustomBind.h"
 #include <stdio.h>
 #include <vector>
 #include "Helpers.h"
 #include "Math.h"
+#include "Audio.h"
 
 // Bullet3 Inclusions
 #include <btBulletCollisionCommon.h>
@@ -24,6 +26,7 @@
      wachu looking at bud
 
 */
+static PhysicsManager* Self;
 
 // Note(Ethan) : These functions help in the creation of Bullet3 physics objects.
 btTransform PhysicsManager::NewTransform(btCollisionShape* shape, Vec3 origin) {
@@ -47,6 +50,7 @@ btRigidBody* PhysicsManager::NewRigidBody(
     i32 group,
     i32 mask) {
 
+    // Configure and add to Bullet3
     btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
     Vec3 localInertia(Vec3(0, 0, 0));
     btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, shape, localInertia);
@@ -54,6 +58,11 @@ btRigidBody* PhysicsManager::NewRigidBody(
     btRigidBody* body = new btRigidBody(rbInfo);
     body->setAngularFactor(Vec3(0., 0., 0.));
     CurrentWorld->addRigidBody(body, group, mask);
+
+    // Add to ECS
+    Entity e = Entity();
+    body->setUserPointer(&e);
+
     return body;
 }
 
@@ -115,6 +124,55 @@ btRigidBody* PhysicsManager::CreateConvexObject(f32 mass, f32 friction, i32 grou
     return 0;
 }
 
+// Note(Ethan) : We need this for impact noises and bounce impulses.
+void PhysicsManager::PhysicsCollisionCallBack(btDynamicsWorld* p, btScalar t) {
+    UNREFERENCED_PARAMETER(t);
+    const u32 numManifolds = (u32)p->getDispatcher()->getNumManifolds();
+
+    for every(manifold, numManifolds) {
+        btDispatcher* pDispatcher = p->getDispatcher();
+        btPersistentManifold* pManifold = pDispatcher->getManifoldByIndexInternal(manifold);
+
+        // Get bodys
+        const btRigidBody* pBody0 = btRigidBody::upcast(pManifold->getBody0());
+        const btRigidBody* pBody1 = btRigidBody::upcast(pManifold->getBody1());
+
+        // Get entities
+        Entity pObj0 = *(Entity*)pBody0->getUserPointer();
+        Entity pObj1 = *(Entity*)pBody1->getUserPointer();
+
+        const int numContacts = pManifold->getNumContacts();
+        if (Self->CurrentRigidBodies->Get(pObj0) && Self->CurrentRigidBodies->Get(pObj1) && numContacts > 0) { //guard
+            for every(contact, numContacts){
+                btManifoldPoint& pt = pManifold->getContactPoint(contact);
+                Collision newCollisionA;
+                newCollisionA.CollisionPos = pt.getPositionWorldOnA();
+                Collision newCollisionB;
+                newCollisionB.CollisionPos = pt.getPositionWorldOnB();
+
+                Self->CurrentCollisions->AddExisting(pObj0, newCollisionA);
+                Self->CurrentCollisions->AddExisting(pObj1, newCollisionB);
+            }
+        }
+    }
+}
+
+void PhysicsManager::PhysicsManagerStep() {
+    // This plays a sound for all collisions. (NOTE) Ethan : Will be moved into PhysicsManager once I move all physics stepping into a new custom function.
+    for every(index, CurrentCollisions->Size()) {
+        Entity e = CurrentCollisions->Entities()[index];
+        Entity player = CurrentRigidBodies->Entities()[0];
+        Vec3 pos = CurrentCollisions->Get(e)->CollisionPos;
+
+        if (e == player) {
+        }
+        else {
+            printf("Collision detected at : (%f, %f, %f)\n", pos.x, pos.y, pos.z);
+            CurrentAudio->play(SoundIndex::Clang, pos, 0.25, 0.0);
+        }
+    }
+    CurrentCollisions->Clear();
+}
 
 // Helper Functions, these will be helpful when we don't want to keep passing the dynamics world to managers.
 void PhysicsManager::RemoveRigidBody(btRigidBody* body) {
@@ -133,10 +191,12 @@ void PhysicsManager::DestroyPhysicsOBject(btCollisionShape* shape) {
 
 
 void PhysicsManager::InitializePhysics(
-    btDiscreteDynamicsWorld** GameWorld, 
-    btAlignedObjectArray<btCollisionShape*>* GameShapes, 
+    btDiscreteDynamicsWorld** GameWorld,
+    btAlignedObjectArray<btCollisionShape*>* GameShapes,
     Table<btRigidBody*>* GameRigidBodies,
-    Entity* GamePlayer
+    Table<Collision>* GameCollisions,
+    Entity* GamePlayer,
+    LSound* GameAudio
 
 ) {
 
@@ -148,14 +208,18 @@ void PhysicsManager::InitializePhysics(
     *GameWorld = new btDiscreteDynamicsWorld(CurrentDispatcher, CurrentBroadphaseCache, CurrentSolver, CurrentConfiguration);
     *GameShapes = btAlignedObjectArray<btCollisionShape*>();
     CurrentRigidBodies = GameRigidBodies;
+    CurrentCollisions = GameCollisions;
     CurrentWorld = *GameWorld;
     CurrentShapes = *GameShapes;
     CurrentWorld->setGravity(btVector3(0.0, -5000.0, 0.0));
     CurrentPlayer = GamePlayer;
+    CurrentAudio = GameAudio;
+
+    // Static Self Assignment
+    Self = this;
 
     // Collision Callback
-    btOverlapFilterCallback* filterCallback = new ProjectileCollisionFilter();
-    CurrentWorld->getPairCache()->setOverlapFilterCallback(filterCallback);
+    CurrentWorld->setInternalTickCallback(PhysicsCollisionCallBack);
 
     // Player Rigidbody | (Note) : Create this first, as the player is currently indexed as [0] in the collision table.
     {

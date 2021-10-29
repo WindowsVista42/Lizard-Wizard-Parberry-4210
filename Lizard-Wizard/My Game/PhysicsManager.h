@@ -7,6 +7,7 @@
 #include "Settings.h"
 #include "CustomBind.h"
 #include <vector>
+#include <map>
 #include "Ecs.h"
 
 // Bullet3 Inclusions
@@ -16,21 +17,13 @@
 #include "BulletCollision/Gimpact/btGImpactShape.h"
 #include "LinearMath/btAlignedObjectArray.h"
 
-struct ProjectileCollisionFilter : public btOverlapFilterCallback
-{
-    // return true when pairs need collision.
-    virtual bool needBroadphaseCollision(btBroadphaseProxy* proxy0, btBroadphaseProxy* proxy1) const
-    {
-        bool collides = (proxy0->m_collisionFilterGroup & proxy1->m_collisionFilterMask) != 0;
-        collides = collides && (proxy1->m_collisionFilterGroup & proxy0->m_collisionFilterMask);
-
-        return collides;
-    }
+// Collision
+struct Collision {
+    Vec3 CollisionPos;
 };
 
 // Physics Class
 class PhysicsManager {
-
 public:
     btTransform NewTransform(btCollisionShape*, Vec3);
     btRigidBody* NewRigidBody(btCollisionShape*, btTransform, f32, f32, i32, i32);
@@ -38,12 +31,13 @@ public:
     btRigidBody* CreateBoxObject(Vec3, Vec3, f32, f32, i32, i32);
     btRigidBody* CreateCapsuleObject(btScalar, btScalar, Vec3, f32, f32, i32, i32);
     btRigidBody* CreateConvexObject(f32, f32, i32, i32);
+    static void PhysicsCollisionCallBack(btDynamicsWorld*, btScalar);
+    void PhysicsManagerStep();
     void RemoveRigidBody(btRigidBody*);
     void AddRigidBody(btRigidBody*, i32, i32);
     void DestroyPhysicsOBject(btCollisionShape*);
-    void InitializePhysics(btDiscreteDynamicsWorld**, btAlignedObjectArray<btCollisionShape*>*, Table<btRigidBody*>*, Entity*);
+    void InitializePhysics(btDiscreteDynamicsWorld**, btAlignedObjectArray<btCollisionShape*>*, Table<btRigidBody*>*, Table<Collision>*, Entity*, LSound*);
 
-private:
     btDefaultCollisionConfiguration* CurrentConfiguration;
     btCollisionDispatcher* CurrentDispatcher;
     btDbvtBroadphase* CurrentBroadphaseCache;
@@ -51,7 +45,9 @@ private:
     btAlignedObjectArray<btCollisionShape*> CurrentShapes;
     btDiscreteDynamicsWorld* CurrentWorld;
     Table<btRigidBody*>* CurrentRigidBodies;
+    Table<Collision>* CurrentCollisions;
     Entity* CurrentPlayer;
+    LSound* CurrentAudio;
 };
 
 
