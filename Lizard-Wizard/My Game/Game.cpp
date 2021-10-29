@@ -278,7 +278,7 @@ void CGame::InputHandler() {
                 3, 
                 8000.0, 
                 0.5, 
-                Vec4(5.0f,0,0,0),
+                Vec4(30.0f,0,0,0),
                 true);
         }
 
@@ -367,6 +367,8 @@ void CGame::RenderFrame() {
             toRemove.push_back(e);
         }
     }
+
+    CustomPhysicsStep();
 
     // Strip Projectiles.
     for every(index, toRemove.size()) {
@@ -537,7 +539,6 @@ void CGame::ProcessFrame(){
     InputHandler(); //handle keyboard input
     m_pAudio->BeginFrame(); //notify audio player that frame has begun
     m_pTimer->Tick([&]() { //all time-dependent function calls should go here
-    CustomPhysicsStep();
     m_pDynamicsWorld->stepSimulation(m_pTimer->GetFrameTime(), 10); // Step Physics
     });
     RenderFrame(); //render a frame of animation

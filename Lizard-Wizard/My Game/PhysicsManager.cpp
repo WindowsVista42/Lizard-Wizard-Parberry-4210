@@ -140,16 +140,11 @@ void CGame::PhysicsCollisionCallBack(btDynamicsWorld* p, btScalar t) {
         Entity pEntity1 = Self->m_RigidBodyMap.at(pBody1);
 
         const int numContacts = pManifold->getNumContacts();
-        if (numContacts > 0) { //guard
+        if (numContacts > 0 && !Self->m_CurrentCollisions.Contains(pEntity0)) { //guard
             for every(contact, numContacts){
                 btManifoldPoint& pt = pManifold->getContactPoint(contact);
-                Collision newCollisionA;
-                newCollisionA.CollisionPos = pt.getPositionWorldOnA();
-                Collision newCollisionB;
-                newCollisionB.CollisionPos = pt.getPositionWorldOnB();
-
-                Self->m_CurrentCollisions.AddExisting(pEntity0, newCollisionA);
-                Self->m_CurrentCollisions.AddExisting(pEntity1, newCollisionB);
+                Self->m_CurrentCollisions.AddExisting(pEntity0);
+                Self->m_CurrentCollisions.AddExisting(pEntity1);
             }
         }
     }
@@ -159,9 +154,14 @@ void CGame::CustomPhysicsStep() {
     // This plays a sound for all collisions. (NOTE) Ethan : Will be moved into CGame once I move all physics stepping into a new custom function.
     for every(index, m_CurrentCollisions.Size()) {
         Entity e = m_CurrentCollisions.Entities()[index];
-        Vec3 pos = m_CurrentCollisions.Get(e)->CollisionPos;
+        Vec3 pos = (*m_RigidBodies.Get(e))->getWorldTransform().getOrigin();
 
-        //printf("Collision detected at : (%f, %f, %f)\n", pos.x, pos.y, pos.z);
+
+        if (m_ProjectilesActive.Contains(e)) {
+            printf("Projectile collision detected at : (%f, %f, %f)\n", pos.x, pos.y, pos.z);
+            std::cout << "Collision ID :" << e.id << std::endl;
+            m_pAudio->play(SoundIndex::Clang, pos, 0.25, 0.0);
+        }
         //m_pAudio->play(SoundIndex::Clang, pos, 0.25, 0.0);
     }
     m_CurrentCollisions.Clear();

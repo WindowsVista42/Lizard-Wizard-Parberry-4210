@@ -80,7 +80,7 @@ void CGame::DirectNPC(Entity e, btRigidBody* player) {
                     1,
                     20000.0, 
                     0.05, 
-                    Vec4(0,0,5.0f,0), 
+                    Vec4(0,0,30.0f,0), 
                     true
                 );
             }

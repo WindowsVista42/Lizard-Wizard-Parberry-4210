@@ -126,6 +126,15 @@ public:
         return &components[mapping[e]];
     }
 
+    // Checks if a Entity is a member of table.
+    b8 Contains(Entity e) {
+        if (mapping[e]) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     /// Get the number of components in the table.
     usize Size() {
         return components.size();
@@ -196,6 +205,16 @@ public:
     void Clear() {
         entities.clear();
         mapping.clear();
+    }
+
+    // Checks if a Entity is a member of group.
+    b8 Contains(Entity e) {
+        if (mapping[e]) {
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
     /// Get the number of entities in this group.

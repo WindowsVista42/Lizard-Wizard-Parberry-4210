@@ -40,10 +40,6 @@ struct RayProjectile {
     Vec4 Color;
 };
 
-struct Collision {
-    Vec3 CollisionPos;
-};
-
 struct Transform {
     Vec3 Position;
     Quat Rotation;
@@ -94,7 +90,7 @@ private:
     Room currentMap[X_ROOMS][Y_ROOMS];
 
     // Collision Table (Simply put, we store all currently colliding objects here.)
-    Table<Collision> m_CurrentCollisions;
+    Group m_CurrentCollisions;
 
     // UserInput Vector
     //CustomBind m_currentBinds;
