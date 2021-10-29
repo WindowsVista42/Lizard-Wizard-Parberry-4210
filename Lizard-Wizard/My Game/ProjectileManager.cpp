@@ -62,7 +62,7 @@ void CGame::GenerateSimProjectile(
 
         // Re-add regidbody to world after edit.
         m_pDynamicsWorld->addRigidBody(projectile, 2, 0b00001);
-        f32 lum = 10.0f;
+        f32 lum = 100.0f;
         m_pRenderer->lights.Get(e)->color = Vec4(projectileColor.x * lum, projectileColor.y * lum, projectileColor.z * lum, 0);
         projectile->activate();
     }

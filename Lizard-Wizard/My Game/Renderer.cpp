@@ -403,7 +403,7 @@ static inline void render_post_process(
 /// End Rendering a frame.
 /// Put all DrawXYZ() or other functions in between this and BeginFrame()
 void Renderer::EndDrawing() {
-    static Entity e = lights.Add({ Vec4(500.0f, 200.0f, 0.0f, 0.0f), Vec4(200.0f, 800.0f, 1200.0f, 0.0f) });
+    static Entity e = lights.Add({ Vec4(500.0f, 200.0f, 0.0f, 0.0f), Colors::CornflowerBlue * 800.0f });
 
     assert(lights.Size() < 254);
     m_lighting->SetLightCount(lights.Size());
@@ -422,7 +422,9 @@ void Renderer::EndDrawing() {
     auto viewport = m_pDeviceResources->GetScreenViewport();
     auto scissorRect = m_pDeviceResources->GetScissorRect();
 
-    f32 scale = 1.0;
+    m_bloomExtract->SetConstants(1.2);
+    m_bloomBlur->SetConstants(0.04, 1.0);
+    m_bloomCombine->SetConstants(1.0);
 
     render_post_process<
         LightingEffect, 
@@ -470,6 +472,7 @@ void Renderer::EndDrawing() {
 
     viewport.Width /= 2; viewport.Height /= 2;
     m_pCommandList->RSSetViewports(1, &viewport);
+    m_bloomBlur->SetConstants(0.0009765625, 16.0);
     render_post_process<
         BloomBlurEffect,
         Descriptors::BloomBlur3, Descriptors::BloomBlur3,

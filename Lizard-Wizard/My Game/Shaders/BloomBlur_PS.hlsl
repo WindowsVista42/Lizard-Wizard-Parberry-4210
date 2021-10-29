@@ -19,13 +19,13 @@ Texture2D<float4> Color : register(t0);
 sampler Sampler : register(s0);
 
 cbuffer Constants : register(b0) {
+    float Intensity;
+    float Scale;
 }
 
 struct PixelOutput {
     float4 Color : SV_TARGET0;
 };
-
-static const float Intensity = 0.04f;
 
 float3 BoxBlur3x3(float2 uv, float intensity) {
     float2 d = (float2(1.0f, 1.0f) / 3.0) * intensity;
@@ -51,7 +51,7 @@ float3 BoxBlur3x3(float2 uv, float intensity) {
 PixelOutput main(VertexOutput input) {
     PixelOutput output;
 
-    float3 color = BoxBlur3x3(input.Texture, Intensity);
+    float3 color = BoxBlur3x3(input.Texture, Intensity * Scale);
 
     output.Color = float4(color, 1.0f);
 

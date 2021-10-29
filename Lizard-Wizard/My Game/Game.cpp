@@ -278,7 +278,7 @@ void CGame::InputHandler() {
                 3, 
                 8000.0, 
                 0.5, 
-                Vec4(30.0f,0,0,0),
+                Colors::PaleVioletRed,
                 true);
         }
 

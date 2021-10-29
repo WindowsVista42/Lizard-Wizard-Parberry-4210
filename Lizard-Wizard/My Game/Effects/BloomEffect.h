@@ -13,6 +13,8 @@ public:
 
     void Apply(ID3D12GraphicsCommandList* command_list) override;
     void SetTextures(D3D12_GPU_DESCRIPTOR_HANDLE first_texture);
+    void SetConstants(f32 threshold);
+
 private:
     Microsoft::WRL::ComPtr<ID3D12Device> m_device;
     Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature;
@@ -21,6 +23,7 @@ private:
     u32 m_dirtyFlags;
     DirectX::GraphicsResource m_constantBuffer;
 
+    f32 m_threshold;
     D3D12_GPU_DESCRIPTOR_HANDLE m_firstTexture;
 };
 
@@ -40,6 +43,7 @@ public:
 
     void Apply(ID3D12GraphicsCommandList* command_list) override;
     void SetTextures(D3D12_GPU_DESCRIPTOR_HANDLE first_texture);
+    void SetConstants(f32 intensity, f32 scale);
 
 private:
     Microsoft::WRL::ComPtr<ID3D12Device> m_device;
@@ -49,6 +53,8 @@ private:
     u32 m_dirtyFlags;
     DirectX::GraphicsResource m_constantBuffer;
 
+    f32 m_intensity;
+    f32 m_scale;
     D3D12_GPU_DESCRIPTOR_HANDLE m_firstTexture;
 };
 
@@ -68,7 +74,7 @@ public:
 
     void Apply(ID3D12GraphicsCommandList* command_list) override;
     void SetTextures(D3D12_GPU_DESCRIPTOR_HANDLE first_texture);
-    void SetScale(f32 scale);
+    void SetConstants(f32 scale);
 
 private:
     Microsoft::WRL::ComPtr<ID3D12Device> m_device;
@@ -78,7 +84,7 @@ private:
     u32 m_dirtyFlags;
     DirectX::GraphicsResource m_constantBuffer;
 
-    f32 scale;
+    f32 m_scale;
     D3D12_GPU_DESCRIPTOR_HANDLE m_firstTexture;
 };
 

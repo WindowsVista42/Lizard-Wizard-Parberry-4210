@@ -10,6 +10,7 @@ namespace {
 
 namespace {
     struct __declspec(align(16)) BloomExtractConstants {
+        f32 threshold;
     };
 
     static_assert((sizeof(BloomExtractConstants) % 16) == 0, "Constant Buffer size alignment");
@@ -29,12 +30,18 @@ void BloomExtractEffect::SetTextures(D3D12_GPU_DESCRIPTOR_HANDLE first_texture) 
     m_firstTexture = first_texture;
 }
 
+void BloomExtractEffect::SetConstants(f32 threshold) {
+    m_threshold = threshold;
+    m_dirtyFlags |= DirtyConstantBuffer;
+}
+
 void BloomExtractEffect::Apply(ID3D12GraphicsCommandList* command_list) {
     //NOTE(sean): update dirty data
     if (m_dirtyFlags & DirtyConstantBuffer) {
         auto constant_buffer = GraphicsMemory::Get(m_device.Get()).AllocateConstant<BloomExtractConstants>();
 
         BloomExtractConstants data = {
+            m_threshold
         };
 
         memcpy((u8*)constant_buffer.Memory(), &data, sizeof(BloomExtractConstants));
@@ -60,6 +67,8 @@ void BloomExtractEffect::Apply(ID3D12GraphicsCommandList* command_list) {
 
 namespace {
     struct __declspec(align(16)) BloomBlurConstants {
+        f32 intensity;
+        f32 scale;
     };
 
     static_assert((sizeof(BloomBlurConstants) % 16) == 0, "Constant Buffer size alignment");
@@ -79,12 +88,20 @@ void BloomBlurEffect::SetTextures(D3D12_GPU_DESCRIPTOR_HANDLE first_texture) {
     m_firstTexture = first_texture;
 }
 
+void BloomBlurEffect::SetConstants(f32 intensity, f32 scale) {
+    m_intensity = intensity;
+    m_scale = scale;
+    m_dirtyFlags |= DirtyConstantBuffer;
+}
+
 void BloomBlurEffect::Apply(ID3D12GraphicsCommandList* command_list) {
     //NOTE(sean): update dirty data
     if (m_dirtyFlags & DirtyConstantBuffer) {
         auto constant_buffer = GraphicsMemory::Get(m_device.Get()).AllocateConstant<BloomBlurConstants>();
 
         BloomBlurConstants data = {
+            m_intensity,
+            m_scale
         };
 
         memcpy((u8*)constant_buffer.Memory(), &data, sizeof(BloomBlurConstants));
@@ -130,8 +147,9 @@ void BloomCombineEffect::SetTextures(D3D12_GPU_DESCRIPTOR_HANDLE first_texture) 
     m_firstTexture = first_texture;
 }
 
-void BloomCombineEffect::SetScale(f32 scale) {
-    this->scale = scale;
+void BloomCombineEffect::SetConstants(f32 scale) {
+    m_scale = scale;
+    m_dirtyFlags |= DirtyConstantBuffer;
 }
 
 void BloomCombineEffect::Apply(ID3D12GraphicsCommandList* command_list) {
@@ -140,7 +158,7 @@ void BloomCombineEffect::Apply(ID3D12GraphicsCommandList* command_list) {
         auto constant_buffer = GraphicsMemory::Get(m_device.Get()).AllocateConstant<BloomCombineConstants>();
 
         BloomCombineConstants data = {
-            this->scale
+            m_scale
         };
 
         memcpy((u8*)constant_buffer.Memory(), &data, sizeof(BloomCombineConstants));

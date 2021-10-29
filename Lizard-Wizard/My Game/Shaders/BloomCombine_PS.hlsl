@@ -21,7 +21,7 @@ Texture2D<float4> Color1 : register(t1);
 sampler Sampler : register(s0);
 
 cbuffer Constants : register(b0) {
-    float scale;
+    float Scale;
 }
 
 struct PixelOutput {

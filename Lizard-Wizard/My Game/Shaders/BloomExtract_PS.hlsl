@@ -19,6 +19,7 @@ Texture2D<float4> Color : register(t0);
 sampler Sampler : register(s0);
 
 cbuffer Constants : register(b0) {
+    float Threshold;
 }
 
 struct PixelOutput {
@@ -28,8 +29,6 @@ struct PixelOutput {
 float Luminance(float3 color) {
     return dot(color, float3(0.299f, 0.587f, 0.114f));
 }
-
-static const float Threshold = 2.0f;
 
 [RootSignature(RS)]
 PixelOutput main(VertexOutput input) {

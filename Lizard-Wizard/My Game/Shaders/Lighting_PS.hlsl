@@ -52,7 +52,6 @@ static const float AO_TOTAL_SAMPLE_DISTANCE = 0.02f;
 static const float AO_SAMPLE_DISTANCE = AO_TOTAL_SAMPLE_DISTANCE / float(AO_SAMPLE_COUNT * 2 + 1);
 static const float DIVI = float((AO_SAMPLE_COUNT * 2 + 1) * (AO_SAMPLE_COUNT * 2 + 1));
 
-static const float kernel[9] = { -1.0, -1.0, -1.0, -1.0, 8.0, -1.0, -1.0, -1.0, -1.0 };
 static const float2 samples[9] = {
     float2(-0.001,  0.001),
     float2( 0.000,  0.001),
@@ -112,7 +111,6 @@ PixelOutput main(VertexOutput input) {
         output_color += light_color * pixel_color;
     }
 
-    //const float3 AMBIENT = float3(0.02, 0.02, 0.08);
     output.Color = float4(output_color * ao_strength, 1.0f);
 
     return output;
