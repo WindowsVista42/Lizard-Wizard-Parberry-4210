@@ -167,8 +167,10 @@ void PhysicsManager::PhysicsManagerStep() {
         if (e == player) {
         }
         else {
+            /*
             printf("Collision detected at : (%f, %f, %f)\n", pos.x, pos.y, pos.z);
             CurrentAudio->play(SoundIndex::Clang, pos, 0.25, 0.0);
+            */
         }
     }
     CurrentCollisions->Clear();
