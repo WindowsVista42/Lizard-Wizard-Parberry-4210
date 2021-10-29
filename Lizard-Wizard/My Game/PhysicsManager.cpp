@@ -1,21 +1,5 @@
 // Inclusions
 #include "Game.h"
-#include "Component.h"
-#include "ComponentIncludes.h"
-#include "Settings.h"
-#include "CustomBind.h"
-#include <stdio.h>
-#include <vector>
-#include "Helpers.h"
-#include "Math.h"
-#include "Audio.h"
-
-// Bullet3 Inclusions
-#include <btBulletCollisionCommon.h>
-#include <btBulletDynamicsCommon.h>
-#include "BulletCollision/NarrowPhaseCollision/btRaycastCallback.h"
-#include "BulletCollision/Gimpact/btGImpactShape.h"
-#include "LinearMath/btAlignedObjectArray.h"
 
 /* Note(Ethan) : This is the physics manager, it helps us clean up the game.cpp and further simplify how we use Bullet3.
 *
@@ -156,11 +140,12 @@ void CGame::CustomPhysicsStep() {
         Entity e = m_CurrentCollisions.Entities()[index];
         Vec3 pos = (*m_RigidBodies.Get(e))->getWorldTransform().getOrigin();
 
-
+        // Collision event example
+        // (Warning) Ethan : This can get fairly expensive if we stack if-statements and switch-statements so try to tie everything together in the ECS to remain efficient.
         if (m_ProjectilesActive.Contains(e)) {
-            printf("Projectile collision detected at : (%f, %f, %f)\n", pos.x, pos.y, pos.z);
-            std::cout << "Collision ID :" << e.id << std::endl;
-            m_pAudio->play(SoundIndex::Clang, pos, 0.25, 0.0);
+            //printf("Projectile collision detected at : (%f, %f, %f)\n", pos.x, pos.y, pos.z);
+            //std::cout << "Collision ID :" << e.id << std::endl;
+            //m_pAudio->play(SoundIndex::Clang, pos, 0.25, 0.0);
         }
         //m_pAudio->play(SoundIndex::Clang, pos, 0.25, 0.0);
     }

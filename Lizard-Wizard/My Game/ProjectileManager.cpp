@@ -1,20 +1,5 @@
 // Inclusions
 #include "Game.h"
-#include "Component.h"
-#include "Settings.h"
-#include "CustomBind.h"
-#include <time.h>
-#include <stdio.h>
-#include <vector>
-#include "Helpers.h"
-#include "Math.h"
-
-// Bullet3 Inclusions
-#include <btBulletCollisionCommon.h>
-#include <btBulletDynamicsCommon.h>
-#include "BulletCollision/NarrowPhaseCollision/btRaycastCallback.h"
-#include "BulletCollision/Gimpact/btGImpactShape.h"
-#include "LinearMath/btAlignedObjectArray.h"
 
 /* Note(Ethan) : This is a prototype test for the projectile system, I will reduce comments once we get to making the release version.
 * 

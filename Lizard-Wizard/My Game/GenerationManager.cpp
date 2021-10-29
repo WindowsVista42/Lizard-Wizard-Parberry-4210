@@ -1,5 +1,4 @@
 #include "Game.h"
-#include "Defines.h"
 
 void CGame::CreateNormalRoom(Vec3 roomCenter) {
     // Ground then roof.
