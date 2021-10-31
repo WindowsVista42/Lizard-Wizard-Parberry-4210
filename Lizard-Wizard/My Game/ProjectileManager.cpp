@@ -62,7 +62,7 @@ void CGame::GenerateSimProjectile(
 
         // Re-add regidbody to world after edit.
         m_pDynamicsWorld->addRigidBody(projectile, 2, 0b00001);
-        f32 lum = 100.0f;
+        f32 lum = 50.0f;
         m_pRenderer->lights.Get(e)->color = Vec4(projectileColor.x * lum, projectileColor.y * lum, projectileColor.z * lum, 0);
         projectile->activate();
     }
@@ -137,7 +137,7 @@ void CGame::GenerateRayProjectile(
 void CGame::InitializeProjectiles() {
     for every(index, PROJECTILE_CACHE_SIZE) {
         // Create Rigidbody and get ECS identifier
-        btRigidBody* newBody = CreateSphereObject(50.f, Vec3(99999.f, 99999.f, 99999.f), 0.0f, 0.0f, 3, 0b00001);
+        btRigidBody* newBody = CreateSphereObject(50.f, Vec3(FLT_MAX, FLT_MAX, FLT_MAX), 0.0f, 0.0f, 3, 0b00001);
         Entity e = m_RigidBodyMap.at(newBody);
         m_pDynamicsWorld->removeRigidBody(newBody);
 
@@ -148,7 +148,7 @@ void CGame::InitializeProjectiles() {
         */
 
         // Prepare light
-        Light newLight = { Vec4(99999.f,99999.f,99999.f,0), Vec4{150.0f, 30.0f, 10.0f, 0} };
+        Light newLight = { Vec4(FLT_MAX, FLT_MAX, FLT_MAX ,0), Vec4{150.0f, 30.0f, 10.0f, 0} };
 
         // Insert into tables / groups
         m_pRenderer->lights.AddExisting(e, newLight);
@@ -169,7 +169,7 @@ void CGame::StripProjectile(Entity e) {
     projectile->clearForces();
 
     btTransform trans;
-    trans.setOrigin(Vec3(99999.f, 99999.f, 99999.f));
+    trans.setOrigin(Vec3(FLT_MAX, FLT_MAX, FLT_MAX));
     f32 mass = 0.0f;
     f32 friction = 0.0f;
     btVector3 inertia;

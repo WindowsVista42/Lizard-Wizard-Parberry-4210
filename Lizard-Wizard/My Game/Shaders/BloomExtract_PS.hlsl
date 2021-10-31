@@ -34,7 +34,7 @@ float Luminance(float3 color) {
 PixelOutput main(VertexOutput input) {
     PixelOutput output;
 
-    float3 color = Color.Sample(Sampler, input.Texture);
+    float3 color = Color.Sample(Sampler, input.Texture).rgb;
     float lum = Luminance(color);
 
     float F = clamp(lum - Threshold, 0.0f, Threshold) / Threshold;

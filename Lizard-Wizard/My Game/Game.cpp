@@ -28,7 +28,7 @@ static ModelInstance model_instance;
 
 static bool flycam_enabled = false;
 static bool debug_rendering_enabled = true;
-static u32 render_mode = 3;
+static u32 render_mode = 1;
 
 CGame::~CGame() {}
 
@@ -156,11 +156,10 @@ void CGame::InputHandler() {
         m_bDrawFrameRate = !m_bDrawFrameRate;
 
     if (m_pKeyboard->TriggerDown(VK_SPACE) && !flycam_enabled) {
-        btCollisionObject* pObj = m_pDynamicsWorld->getCollisionObjectArray()[0];
-        pObj->activate(true);
-        btRigidBody* pBody = btRigidBody::upcast(pObj);
-        btVector3 jumpVector = {0, 5000, 0};
-        pBody->applyCentralImpulse(jumpVector);
+        btRigidBody* body = *m_RigidBodies.Get(m_Player);
+        btVector3 jumpVector = {0, 3000, 0};
+        body->activate();
+        body->applyCentralImpulse(jumpVector);
     }
 
     if (m_pKeyboard->TriggerUp(VK_SPACE)) //play sound
@@ -239,7 +238,7 @@ void CGame::InputHandler() {
 
                 btVector3 velocity = pBody->getLinearVelocity();
                 btScalar magnitude = velocity.length();
-                btScalar max_speed = 1200.0;
+                btScalar max_speed = 1200.0 * 1.9;
 
                 if (magnitude <= max_speed) {
                     pBody->applyCentralForce(*(btVector3*)&delta_movement);
@@ -319,20 +318,28 @@ void CGame::InputHandler() {
         }
     }
 
-    if (m_pKeyboard->TriggerDown('V')) {
-        static u32 sw = 2;
-        sw += 1;
-        sw %= 2;
-        Vec4 color;
+    {
+        static f32 intensity = 1.0f;
+        bool toggled = false;
 
-        switch (sw) {
-        case 0: color = Colors::LightSkyBlue; break;
-        case 1: color = Colors::LightYellow; break;
+        if (m_pKeyboard->Down('J')) {
+            toggled = true;
+            intensity -= 0.02;
         }
 
-        for every(index, m_TestingLights.Size()) {
-            Entity e = m_TestingLights.Entities()[index];
-            m_pRenderer->lights.Get(e)->color = color * 200.0f;
+        if (m_pKeyboard->Down('K')) {
+            toggled = true;
+            intensity += 0.02;
+        }
+
+        if (toggled) {
+            btClamp<f32>(intensity, 0.0, 1.0);
+            Vec4 color = Colors::LightYellow * intensity;
+
+            for every(index, m_TestingLights.Size()) {
+                Entity e = m_TestingLights.Entities()[index];
+                m_pRenderer->lights.Get(e)->color = color * 200.0f;
+            }
         }
     }
 
@@ -424,7 +431,7 @@ void CGame::RenderFrame() {
     // 0x10
     // 0x11
 
-    if (render_mode & 1) {
+    if (render_mode & 0b01) {
         m_pRenderer->BeginDrawing();
         {
             //NOTE(sean): Model instance rendering test.
@@ -488,7 +495,7 @@ void CGame::RenderFrame() {
         m_pRenderer->EndDrawing();
     }
 
-    if (render_mode & 2) {
+    if (render_mode & 0b10) {
         m_pRenderer->BeginDebugDrawing();
         {
             //NOTE(sean): the reason batching all of this together works, is that we're doing all the vertex calculations on the cpu instead of the gpu

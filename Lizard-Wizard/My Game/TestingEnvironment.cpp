@@ -111,6 +111,7 @@ void CGame::CreateTestingEnvironment() {
 
             Entity e = Entity();
             m_ModelInstances.AddExisting(e, mi);
+            m_pRenderer->lights.AddExisting(e, {*(Vec4*)&model_pos, Vec4(0.2, 0.98, 0.5, 1.0) * 200.0f});
 
             m_TestingModels.AddExisting(e);
         }
