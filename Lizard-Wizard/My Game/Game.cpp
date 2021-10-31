@@ -21,7 +21,7 @@ static f32 yaw = 0.0f;
 static f32 pitch = 0.0f;
 const f32 sensitivity = 0.0333f;
 
-static Vector3 player_pos = { 0.0f, 1500.0f, -2500.0f };
+static Vector3 player_pos = { -10000.0f, 0.0f, -10000.0f };
 const f32 move_speed = 50.0f;
 
 static ModelInstance model_instance;
@@ -93,6 +93,8 @@ void CGame::Initialize() {
     m_leftClick = CustomBind::New(VK_LBUTTON);
     m_rightClick = CustomBind::New(VK_RBUTTON);
 
+    CreateTestingEnvironment();
+
     BeginGame();
 }
 
@@ -107,6 +109,8 @@ void CGame::LoadModels() {
     //m_pRenderer->LoadDebugModel("cube", Colors::Peru, DebugModelIndex::);
     m_pRenderer->LoadModel("cube", ModelIndex::Cube);
     m_pRenderer->LoadModel("suzanne", ModelIndex::Suzanne);
+    m_pRenderer->LoadModel("obelisk_enemy", ModelIndex::ObeliskEnemy);
+    m_pRenderer->LoadModel("sentry", ModelIndex::Sentry);
 }
 
 void CGame::LoadImages(){}
@@ -315,6 +319,23 @@ void CGame::InputHandler() {
         }
     }
 
+    if (m_pKeyboard->TriggerDown('V')) {
+        static u32 sw = 2;
+        sw += 1;
+        sw %= 2;
+        Vec4 color;
+
+        switch (sw) {
+        case 0: color = Colors::LightSkyBlue; break;
+        case 1: color = Colors::LightYellow; break;
+        }
+
+        for every(index, m_TestingLights.Size()) {
+            Entity e = m_TestingLights.Entities()[index];
+            m_pRenderer->lights.Get(e)->color = color * 200.0f;
+        }
+    }
+
 }
 
 /// Draw the current frame rate to a hard-coded position in the window.
@@ -455,6 +476,10 @@ void CGame::RenderFrame() {
                 } break;
                 }
             }
+        }
+
+        for every(index, m_ModelInstances.Size()) {
+            m_pRenderer->DrawModelInstance(&m_ModelInstances.Components()[index]);
         }
 
         m_pRenderer->EndDrawing();

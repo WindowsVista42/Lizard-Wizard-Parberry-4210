@@ -183,6 +183,7 @@
     <ClCompile Include="RenderTexture.cpp" />
     <ClCompile Include="StagedBuffer.cpp" />
     <ClCompile Include="Effects\TonemapEffect.cpp" />
+    <ClCompile Include="TestingEnvironment.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Effects\BloomEffect.h" />

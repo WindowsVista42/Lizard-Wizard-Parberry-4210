@@ -87,6 +87,9 @@ private:
     Group m_NPCsCache;
     Group m_NPCsActive;
 
+    // Parenting system
+    Table<Group> m_Parents;
+
     // Rooms / Generation Tables
     std::vector<Room> currentRooms;
     Room currentMap[X_ROOMS][Y_ROOMS];
@@ -100,6 +103,13 @@ private:
     // Projectile Vector
     //std::vector<Projectile> m_currentProjectiles;
     //std::vector<RayProjectile> m_currentRayProjectiles;
+
+    Table<Transform> m_Transforms;
+
+    Group m_TestingLights;
+    Group m_TestingWallsFloors;
+    Group m_TestingModels;
+
 
     i32 randomSeed;
 
@@ -237,6 +247,9 @@ private:
     void InitializeNPCs();
     void StripNPC(Entity);
 
+
+    // TESTING ROOM //
+    void CreateTestingEnvironment();
 
 public:
     Renderer* m_pRenderer; ///< Pointer to renderer.

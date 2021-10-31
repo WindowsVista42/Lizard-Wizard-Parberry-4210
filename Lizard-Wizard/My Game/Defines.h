@@ -149,7 +149,7 @@ namespace SoundIndex { enum e : u32 {
 };}
 
 namespace ModelIndex { enum e : u32 {
-    Cube, Suzanne,
+    Cube, Suzanne, ObeliskEnemy, Sentry,
     Count // keep this last
 };}
 

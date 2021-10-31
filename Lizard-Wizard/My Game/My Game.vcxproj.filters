@@ -19,6 +19,7 @@
     <ClCompile Include="Effects\DeferredEffect.cpp" />
     <ClCompile Include="Effects\TonemapEffect.cpp" />
     <ClCompile Include="Effects\LightingEffect.cpp" />
+    <ClCompile Include="TestingEnvironment.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CustomBind.h" />

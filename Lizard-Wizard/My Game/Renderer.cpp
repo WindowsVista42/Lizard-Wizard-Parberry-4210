@@ -403,7 +403,7 @@ static inline void render_post_process(
 /// End Rendering a frame.
 /// Put all DrawXYZ() or other functions in between this and BeginFrame()
 void Renderer::EndDrawing() {
-    static Entity e = lights.Add({ Vec4(500.0f, 200.0f, 0.0f, 0.0f), Colors::CornflowerBlue * 800.0f });
+    //static Entity e = lights.Add({ Vec4(500.0f, 200.0f, 0.0f, 0.0f), Colors::CornflowerBlue * 800.0f });
 
     assert(lights.Size() < 254);
     m_lighting->SetLightCount(lights.Size());
@@ -423,7 +423,7 @@ void Renderer::EndDrawing() {
     auto scissorRect = m_pDeviceResources->GetScissorRect();
 
     m_bloomExtract->SetConstants(1.2);
-    m_bloomBlur->SetConstants(0.04, 1.0);
+    m_bloomBlur->SetConstants(0.03, 1.0);
     m_bloomCombine->SetConstants(1.0);
 
     render_post_process<
@@ -520,6 +520,7 @@ void Renderer::EndDrawing() {
         Descriptors::BloomCombine0, Descriptors::BloomCombine0
     >(m_pCommandList, m_bloomCombine.get(), bundle, 0);
 
+    m_bloomCombine->SetConstants(0.4);
     render_post_process<
         BloomCombineEffect,
         Descriptors::LightingColor, Descriptors::BloomCombine0,

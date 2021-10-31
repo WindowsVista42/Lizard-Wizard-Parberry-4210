@@ -34,10 +34,22 @@ struct PixelOutput {
 PixelOutput main(VertexOutput input) {
     PixelOutput output;
 
-    float3 color0 = Color0.Sample(Sampler, input.Texture);
-    float3 color1 = Color1.Sample(Sampler, input.Texture);
+    float3 color0 = Color0.Sample(Sampler, input.Texture).rgb;
+    float3 color1 = Color1.Sample(Sampler, input.Texture).rgb;
 
-    output.Color = float4(color0 + color1, 1.0f);
+    if (color1.r > 6.0) {
+        color1.r = 6.0;
+    }
+
+    if (color1.g > 6.0) {
+        color1.g = 6.0;
+    }
+
+    if (color1.b > 6.0) {
+        color1.b = 6.0;
+    }
+
+    output.Color = float4(color0 + (color1 * Scale), 1.0f);
 
     return output;
 }
