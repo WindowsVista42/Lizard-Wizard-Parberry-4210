@@ -36,10 +36,12 @@ btRigidBody* CGame::NewRigidBody(
     // Configure and add to Bullet3
     btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
     Vec3 localInertia(Vec3(0, 0, 0));
+    f32 restitution = 0.1f;
     btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, shape, localInertia);
     rbInfo.m_friction = friction;
     btRigidBody* body = new btRigidBody(rbInfo);
     body->setAngularFactor(Vec3(0., 0., 0.));
+    body->setRestitution(restitution);
     m_pDynamicsWorld->addRigidBody(body, group, mask);
 
     // Add to ECS
