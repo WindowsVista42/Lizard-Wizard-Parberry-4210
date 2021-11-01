@@ -22,7 +22,7 @@ static f32 pitch = 0.0f;
 const f32 sensitivity = 0.0333f;
 
 static Vector3 player_pos = { -10000.0f, 0.0f, -10000.0f };
-const f32 move_speed = 100.0f;
+const f32 move_speed = 150.0f;
 
 static ModelInstance model_instance;
 
@@ -252,9 +252,8 @@ void CGame::InputHandler() {
             delta_movement.Normalize();
 
             if (!flycam_enabled) {
-                btCollisionObject* pObj = m_pDynamicsWorld->getCollisionObjectArray()[0];
-                pObj->activate(true);
-                btRigidBody* pBody = btRigidBody::upcast(pObj);
+                btRigidBody* pBody = *m_RigidBodies.Get(m_Player);
+                pBody->activate();
                 delta_movement *= 17500.0;
 
 
@@ -297,7 +296,7 @@ void CGame::InputHandler() {
 
         if (m_leftClick.pressed) {
             GenerateSimProjectile(
-                m_pDynamicsWorld->getCollisionObjectArray()[0], 
+                *m_RigidBodies.Get(m_Player),
                 m_pRenderer->m_pCamera->GetPos(),
                 m_pRenderer->m_pCamera->GetViewVector(), 
                 3, 
@@ -309,7 +308,7 @@ void CGame::InputHandler() {
 
         if (m_rightClick.pressed) {
             GenerateRayProjectile(
-                m_pDynamicsWorld->getCollisionObjectArray()[0], 
+                *m_RigidBodies.Get(m_Player),
                 m_pRenderer->m_pCamera->GetPos(), 
                 m_pRenderer->m_pCamera->GetViewVector(), 
                 3, 
