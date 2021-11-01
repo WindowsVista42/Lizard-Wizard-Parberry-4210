@@ -243,7 +243,7 @@ private:
     void Attack(Entity);
     void Search(Entity);
     void DirectNPC(Entity, btRigidBody*);
-    void PlaceNPC(Entity, Vec3);
+    void PlaceNPC(Entity, Vec3, Vec3);
     void InitializeNPCs();
     void StripNPC(Entity);
 
