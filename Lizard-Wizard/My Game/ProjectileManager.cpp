@@ -128,11 +128,20 @@ void CGame::GenerateRayProjectile(
     newRay.Pos2 = Vec3(startPos.x, startPos.y, startPos.z) + lookDirection * 5000.;
     newRay.Color = rayColor;
 
-    for (i32 i = 0; i < rayCount; i++) {
-        Vec3 newDirection = JitterVec3(lookDirection, -rayAccuracy, rayAccuracy);
-        CalculateRay(caster, newRay, startPos, newDirection, rayBounces, Colors::Peru, ignoreCaster);
+    if (!recursed) {
+        for (i32 i = 0; i < rayCount; i++) {
+            Vec3 newDirection = JitterVec3(lookDirection, -0.2, 0.2);
+            CalculateRay(caster, newRay, startPos, newDirection, rayBounces, Colors::Peru, ignoreCaster);
 
-        m_currentRayProjectiles.push_back(newRay);
+            m_currentRayProjectiles.push_back(newRay);
+        }
+    }
+    else {
+        for (i32 i = 0; i < rayCount; i++) {
+            CalculateRay(caster, newRay, startPos, lookDirection, rayBounces, Colors::Peru, ignoreCaster);
+
+            m_currentRayProjectiles.push_back(newRay);
+        }
     }
 }
 

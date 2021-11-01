@@ -29,17 +29,51 @@ Vec3 JitterVec3(Vec3 input, f32 negativeAccuracy, f32 range) {
     );
 }
 
+/*
 btQuaternion LookAt(Vec3 origin, Vec3 lookAt) {
     Vec3 forwardVector = XMVector3Normalize(origin - lookAt);
     Vec3 rotAxis = XMVector3Cross(Vec3(1.0f, 0, 0), forwardVector);
-    float dot = forwardVector.Dot(Vec3(1.0f, 0, 0));
+    rotAxis = Vec3(0.0f, 0.0f, 0.0f);
+    f32 angle = acos(forwardVector.Dot(Vec3(1.0f, 0, 0)));
 
     btQuaternion q;
-    q.setX(rotAxis.x);
+    q.setRotation(rotAxis, angle);
+
+    q.setX(0.0f);
     q.setY(rotAxis.y);
-    q.setZ(rotAxis.z);
+    q.setZ(0.0f);
     q.setW(dot + 1);
 
     return q.normalize();
 }
+*/
 
+btQuaternion CreateFromAxisAngle(Vec3 axis, f32 angle) {
+    f32 halfAngle = angle * .5f;
+    f32 s = (f32) sin(halfAngle);
+    btQuaternion q;
+    q.setX(axis.x * s);
+    q.setY(axis.y * s);
+    q.setZ(axis.z * s);
+    q.setW((f32)cos(halfAngle));
+    return q;
+}
+
+btQuaternion LookAt(Vec3 origin, Vec3 lookAt) {
+    Vec3 forwardVector = XMVector3Normalize(lookAt - origin);
+    Vec3 forward = Vec3(1.0f, 0, 0);
+    f32 dot = forward.Dot(forwardVector);
+
+    if (abs(dot - (-1.0f)) < 0.000001f) {
+        return btQuaternion(1.0f, 0, 0, 3.1415926535897932f);
+    }
+    if (abs(dot - (1.0f)) < 0.000001f) {
+        return btQuaternion(0,0,0,1.0f);
+    }
+
+    f32 angle = (f32)acos(dot);
+    Vec3 rotAxis = forward.Cross(forwardVector);
+    rotAxis = XMVector3Normalize(rotAxis);
+
+    return CreateFromAxisAngle(rotAxis, angle);;
+}

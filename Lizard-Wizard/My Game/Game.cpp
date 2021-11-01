@@ -51,16 +51,6 @@ void CGame::Initialize() {
     InitializeProjectiles();
     InitializeNPCs();
 
-    // Test NPC(s)
-    {
-        Entity turret1 = m_NPCs.Entities()[0];
-        PlaceNPC(turret1, Vec3(6000.0f, 500.0f,0));
-        Entity turret2 = m_NPCs.Entities()[1];
-        PlaceNPC(turret2, Vec3(6000.0f, 500.0f, 1500.0f));
-        Entity turret3 = m_NPCs.Entities()[2];
-        PlaceNPC(turret3, Vec3(6000.0f, 500.0f, -1500.0f));
-    }
-
     // Room Collider
     {
         /*
@@ -188,6 +178,22 @@ void CGame::InputHandler() {
     if (m_pKeyboard->TriggerDown('G')) {
         render_mode %= 3;
         render_mode += 1;
+    }
+
+    // Spawn NPC
+    if (m_pKeyboard->TriggerDown('N')) {
+        if (m_NPCsCache.Size() > 0) {
+            Entity turret = m_NPCs.Entities()[m_NPCsActive.Size()];
+            PlaceNPC(turret, m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector());
+        }
+    }
+
+    // Destroy last NPC
+    if (m_pKeyboard->TriggerDown('Z')) {
+        if (m_NPCsActive.Size() > 0) {
+            Entity turret = m_NPCs.Entities()[m_NPCsActive.Size()];
+            StripNPC(turret);
+        }
     }
 
     // Print screenshot button thing that will do stuff
