@@ -22,7 +22,7 @@ static f32 pitch = 0.0f;
 const f32 sensitivity = 0.0333f;
 
 static Vector3 player_pos = { -10000.0f, 0.0f, -10000.0f };
-const f32 move_speed = 50.0f;
+const f32 move_speed = 100.0f;
 
 static ModelInstance model_instance;
 
@@ -226,6 +226,22 @@ void CGame::InputHandler() {
             }
         }
 
+        if (m_pKeyboard->TriggerDown('H')) {
+            btRigidBody* player_body = *m_RigidBodies.Get(m_Player);
+            m_pDynamicsWorld->removeRigidBody(player_body);
+
+            //player_body->clearForces();
+
+	        btTransform trans;
+            trans.setOrigin(Vec3(player_pos));
+
+            player_body->getMotionState()->setWorldTransform(trans);
+            player_body->setWorldTransform(trans);
+            player_body->activate();
+
+            m_pDynamicsWorld->addRigidBody(player_body);
+        }
+
         if (delta_movement != Vector3::Zero) {
             delta_movement.Normalize();
 
@@ -404,17 +420,10 @@ void CGame::RenderFrame() {
     }
 
     if (!flycam_enabled) {
-        btCollisionObject* obj = m_pDynamicsWorld->getCollisionObjectArray()[0];
-        btCollisionShape* shape = obj->getCollisionShape();
-        btRigidBody* body = btRigidBody::upcast(obj);
-        btTransform trans;
+        btRigidBody* body = *m_RigidBodies.Get(m_Player);
 
-        if (body && body->getMotionState()) {
-            body->getMotionState()->getWorldTransform(trans);
-        }
-        else {
-            trans = obj->getWorldTransform();
-        }
+        btTransform trans;
+        body->getMotionState()->getWorldTransform(trans);
 
         m_pRenderer->m_pCamera->MoveTo(*(Vector3*)&trans.getOrigin());
     } else {
