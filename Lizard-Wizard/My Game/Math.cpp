@@ -29,51 +29,25 @@ Vec3 JitterVec3(Vec3 input, f32 negativeAccuracy, f32 range) {
     );
 }
 
-/*
-btQuaternion LookAt(Vec3 origin, Vec3 lookAt) {
-    Vec3 forwardVector = XMVector3Normalize(origin - lookAt);
-    Vec3 rotAxis = XMVector3Cross(Vec3(1.0f, 0, 0), forwardVector);
-    rotAxis = Vec3(0.0f, 0.0f, 0.0f);
-    f32 angle = acos(forwardVector.Dot(Vec3(1.0f, 0, 0)));
+btQuaternion CalculateVelocity(Vec3 origin, Vec3 target, f32 time) {
+    // Distance Calculation
+    Vec3 distance = target - origin;
+    Vec3 distanceXZ = distance;
 
-    btQuaternion q;
-    q.setRotation(rotAxis, angle);
+    // Velocity Calculation
+    f32 distanceY = distance.y;
+    f32 magnitudeXZ = distanceXZ.x * distanceXZ.x + distanceXZ.y * distanceXZ.y + distanceXZ.z * distanceXZ.z;
+    f32 velocityXZ = magnitudeXZ / time;
+    f32 velocityY = distanceY / time + 0.5f * abs(-5000.0f) * time;
 
-    q.setX(0.0f);
-    q.setY(rotAxis.y);
-    q.setZ(0.0f);
-    q.setW(dot + 1);
+    // Normalize Vector
+    Vec3 resultVector = XMVector3Normalize(distanceXZ);
+    resultVector *= velocityXZ;
+    resultVector.y = velocityY;
 
-    return q.normalize();
-}
-*/
+    // Quaternion
+    btQuaternion newRotation;
+    newRotation.setEulerZYX(resultVector.x, resultVector.y, resultVector.z);
 
-btQuaternion CreateFromAxisAngle(Vec3 axis, f32 angle) {
-    f32 halfAngle = angle * .5f;
-    f32 s = (f32) sin(halfAngle);
-    btQuaternion q;
-    q.setX(axis.x * s);
-    q.setY(axis.y * s);
-    q.setZ(axis.z * s);
-    q.setW((f32)cos(halfAngle));
-    return q;
-}
-
-btQuaternion LookAt(Vec3 origin, Vec3 lookAt) {
-    Vec3 forwardVector = XMVector3Normalize(lookAt - origin);
-    Vec3 forward = Vec3(1.0f, 0, 0);
-    f32 dot = forward.Dot(forwardVector);
-
-    if (abs(dot - (-1.0f)) < 0.000001f) {
-        return btQuaternion(1.0f, 0, 0, 3.1415926535897932f);
-    }
-    if (abs(dot - (1.0f)) < 0.000001f) {
-        return btQuaternion(0,0,0,1.0f);
-    }
-
-    f32 angle = (f32)acos(dot);
-    Vec3 rotAxis = forward.Cross(forwardVector);
-    rotAxis = XMVector3Normalize(rotAxis);
-
-    return CreateFromAxisAngle(rotAxis, angle);;
+    return newRotation;
 }

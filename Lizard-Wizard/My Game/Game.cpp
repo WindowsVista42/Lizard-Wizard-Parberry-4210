@@ -243,9 +243,9 @@ void CGame::InputHandler() {
 
             player_body->getMotionState()->setWorldTransform(trans);
             player_body->setWorldTransform(trans);
-            player_body->activate();
 
             m_pDynamicsWorld->addRigidBody(player_body);
+            player_body->activate();
         }
 
         if (delta_movement != Vector3::Zero) {

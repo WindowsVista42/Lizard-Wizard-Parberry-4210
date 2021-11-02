@@ -39,8 +39,8 @@ void CGame::DirectNPC(Entity e, btRigidBody* player) {
     btRigidBody* body = *m_RigidBodies.Get(e);
     Vec3 origin = body->getWorldTransform().getOrigin();
     Vec3 lookAt = player->getWorldTransform().getOrigin() + player->getLinearVelocity() / 4;
-    btQuaternion newAngles = LookAt(origin, lookAt);
     btTransform newTransform;
+    newTransform.setBasis(*(btMatrix3x3*)& XMMatrixLookAtLH(origin, lookAt, Vec3(0,1.0f,0)));
     f32 waitTimer;
     switch (m_NPCs.Get(e)->Behavior) {
         case NPCBehavior::MELEE :
@@ -51,7 +51,6 @@ void CGame::DirectNPC(Entity e, btRigidBody* player) {
             break;
         case NPCBehavior::TURRET :
             newTransform.setOrigin(body->getWorldTransform().getOrigin());
-            newTransform.setRotation(newAngles);
             body->getMotionState()->setWorldTransform(newTransform);
             body->setWorldTransform(newTransform);
             waitTimer = *m_Timers.Get(e);
