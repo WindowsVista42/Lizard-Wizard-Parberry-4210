@@ -113,7 +113,12 @@ void CGame::LoadModels() {
     m_pRenderer->LoadModel("sentry", ModelIndex::Sentry);
 }
 
-void CGame::LoadImages(){}
+void CGame::LoadImages(){
+    m_pRenderer->BeginResourceUpload();
+    m_pRenderer->LoadTextureI("test", TextureIndex::Other);
+
+    m_pRenderer->EndResourceUpload();
+}
 
 /// Initialize the audio player and load game sounds.
 
@@ -147,13 +152,16 @@ void CGame::BeginGame(){
 /// Poll the keyboard state and respond to the key presses that happened since
 /// the last frame
 void CGame::InputHandler() {
-    m_pKeyboard->GetState(); //get current keyboard state 
+    m_pKeyboard->GetState();
 
-    if (m_pKeyboard->TriggerDown(VK_F1)) //help
+    if (m_pKeyboard->TriggerDown(VK_F1))
         ShellExecute(0, 0, "https://larc.unt.edu/code/blank/", 0, 0, SW_SHOW);
 
-    if (m_pKeyboard->TriggerDown(VK_F2)) //toggle frame rate 
+    if (m_pKeyboard->TriggerDown(VK_F2))
         m_bDrawFrameRate = !m_bDrawFrameRate;
+
+    if (m_pKeyboard->TriggerDown(VK_F3))
+        m_bDrawHelpMessage = !m_bDrawHelpMessage;
 
     if (m_pKeyboard->TriggerDown(VK_SPACE) && !flycam_enabled) {
         btRigidBody* body = *m_RigidBodies.Get(m_Player);
@@ -252,6 +260,15 @@ void CGame::InputHandler() {
     }
 
     //TODO(sean): Ignore input if user has just refocused on the window
+    static bool mouse_toggle = true;
+    static bool just_mouse_toggle = false;
+    if (m_pKeyboard->TriggerDown(VK_ESCAPE)) {
+        mouse_toggle = !mouse_toggle;
+        just_mouse_toggle = true;
+    } else {
+        just_mouse_toggle = false;
+    }
+
     if(m_pRenderer->GetHwnd() == GetFocus()) { // check if focused window is us
         // I see you looking at 
         //    _____this
@@ -265,9 +282,24 @@ void CGame::InputHandler() {
         POINT center = { (rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2 };
         const f32 mouse_sensitivity = 0.00333;
 
+        // dont do anything if mouse is not hidden
         POINT cursor_pos;
-        GetCursorPos(&cursor_pos);
-        SetCursorPos(center.x, center.y);
+        if (mouse_toggle) {
+            GetCursorPos(&cursor_pos);
+            SetCursorPos(center.x, center.y);
+            if (just_mouse_toggle) {
+                ShowCursor(0); // NOTE(sean): win32 hide the cursor
+                cursor_pos.x = center.x;
+                cursor_pos.y = center.y;
+            }
+        } else {
+            cursor_pos.x = center.x;
+            cursor_pos.y = center.y;
+
+            if (just_mouse_toggle) {
+                ShowCursor(1); // NOTE(sean): win32 hide the cursor
+            }
+        }
 
         // Mouse Click Testing
         m_leftClick.UpdateState();
@@ -282,7 +314,8 @@ void CGame::InputHandler() {
                 8000.0, 
                 0.5, 
                 Colors::PaleVioletRed,
-                true);
+                true
+            );
         }
 
         if (m_rightClick.pressed) {
@@ -295,7 +328,8 @@ void CGame::InputHandler() {
                 0.05, 
                 Colors::IndianRed, 
                 false, 
-                true);
+                true
+            );
         }
 
         Vector2 delta = { (f32)(cursor_pos.x - center.x), (f32)(cursor_pos.y - center.y) };
@@ -439,7 +473,7 @@ void CGame::RenderFrame() {
             {
                 ModelInstance instance = {};
                 instance.model = ModelIndex::Suzanne;
-                instance.texture = 0;
+                instance.texture = 1;
                 f32 xoff = 400.0f * cosf(m_pTimer->GetTime());
                 f32 zoff = 400.0f * sinf(m_pTimer->GetTime());
                 instance.world = MoveScaleMatrix(Vector3(xoff, 50.0f, zoff), Vector3(100.0f, 100.0f, 100.0f));
@@ -468,7 +502,7 @@ void CGame::RenderFrame() {
                         instance.model = (u32)ModelIndex::Cube;
                         //instance.world = MoveScaleMatrix(trans.getOrigin(), castratedObject->getHalfExtentsWithMargin());
                         instance.world = MoveRotateScaleMatrix(trans.getOrigin(), *(Quat*)&trans.getRotation(), castratedObject->getHalfExtentsWithMargin());
-                        instance.texture = 0;
+                        instance.texture = 1;
                         m_pRenderer->DrawModelInstance(&instance);
                     } break;
 
@@ -478,7 +512,7 @@ void CGame::RenderFrame() {
                     ModelInstance instance = {};
                     instance.model = ModelIndex::Suzanne;
                     instance.world = MoveScaleMatrix(trans.getOrigin(), Vector3(25.0f));
-                    instance.texture = 0;
+                    instance.texture = 1;
                     m_pRenderer->DrawModelInstance(&instance);
                 } break;
                 }
@@ -554,6 +588,21 @@ void CGame::RenderFrame() {
         m_pRenderer->EndDebugDrawing();
     }
 
+    {
+        m_pRenderer->BeginUIDrawing();
+        if (m_bDrawHelpMessage) {
+            m_pRenderer->DrawScreenText(L"Press 'Escape' to toggle mouse.", Vector2(50.0, 50.0), Colors::White);
+            m_pRenderer->DrawScreenText(L"Toggle this message with 'F3'.", Vector2(50.0, 100.0), Colors::White);
+        }
+
+        if (m_bDrawFrameRate) {
+            char buffer[64];
+            sprintf(buffer, "%.2f", m_frameRate);
+            m_pRenderer->DrawScreenText(buffer, Vector2(m_nWinWidth - 200.0, 50.0), Colors::White);
+        }
+        m_pRenderer->EndUIDrawing();
+    }
+
     m_pRenderer->tint_color = Vec3(1.0f, 1.0f, 1.0f);
     m_pRenderer->blur_amount = 0.0f;
     m_pRenderer->saturation_amount = 1.0f;
@@ -571,7 +620,8 @@ void CGame::ProcessFrame(){
     InputHandler(); //handle keyboard input
     m_pAudio->BeginFrame(); //notify audio player that frame has begun
     m_pTimer->Tick([&]() { //all time-dependent function calls should go here
-    m_pDynamicsWorld->stepSimulation(m_pTimer->GetFrameTime(), 10); // Step Physics
+        m_pDynamicsWorld->stepSimulation(m_pTimer->GetFrameTime(), 10); // Step Physics
+        m_frameRate = m_pTimer->GetFPS();
     });
     RenderFrame(); //render a frame of animation
 }

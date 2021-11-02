@@ -176,6 +176,9 @@ public:
     void BeginDebugDrawing();
     void EndDebugDrawing();
 
+    void BeginUIDrawing();
+    void EndUIDrawing();
+
     void EndFrame();
 
     const usize GetNumFrames() const;
@@ -217,7 +220,7 @@ public:
 
     void DrawModelInstance(ModelInstance* instance);
     void LoadModel(const char* name, u32 model_index);
-    void LoadTexture(const char* name, u32 texture_index);
+    void LoadTextureI(const char* name, u32 texture_index);
 
     //TODO(sean): Implement this
     //NOTE(sean): Frustum Culling -- Don't render things behind the cameras near clip plane

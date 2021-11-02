@@ -114,6 +114,8 @@ private:
     i32 randomSeed;
 
     bool m_bDrawFrameRate = false; ///< Draw the frame rate.
+    f32 m_frameRate;
+    bool m_bDrawHelpMessage = true; ///< Draw the help message.
     
     ////////////////////////
     // Internal Functions //

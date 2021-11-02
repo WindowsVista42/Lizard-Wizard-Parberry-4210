@@ -14,7 +14,7 @@ Renderer::Renderer():
 {
     //NOTE(sean): Windows window stuff
     m_f32BgColor = Colors::Black; // NOTE(sean): set the clear color
-    ShowCursor(0); // NOTE(sean): win32 hide the cursor
+    ShowCursor(0);
 
     //NOTE(sean): camera stuff
     const f32 width = (f32)m_nWinWidth;
@@ -296,8 +296,7 @@ void Renderer::BeginFrame() {
 }
 
 void Renderer::EndFrame() {
-    //NOTE(sean): some internal parberry code, I don't know what it does,
-    // but it just saves a screenshot and should work despite all of my changes.
+    //NOTE(sean): derived from some internal parberry code.
     if (m_screenShot) {
         BetterScreenShot();
         m_screenShot = false;
@@ -334,6 +333,23 @@ void Renderer::BeginDebugDrawing() {
 /// Put all DrawDebugXYZ() or other functions in between this and EndDebugFrame()
 void Renderer::EndDebugDrawing() {
     //NOTE(sean): Stub for now
+}
+
+void Renderer::BeginUIDrawing() {
+    ID3D12DescriptorHeap* pHeap[] = { m_pDescriptorHeap->Heap() };
+    m_pCommandList->SetDescriptorHeaps(_countof(pHeap), pHeap);
+
+    auto viewport = m_pDeviceResources->GetScreenViewport();
+    auto scissorRect = m_pDeviceResources->GetScissorRect();
+
+    m_pCommandList->RSSetViewports(1, &viewport);
+    m_pCommandList->RSSetScissorRects(1, &scissorRect);
+
+    m_pSpriteBatch->Begin(m_pCommandList);
+}
+
+void Renderer::EndUIDrawing() {
+    m_pSpriteBatch->End();
 }
 
 template <const u32 Start, const u32 End>
@@ -1032,6 +1048,17 @@ void Renderer::LoadModel(const char* name, u32 model_index) {
 
     vbo_data.free();
     delete[] indices;
+}
+
+/// Load a texture.
+/// Textures are assumed to be DDS (.dds) files.
+void Renderer::LoadTextureI(const char* name, u32 texture_index) {
+
+    std::string fpath = XMLFindItem(m_pXmlSettings, "textures", "texture", name);
+    ABORT_EQ_FORMAT(fpath, "", "Unable to find \"%s\\%s\\%s\"", "textures", "texture", name);
+
+    LTextureDesc d;
+    LoadTextureFile(fpath.c_str(), d);
 }
 
 void Renderer::DrawModelInstance(ModelInstance* instance) {

@@ -10,11 +10,11 @@ std::string XMLFindItem(tinyxml2::XMLElement* xml, const char* group_tag, const 
     ABORT_EQ_FORMAT(group, 0, "Unable to find group tag \"%s\"", group_tag);
 
     std::string path(group->Attribute("path"));
-    XMLElement* item = group->FirstChildElement("model");
+    XMLElement* item = group->FirstChildElement(item_tag);
 
     // find specific tag
     while (item != 0 && strcmp(name, item->Attribute("name"))) {
-        item = item->NextSiblingElement("model");
+        item = item->NextSiblingElement(item_tag);
     }
 
     // was not found

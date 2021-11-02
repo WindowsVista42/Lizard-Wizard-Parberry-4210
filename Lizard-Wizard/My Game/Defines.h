@@ -51,8 +51,12 @@ if((lhs) != (rhs)) { \
 
 #define ABORT_INNER(lhs, rhs, format, file, line, ...) \
 char message[1024]; \
-sprintf(message, "%s:%i aborted at message: \"%s\"", file, line, format, __VA_ARGS__); \
-ABORT(message); \
+sprintf(message, format, __VA_ARGS__); \
+char f[1024]; \
+sprintf(f, "%s:%i aborted at message : ", file, line); \
+char b[1024]; \
+sprintf(b, "%s\"%s\"", f, message); \
+ABORT(b); \
 
 #ifndef DEFINES_H
 #define DEFINES_H
@@ -154,7 +158,8 @@ namespace ModelIndex { enum e : u32 {
 };}
 
 namespace TextureIndex { enum e : u32 {
-    Sample,
+    Font, // keep this first
+    Other,
     Count // keep this last
 };}
 
