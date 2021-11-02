@@ -53,10 +53,17 @@ struct NPC {
     NPCState::e State;
     NPC() :
         Behavior(NPCBehavior::TURRET),
-        State(NPCState::SLEEPING)
+        State(NPCState::WANDER)
     {}
 };
 
+struct Animation {
+    Vec3 beginPos;
+    Vec3 beginRot;
+    Vec3 endPos;
+    Vec3 endRot;
+    f32 length;
+};
 
 // Game Class
 class CGame:
@@ -73,6 +80,9 @@ private:
 
     // Timing Table
     Table<f32> m_Timers;
+
+    // Animation Table
+    Table<Animation> m_Animations;
 
     // Bullet3 Map / Tables
     std::unordered_map<btRigidBody*, Entity> m_RigidBodyMap;
@@ -248,6 +258,8 @@ private:
     void PlaceNPC(Entity, Vec3, Vec3);
     void InitializeNPCs();
     void StripNPC(Entity);
+
+    // ANIMATION MANAGER //
 
 
     // TESTING ROOM //

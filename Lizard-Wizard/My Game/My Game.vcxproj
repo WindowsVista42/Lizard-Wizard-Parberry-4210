@@ -165,6 +165,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AnimationManager.cpp" />
     <ClCompile Include="Effects\BloomEffect.cpp" />
     <ClCompile Include="Effects\EffectsCommon.cpp" />
     <ClCompile Include="GenerationManager.cpp" />
@@ -186,6 +187,7 @@
     <ClCompile Include="TestingEnvironment.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Interpolation.h" />
     <ClInclude Include="Effects\BloomEffect.h" />
     <ClInclude Include="Effects\EffectsCommon.h" />
     <ClInclude Include="Helpers.h" />

@@ -51,3 +51,16 @@ btQuaternion CalculateVelocity(Vec3 origin, Vec3 target, f32 time) {
 
     return newRotation;
 }
+
+Vec3 RandomPointInRadius(Vec3 origin, f32 radius) {
+
+    // Randomize
+    f32 randomNum = GameRandom::Randf32() * 2 * PI;
+    f32 randomPoint = radius * sqrt(randomNum);
+
+    // To Coordinate
+    f32 xRand = randomPoint * cos(randomNum);
+    f32 zRand = randomPoint * sin(randomNum);
+
+    return Vec3(origin.x + xRand, origin.y, origin.z + zRand);
+}
