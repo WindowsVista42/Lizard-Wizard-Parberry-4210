@@ -22,7 +22,7 @@ static f32 pitch = 0.0f;
 const f32 sensitivity = 0.0333f;
 
 static Vector3 player_pos = { -10000.0f, 0.0f, -10000.0f };
-const f32 move_speed = 50.0f;
+const f32 move_speed = 150.0f;
 
 static ModelInstance model_instance;
 
@@ -50,16 +50,6 @@ void CGame::Initialize() {
     InitializeGeneration();
     InitializeProjectiles();
     InitializeNPCs();
-
-    // Test NPC(s)
-    {
-        Entity turret1 = m_NPCs.Entities()[0];
-        PlaceNPC(turret1, Vec3(6000.0f, 500.0f,0));
-        Entity turret2 = m_NPCs.Entities()[1];
-        PlaceNPC(turret2, Vec3(6000.0f, 500.0f, 1500.0f));
-        Entity turret3 = m_NPCs.Entities()[2];
-        PlaceNPC(turret3, Vec3(6000.0f, 500.0f, -1500.0f));
-    }
 
     // Room Collider
     {
@@ -198,6 +188,22 @@ void CGame::InputHandler() {
         render_mode += 1;
     }
 
+    // Spawn NPC
+    if (m_pKeyboard->TriggerDown('N')) {
+        if (m_NPCsCache.Size() > 0) {
+            Entity turret = m_NPCs.Entities()[m_NPCsActive.Size()];
+            PlaceNPC(turret, m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector());
+        }
+    }
+
+    // Destroy last NPC
+    if (m_pKeyboard->TriggerDown('Z')) {
+        if (m_NPCsActive.Size() > 0) {
+            Entity turret = m_NPCs.Entities()[m_NPCsActive.Size()];
+            StripNPC(turret);
+        }
+    }
+
     // Print screenshot button thing that will do stuff
     if (m_pKeyboard->TriggerDown('P')) {
         m_pRenderer->m_screenShot = true;
@@ -234,13 +240,28 @@ void CGame::InputHandler() {
             }
         }
 
+        if (m_pKeyboard->TriggerDown('H')) {
+            btRigidBody* player_body = *m_RigidBodies.Get(m_Player);
+            m_pDynamicsWorld->removeRigidBody(player_body);
+
+            //player_body->clearForces();
+
+	        btTransform trans;
+            trans.setOrigin(Vec3(player_pos));
+
+            player_body->getMotionState()->setWorldTransform(trans);
+            player_body->setWorldTransform(trans);
+
+            m_pDynamicsWorld->addRigidBody(player_body);
+            player_body->activate();
+        }
+
         if (delta_movement != Vector3::Zero) {
             delta_movement.Normalize();
 
             if (!flycam_enabled) {
-                btCollisionObject* pObj = m_pDynamicsWorld->getCollisionObjectArray()[0];
-                pObj->activate(true);
-                btRigidBody* pBody = btRigidBody::upcast(pObj);
+                btRigidBody* pBody = *m_RigidBodies.Get(m_Player);
+                pBody->activate();
                 delta_movement *= 17500.0;
 
 
@@ -307,7 +328,7 @@ void CGame::InputHandler() {
 
         if (m_leftClick.pressed) {
             GenerateSimProjectile(
-                m_pDynamicsWorld->getCollisionObjectArray()[0], 
+                *m_RigidBodies.Get(m_Player),
                 m_pRenderer->m_pCamera->GetPos(),
                 m_pRenderer->m_pCamera->GetViewVector(), 
                 3, 
@@ -320,7 +341,7 @@ void CGame::InputHandler() {
 
         if (m_rightClick.pressed) {
             GenerateRayProjectile(
-                m_pDynamicsWorld->getCollisionObjectArray()[0], 
+                *m_RigidBodies.Get(m_Player),
                 m_pRenderer->m_pCamera->GetPos(), 
                 m_pRenderer->m_pCamera->GetViewVector(), 
                 3, 
@@ -438,17 +459,10 @@ void CGame::RenderFrame() {
     }
 
     if (!flycam_enabled) {
-        btCollisionObject* obj = m_pDynamicsWorld->getCollisionObjectArray()[0];
-        btCollisionShape* shape = obj->getCollisionShape();
-        btRigidBody* body = btRigidBody::upcast(obj);
-        btTransform trans;
+        btRigidBody* body = *m_RigidBodies.Get(m_Player);
 
-        if (body && body->getMotionState()) {
-            body->getMotionState()->getWorldTransform(trans);
-        }
-        else {
-            trans = obj->getWorldTransform();
-        }
+        btTransform trans;
+        body->getMotionState()->getWorldTransform(trans);
 
         m_pRenderer->m_pCamera->MoveTo(*(Vector3*)&trans.getOrigin());
     } else {

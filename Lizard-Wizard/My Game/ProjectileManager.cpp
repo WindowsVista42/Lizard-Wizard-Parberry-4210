@@ -48,6 +48,7 @@ void CGame::GenerateSimProjectile(
         trans.setOrigin(Vec3(Vec3(startPos + newDirection * 100.0f) + Vec3(0, 100.0f, 0)));
         f32 mass = 0.5f;
         f32 friction = 0.5f;
+        f32 restitution = 2.5f;
         btVector3 inertia;
 
         Vec3 velDirection = JitterVec3(lookDirection, -0.02f, 0.02f);
@@ -59,6 +60,7 @@ void CGame::GenerateSimProjectile(
         projectile->setMassProps(mass, inertia);
         projectile->setLinearVelocity(Vec3(velDirection * projectileVelocity));
         projectile->setFriction(friction);
+        projectile->setRestitution(restitution);
 
         // Re-add regidbody to world after edit.
         m_pDynamicsWorld->addRigidBody(projectile, 2, 0b00001);
@@ -126,11 +128,20 @@ void CGame::GenerateRayProjectile(
     newRay.Pos2 = Vec3(startPos.x, startPos.y, startPos.z) + lookDirection * 5000.;
     newRay.Color = rayColor;
 
-    for (i32 i = 0; i < rayCount; i++) {
-        Vec3 newDirection = JitterVec3(lookDirection, -rayAccuracy, rayAccuracy);
-        CalculateRay(caster, newRay, startPos, newDirection, rayBounces, Colors::Peru, ignoreCaster);
+    if (!recursed) {
+        for (i32 i = 0; i < rayCount; i++) {
+            Vec3 newDirection = JitterVec3(lookDirection, -0.2, 0.2);
+            CalculateRay(caster, newRay, startPos, newDirection, rayBounces, Colors::Peru, ignoreCaster);
 
-        m_currentRayProjectiles.push_back(newRay);
+            m_currentRayProjectiles.push_back(newRay);
+        }
+    }
+    else {
+        for (i32 i = 0; i < rayCount; i++) {
+            CalculateRay(caster, newRay, startPos, lookDirection, rayBounces, Colors::Peru, ignoreCaster);
+
+            m_currentRayProjectiles.push_back(newRay);
+        }
     }
 }
 
@@ -141,11 +152,9 @@ void CGame::InitializeProjectiles() {
         Entity e = m_RigidBodyMap.at(newBody);
         m_pDynamicsWorld->removeRigidBody(newBody);
 
-        // Set RigidBody to continuous (Note) Ethan : This causes an unusual btScalar assertion. Look into it later.
-        /*
-        newBody->setCcdMotionThreshold(1.0f);
-        newBody->setCcdSweptSphereRadius(50.0f);
-        */
+        // Continuous Convex Collision (NOTE) Ethan : This is expensive, so only use it for projectiles.
+        newBody->setCcdMotionThreshold(100.0f);
+        newBody->setCcdSweptSphereRadius(75.0f);
 
         // Prepare light
         Light newLight = { Vec4(FLT_MAX, FLT_MAX, FLT_MAX ,0), Vec4{150.0f, 30.0f, 10.0f, 0} };

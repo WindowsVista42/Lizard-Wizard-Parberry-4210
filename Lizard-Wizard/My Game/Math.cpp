@@ -29,17 +29,25 @@ Vec3 JitterVec3(Vec3 input, f32 negativeAccuracy, f32 range) {
     );
 }
 
-btQuaternion LookAt(Vec3 origin, Vec3 lookAt) {
-    Vec3 forwardVector = XMVector3Normalize(origin - lookAt);
-    Vec3 rotAxis = XMVector3Cross(Vec3(1.0f, 0, 0), forwardVector);
-    float dot = forwardVector.Dot(Vec3(1.0f, 0, 0));
+btQuaternion CalculateVelocity(Vec3 origin, Vec3 target, f32 time) {
+    // Distance Calculation
+    Vec3 distance = target - origin;
+    Vec3 distanceXZ = distance;
 
-    btQuaternion q;
-    q.setX(rotAxis.x);
-    q.setY(rotAxis.y);
-    q.setZ(rotAxis.z);
-    q.setW(dot + 1);
+    // Velocity Calculation
+    f32 distanceY = distance.y;
+    f32 magnitudeXZ = distanceXZ.x * distanceXZ.x + distanceXZ.y * distanceXZ.y + distanceXZ.z * distanceXZ.z;
+    f32 velocityXZ = magnitudeXZ / time;
+    f32 velocityY = distanceY / time + 0.5f * abs(-5000.0f) * time;
 
-    return q.normalize();
+    // Normalize Vector
+    Vec3 resultVector = XMVector3Normalize(distanceXZ);
+    resultVector *= velocityXZ;
+    resultVector.y = velocityY;
+
+    // Quaternion
+    btQuaternion newRotation;
+    newRotation.setEulerZYX(resultVector.x, resultVector.y, resultVector.z);
+
+    return newRotation;
 }
-

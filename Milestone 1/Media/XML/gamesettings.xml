@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<!-- Game settings -->
+
+<settings>
+  <game name="Lizard Wizard" />
+  <renderer width="1024" height="768"/>
+   
+  <font file="Media\Fonts\AverageSans_24.spritefont"/>
+
+  <!-- textures -->
+   
+  <textures path="Media\Textures">
+    <texture name="sample" file="sample.dds"/>
+  </textures>
+
+  <!-- sounds -->
+  
+  <sounds path="Media\Sounds">
+    <sound name="clang" file="clang.wav" instances="8"/>
+    <sound name="grunt" file="umph.wav" instances="8"/>
+  </sounds>
+
+  <!-- models -->
+
+  <models path="Media\Models">
+    <model name="cube" file="cube.vbo"/>
+    <model name="suzanne" file="suzanne.vbo"/>
+    <model name="obelisk_enemy" file="obelisk_enemy.vbo"/>
+    <model name="sentry" file="sentry.vbo"/>
+  </models>
+</settings>

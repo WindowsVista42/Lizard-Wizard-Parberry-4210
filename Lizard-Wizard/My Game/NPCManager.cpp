@@ -39,8 +39,8 @@ void CGame::DirectNPC(Entity e, btRigidBody* player) {
     btRigidBody* body = *m_RigidBodies.Get(e);
     Vec3 origin = body->getWorldTransform().getOrigin();
     Vec3 lookAt = player->getWorldTransform().getOrigin() + player->getLinearVelocity() / 4;
-    btQuaternion newAngles = LookAt(origin, lookAt);
     btTransform newTransform;
+    newTransform.setBasis(*(btMatrix3x3*)& XMMatrixLookAtLH(origin, lookAt, Vec3(0,1.0f,0)));
     f32 waitTimer;
     switch (m_NPCs.Get(e)->Behavior) {
         case NPCBehavior::MELEE :
@@ -51,7 +51,6 @@ void CGame::DirectNPC(Entity e, btRigidBody* player) {
             break;
         case NPCBehavior::TURRET :
             newTransform.setOrigin(body->getWorldTransform().getOrigin());
-            newTransform.setRotation(newAngles);
             body->getMotionState()->setWorldTransform(newTransform);
             body->setWorldTransform(newTransform);
             waitTimer = *m_Timers.Get(e);
@@ -77,12 +76,13 @@ void CGame::DirectNPC(Entity e, btRigidBody* player) {
 }
 
 // Places a cached NPC.
-void CGame::PlaceNPC(Entity e, Vec3 origin) {
+void CGame::PlaceNPC(Entity e, Vec3 startPos, Vec3 lookDirection) {
     m_NPCsCache.RemoveTail();
     m_NPCsActive.AddExisting(e);
     btRigidBody* body = *m_RigidBodies.Get(e);
     btTransform trans;
-    trans.setOrigin(origin);
+    Vec3 newPos = Vec3(startPos.x, startPos.y, startPos.z) + lookDirection * 5000.0f;
+    trans.setOrigin(Vec3(newPos.x, 500.0f, newPos.z));
     f32 mass = 0.0f; // For now were making this static until we get a proper NPC movement system.
     f32 friction = 0.0f;
     btVector3 inertia;
@@ -124,7 +124,7 @@ void CGame::StripNPC(Entity e) {
     body->setFriction(friction);
 
     // Re-add regidbody to world after edit.
-    //CurrentWorld->addRigidBody(projectile);
+    AddRigidBody(body, 2, 0b00001);
 
     // Set light position
     m_pRenderer->lights.Get(e)->position = *(Vec4*)&trans.getOrigin();
