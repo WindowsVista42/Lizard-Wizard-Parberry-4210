@@ -20,6 +20,7 @@
     <ClCompile Include="Effects\TonemapEffect.cpp" />
     <ClCompile Include="Effects\LightingEffect.cpp" />
     <ClCompile Include="TestingEnvironment.cpp" />
+    <ClCompile Include="AnimationManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CustomBind.h" />

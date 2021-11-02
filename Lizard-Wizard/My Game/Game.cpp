@@ -105,7 +105,7 @@ void CGame::LoadModels() {
 
 void CGame::LoadImages(){
     m_pRenderer->BeginResourceUpload();
-    m_pRenderer->LoadTextureI("test", TextureIndex::Other);
+    //m_pRenderer->LoadTextureI("test", TextureIndex::Other);
 
     m_pRenderer->EndResourceUpload();
 }

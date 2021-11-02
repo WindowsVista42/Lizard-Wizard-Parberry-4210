@@ -165,6 +165,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AnimationManager.cpp" />
     <ClCompile Include="Effects\BloomEffect.cpp" />
     <ClCompile Include="Effects\EffectsCommon.cpp" />
     <ClCompile Include="GenerationManager.cpp" />
