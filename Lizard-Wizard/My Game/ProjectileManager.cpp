@@ -29,14 +29,17 @@ void CGame::GenerateSimProjectile(
         if (m_ProjectilesCache.Size() < projectileCount - i) {
             return;
         }
+
         Entity e = m_ProjectilesCache.RemoveTail();
+
         m_ProjectilesActive.AddExisting(e);
         m_Timers.AddExisting(e, 2.0f);
-        btRigidBody* projectile = *m_RigidBodies.Get(e);
-        Vec3 newDirection = JitterVec3(lookDirection, -projectileAccuracy, projectileAccuracy);
 
-        // Removes rigidbody from world to edit.
-        //m_pDynamicsWorld->removeRigidBody(projectile);
+        btRigidBody* projectile = *m_RigidBodies.Get(e);
+
+        Vec3 newDirection = JitterVec3(lookDirection, -projectileAccuracy, projectileAccuracy);
+        Vec3 velDirection = JitterVec3(lookDirection, -0.02f, 0.02f);
+
         projectile->clearForces();
 
         Vec3 offset = Vec3(100.0f, 100.0f, 50.0f);
@@ -45,27 +48,31 @@ void CGame::GenerateSimProjectile(
         // UPDATE(sean): changed 300.0f to 100.0f, if you looked down, projectiles were spawning in the ground which would cause crashes on debug builds.
         // Because the projectiles are spawning so close to the camera it looks really jarring, so we're shifting them up 100 units.
         // In the future, we can probably tell the projectiles to spawn from the players wand.
-        trans.setOrigin(Vec3(Vec3(startPos + newDirection * 100.0f) + Vec3(0, 100.0f, 0)));
+        Vec3 orig = Vec3(Vec3(startPos + newDirection * 100.0f) + Vec3(0, 100.0f, 0));
         f32 mass = 0.5f;
         f32 friction = 0.5f;
         f32 restitution = 2.5f;
+
+        // Set static attributes.
         btVector3 inertia;
-
-        Vec3 velDirection = JitterVec3(lookDirection, -0.02f, 0.02f);
-
-        // Set attributes.
-        projectile->getMotionState()->setWorldTransform(trans);
-        projectile->setWorldTransform(trans);
         projectile->getCollisionShape()->calculateLocalInertia(mass, inertia);
         projectile->setMassProps(mass, inertia);
-        projectile->setLinearVelocity(Vec3(velDirection * projectileVelocity));
         projectile->setFriction(friction);
         projectile->setRestitution(restitution);
 
-        // Re-add regidbody to world after edit.
+        // Re-add regidbody to world after static attribute edit.
         m_pDynamicsWorld->addRigidBody(projectile, 2, 0b00001);
-        f32 lum = 50.0f;
+
+        // Set real-time attributes.
+        projectile->getWorldTransform().setOrigin(orig);
+        projectile->setLinearVelocity(Vec3(velDirection * projectileVelocity));
+        projectile->setAngularVelocity(Vec3(0, 0, 0));
+        projectile->setCcdMotionThreshold(1.0);
+        projectile->setCcdSweptSphereRadius(60.0);
+
+        f32 lum = 100.0f;
         m_pRenderer->lights.Get(e)->color = Vec4(projectileColor.x * lum, projectileColor.y * lum, projectileColor.z * lum, 0);
+
         projectile->activate();
     }
 }
