@@ -38,6 +38,7 @@
     <ClInclude Include="Effects\DeferredEffect.h" />
     <ClInclude Include="Effects\TonemapEffect.h" />
     <ClInclude Include="Effects\LightingEffect.h" />
+    <ClInclude Include="Interpolation.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="My Game.rc" />

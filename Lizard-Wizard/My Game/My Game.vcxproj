@@ -187,6 +187,7 @@
     <ClCompile Include="TestingEnvironment.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Interpolation.h" />
     <ClInclude Include="Effects\BloomEffect.h" />
     <ClInclude Include="Effects\EffectsCommon.h" />
     <ClInclude Include="Helpers.h" />

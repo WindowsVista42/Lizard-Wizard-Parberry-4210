@@ -65,7 +65,6 @@ struct Animation {
     f32 length;
 };
 
-
 // Game Class
 class CGame:
     public LComponent, 
@@ -261,7 +260,6 @@ private:
     void StripNPC(Entity);
 
     // ANIMATION MANAGER //
-    void LerpObject();
 
 
     // TESTING ROOM //
