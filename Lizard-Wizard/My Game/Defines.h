@@ -37,6 +37,9 @@ typedef VertexPositionColor VertexPC;
 #define PROJECTILE_CACHE_SIZE 64
 #define NPC_CACHE_SIZE 24
 
+/// Math
+#define PI 3.14159265359f
+
 /// Formatted abort when (lhs == rhs)
 #define ABORT_EQ_FORMAT(lhs, rhs, format, ...) \
 if((lhs) == (rhs)) { \
@@ -173,7 +176,13 @@ namespace NPCState { enum e : u32 {
 
 namespace RoomTag {
     enum tag : u32 {
-        UNFILLED, SPAWN, NORMAL, BOSS
+        UNFILLED, CORRIDOR, NSHALL, EWHALL, NORMAL
+    };
+}
+
+namespace ExitTag {
+    enum exit : u32 {
+        NORTHEX, SOUTHEX, EASTEX, WESTEX
     };
 }
 

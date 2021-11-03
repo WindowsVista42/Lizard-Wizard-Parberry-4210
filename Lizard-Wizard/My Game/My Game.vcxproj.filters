@@ -20,6 +20,8 @@
     <ClCompile Include="Effects\TonemapEffect.cpp" />
     <ClCompile Include="Effects\LightingEffect.cpp" />
     <ClCompile Include="TestingEnvironment.cpp" />
+    <ClCompile Include="AnimationManager.cpp" />
+    <ClCompile Include="Interpolation.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CustomBind.h" />
@@ -37,6 +39,7 @@
     <ClInclude Include="Effects\DeferredEffect.h" />
     <ClInclude Include="Effects\TonemapEffect.h" />
     <ClInclude Include="Effects\LightingEffect.h" />
+    <ClInclude Include="Interpolation.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="My Game.rc" />

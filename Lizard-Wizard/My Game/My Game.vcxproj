@@ -165,12 +165,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AnimationManager.cpp" />
     <ClCompile Include="Effects\BloomEffect.cpp" />
     <ClCompile Include="Effects\EffectsCommon.cpp" />
     <ClCompile Include="GenerationManager.cpp" />
     <ClCompile Include="Helpers.cpp" />
     <ClCompile Include="CustomBind.cpp" />
     <ClCompile Include="Effects\DeferredEffect.cpp" />
+    <ClCompile Include="Interpolation.cpp" />
     <ClCompile Include="Math.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="Effects\LightingEffect.cpp" />
@@ -186,6 +188,7 @@
     <ClCompile Include="TestingEnvironment.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Interpolation.h" />
     <ClInclude Include="Effects\BloomEffect.h" />
     <ClInclude Include="Effects\EffectsCommon.h" />
     <ClInclude Include="Helpers.h" />

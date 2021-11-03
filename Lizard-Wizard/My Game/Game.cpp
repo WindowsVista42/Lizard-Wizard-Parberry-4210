@@ -31,7 +31,6 @@ static bool debug_rendering_enabled = true;
 static u32 render_mode = 1;
 
 CGame::~CGame() {}
-
 /// Create the renderer and the object manager, load images and sounds, and
 /// begin the game.
 void CGame::Initialize() {
@@ -51,7 +50,7 @@ void CGame::Initialize() {
     InitializeProjectiles();
     InitializeNPCs();
 
-    // Room Collider
+    // Procedural Generation
     {
         /*
         Vec3 roomPos = Vec3(0, 0, 0);
@@ -105,7 +104,7 @@ void CGame::LoadModels() {
 
 void CGame::LoadImages(){
     m_pRenderer->BeginResourceUpload();
-    m_pRenderer->LoadTextureI("test", TextureIndex::Other);
+    //m_pRenderer->LoadTextureI("test", TextureIndex::Other);
 
     m_pRenderer->EndResourceUpload();
 }
@@ -191,16 +190,14 @@ void CGame::InputHandler() {
     // Spawn NPC
     if (m_pKeyboard->TriggerDown('N')) {
         if (m_NPCsCache.Size() > 0) {
-            Entity turret = m_NPCs.Entities()[m_NPCsActive.Size()];
-            PlaceNPC(turret, m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector());
+            PlaceNPC(m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector());
         }
     }
 
     // Destroy last NPC
     if (m_pKeyboard->TriggerDown('Z')) {
         if (m_NPCsActive.Size() > 0) {
-            Entity turret = m_NPCs.Entities()[m_NPCsActive.Size()];
-            StripNPC(turret);
+            StripNPC();
         }
     }
 
@@ -417,7 +414,6 @@ void CGame::RenderFrame() {
     //NOTE(sean): Everything out here will technically be known
     // *before* we start rendering, so I dont want to give the impression
     // that we create it *while* rendering, although you certainly can...
-
     m_pRenderer->m_pCamera->SetYaw(yaw);
     m_pRenderer->m_pCamera->SetPitch(pitch);
 
@@ -426,18 +422,24 @@ void CGame::RenderFrame() {
     for every(index, m_Timers.Size()) {
         m_Timers.Components()[index] -= m_pTimer->GetFrameTime();
     }
-
     // This handles NPCs and lighting.
     for every(index, m_NPCsActive.Size()) {
         Entity e = m_NPCsActive.Entities()[index];
         btTransform trans;
+        btCollisionShape* currentShape = (*m_RigidBodies.Get(e))->getCollisionShape();
+        btBoxShape* boxShape = reinterpret_cast<btBoxShape*>(currentShape);
 
         (*m_RigidBodies.Get(e))->getMotionState()->getWorldTransform(trans);
         m_pRenderer->lights.Get(e)->position = *(Vec4*)&trans.getOrigin();
 
-        DirectNPC(e, *m_RigidBodies.Get(m_Player));
-    }
+        (*m_ModelInstances.Get(e)).world = MoveRotateScaleMatrix(
+            (*m_RigidBodies.Get(e))->getWorldTransform().getOrigin(), 
+            *(Quat*)&(*m_RigidBodies.Get(e))->getWorldTransform().getRotation(), 
+            boxShape->getHalfExtentsWithMargin()
+        );
 
+        DirectNPC(e);
+    }
     // This handles projectiles and lighting.
     for every(index, m_ProjectilesActive.Size()) {
         Entity e = m_ProjectilesActive.Entities()[index];
@@ -446,34 +448,48 @@ void CGame::RenderFrame() {
         (*m_RigidBodies.Get(e))->getMotionState()->getWorldTransform(trans);
         m_pRenderer->lights.Get(e)->position = *(Vec4*)&trans.getOrigin();
         
+        (*m_ModelInstances.Get(e)).world = MoveScaleMatrix((*m_RigidBodies.Get(e))->getWorldTransform().getOrigin(), Vector3(25.0f));
+
         if (*m_Timers.Get(e) < 0.0) {
             toRemove.push_back(e);
         }
     }
-
     CustomPhysicsStep();
 
     // Strip Projectiles.
     for every(index, toRemove.size()) {
         StripProjectile(toRemove[index]);
     }
+    /*
+    if (flycam_enabled) {
 
+        btTransform trans;
+        btRigidBody* player_rb = *m_RigidBodies.Get(m_Player);
+        player_rb->getMotionState()->getWorldTransform(trans);
+
+       
+        Light* player_light = m_pRenderer->lights.Get(m_Player);
+        player_light->position = *(Vec4*)&trans.getOrigin();   
+
+    }
+    */
     if (!flycam_enabled) {
         btRigidBody* body = *m_RigidBodies.Get(m_Player);
 
         btTransform trans;
         body->getMotionState()->getWorldTransform(trans);
+        Light* light = m_pRenderer->lights.Get(m_Player);
 
         m_pRenderer->m_pCamera->MoveTo(*(Vector3*)&trans.getOrigin());
+        light->position = *(Vec4*)&trans.getOrigin();
+
     } else {
         m_pRenderer->m_pCamera->MoveTo(player_pos);
     }
-
     static f32 time = 0.0;
     time += m_pTimer->GetFrameTime();
 
     m_pRenderer->BeginFrame();
-
 
     // 0x01
     // 0x10
@@ -511,30 +527,37 @@ void CGame::RenderFrame() {
                 switch (shape->getShapeType()) {
                 case(BT_SHAPE_TYPE_BOX): {
                     btBoxShape* castratedObject = reinterpret_cast<btBoxShape*>(shape);
-
+                    // Note (Ethan) : Working on a new way of creating model instances tied to the ECS, leaving this here just incase we need a fallback.
+                    /*
                         ModelInstance instance = {};
                         instance.model = (u32)ModelIndex::Cube;
                         //instance.world = MoveScaleMatrix(trans.getOrigin(), castratedObject->getHalfExtentsWithMargin());
                         instance.world = MoveRotateScaleMatrix(trans.getOrigin(), *(Quat*)&trans.getRotation(), castratedObject->getHalfExtentsWithMargin());
                         instance.texture = 1;
                         m_pRenderer->DrawModelInstance(&instance);
+                    */
                     } break;
 
                 case(BT_SHAPE_TYPE_CAPSULE): {} break;
 
                 default: {
+
+                    // Note (Ethan) : Working on a new way of creating model instances tied to the ECS, leaving this here just incase we need a fallback.
+                    /*
                     ModelInstance instance = {};
                     instance.model = ModelIndex::Suzanne;
                     instance.world = MoveScaleMatrix(trans.getOrigin(), Vector3(25.0f));
                     instance.texture = 1;
                     m_pRenderer->DrawModelInstance(&instance);
+                    */
                 } break;
                 }
             }
         }
 
-        for every(index, m_ModelInstances.Size()) {
-            m_pRenderer->DrawModelInstance(&m_ModelInstances.Components()[index]);
+        for every(index, m_ModelsActive.Size()) {
+            Entity e = m_ModelsActive.Entities()[index];
+            m_pRenderer->DrawModelInstance(m_ModelInstances.Get(e));
         }
 
         m_pRenderer->EndDrawing();

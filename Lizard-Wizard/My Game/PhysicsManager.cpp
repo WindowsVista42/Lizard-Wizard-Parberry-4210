@@ -164,8 +164,19 @@ void CGame::AddRigidBody(btRigidBody* body, i32 group, i32 mask) {
     m_pDynamicsWorld->addRigidBody(body, group, mask);
 }
 
+void CGame::RBSetMassFriction(btRigidBody* body, f32 mass, f32 friction) {
+    btVector3 inertia;
+    body->getCollisionShape()->calculateLocalInertia(mass, inertia);
+    body->setMassProps(mass, inertia);
+    body->setFriction(friction);
+}
 
-void CGame::DestroyPhysicsOBject(btCollisionShape* shape) {
+void CGame::RBSetOriginForced(btRigidBody* body, Vec3 origin) {
+    body->getWorldTransform().setOrigin(origin);
+    body->clearForces();
+}
+
+void CGame::DestroyPhysicsObject(btCollisionShape* shape) {
     // Nothing for now, figure out a good way to destroy any given Bullet3 objects.
 }
 
@@ -194,6 +205,6 @@ void CGame::InitializePhysics() {
     // m_Player Rigidbody | (Note) : Create this first, as the m_Player is currently indexed as [0] in the collision table.
     {
         btRigidBody* rb = CreateCapsuleObject(100.0f, 250.0f, Vec3(-10000.0, 100.0, -10000.0), 1.0f, 0.5f, 2, 0b00001);
-        m_RigidBodies.AddExisting(m_Player, rb);
+        m_Player = m_RigidBodyMap.at(rb);
     }
 }
