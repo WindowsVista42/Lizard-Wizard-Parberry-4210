@@ -10,6 +10,18 @@
 
 */
 
+void RBSetMassFriction(btRigidBody* body, f32 mass, f32 friction) {
+    btVector3 inertia;
+    body->getCollisionShape()->calculateLocalInertia(mass, inertia);
+    body->setMassProps(mass, inertia);
+    body->setFriction(friction);
+}
+
+void RBSetOriginForced(btRigidBody* body, Vec3 origin) {
+    body->getWorldTransform().setOrigin(origin);
+    body->clearForces();
+}
+
 void CGame::GenerateSimProjectile(
     btCollisionObject* caster, 
     const Vec3 startPos, 
@@ -49,16 +61,10 @@ void CGame::GenerateSimProjectile(
         // Because the projectiles are spawning so close to the camera it looks really jarring, so we're shifting them up 100 units.
         // In the future, we can probably tell the projectiles to spawn from the players wand.
         Vec3 orig = Vec3(Vec3(startPos + newDirection * 100.0f) + Vec3(0, 100.0f, 0));
-        f32 mass = 0.5f;
-        f32 friction = 0.5f;
-        f32 restitution = 2.5f;
 
         // Set static attributes.
-        btVector3 inertia;
-        projectile->getCollisionShape()->calculateLocalInertia(mass, inertia);
-        projectile->setMassProps(mass, inertia);
-        projectile->setFriction(friction);
-        projectile->setRestitution(restitution);
+        RBSetMassFriction(projectile, 0.5f, 0.5f);
+        projectile->setRestitution(2.5f);
 
         // Re-add regidbody to world after static attribute edit.
         m_pDynamicsWorld->addRigidBody(projectile, 2, 0b00001);
@@ -183,33 +189,18 @@ void CGame::InitializeProjectiles() {
 }
 
 void CGame::StripProjectile(Entity e) {
-    m_ProjectilesActive.Remove(e);
     m_Timers.Remove(e);
+    m_ProjectilesActive.Remove(e);
     m_ProjectilesCache.AddExisting(e);
     btRigidBody* projectile = *m_RigidBodies.Get(e);
 
+    Vec3 orig = Vec3(FLT_MAX, FLT_MAX, FLT_MAX);
+    RBSetOriginForced(projectile, orig);
+    m_pRenderer->lights.Get(e)->position = *(Vec4*)&orig;
 
-    // Removes rigidbody from world to edit.
+    // Removes rigidbody from world to edit constant attributes.
     m_pDynamicsWorld->removeRigidBody(projectile);
-    projectile->clearForces();
 
-    btTransform trans;
-    trans.setOrigin(Vec3(FLT_MAX, FLT_MAX, FLT_MAX));
-    f32 mass = 0.0f;
-    f32 friction = 0.0f;
-    btVector3 inertia;
-
-    // Set attributes.
-    projectile->getMotionState()->setWorldTransform(trans);
-    projectile->setWorldTransform(trans);
-    projectile->getCollisionShape()->calculateLocalInertia(mass, inertia);
-    projectile->setMassProps(mass, inertia);
-    projectile->setFriction(friction);
-
-    // Re-add regidbody to world after edit.
-    //m_pDynamicsWorld->addRigidBody(projectile);
-
-    // Set light position
-    m_pRenderer->lights.Get(e)->position = *(Vec4*)&trans.getOrigin();
+    RBSetMassFriction(projectile, 0.0f, 0.0f);
 }
 
