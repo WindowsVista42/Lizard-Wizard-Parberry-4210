@@ -176,7 +176,13 @@ namespace NPCState { enum e : u32 {
 
 namespace RoomTag {
     enum tag : u32 {
-        UNFILLED, SPAWN, NORMAL, BOSS
+        UNFILLED, CORRIDOR, NSHALL, EWHALL, NORMAL
+    };
+}
+
+namespace ExitTag {
+    enum exit : u32 {
+        NORTHEX, SOUTHEX, EASTEX, WESTEX
     };
 }
 

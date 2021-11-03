@@ -34,6 +34,7 @@
 // Structs
 struct Room {
     u32 currentTag;
+    u32 currentExit;
     Vec3 origin;
 };
 
@@ -208,10 +209,10 @@ private:
 
 
     // GENERATION MANAGER //
+    void CreateCorridorRoom(Vec3);
+    void CreateEWHall(Vec3);
+    void CreateNSHall(Vec3);
     void CreateNormalRoom(Vec3);
-    void CreateBossRoom(Vec3);
-    void CreateSpawnRoom(Vec3);
-    void CreateHallway(Vec3);
     void GenerateRooms(Vec3, const i32);
     void DestroyRooms();
     void InitializeGeneration();

@@ -49,7 +49,8 @@ void CGame::Initialize() {
     InitializeGeneration();
     InitializeProjectiles();
     InitializeNPCs();
-    // Room Collider
+
+    // Procedural Generation
     {
         /*
         Vec3 roomPos = Vec3(0, 0, 0);
@@ -413,7 +414,6 @@ void CGame::RenderFrame() {
     //NOTE(sean): Everything out here will technically be known
     // *before* we start rendering, so I dont want to give the impression
     // that we create it *while* rendering, although you certainly can...
-
     m_pRenderer->m_pCamera->SetYaw(yaw);
     m_pRenderer->m_pCamera->SetPitch(pitch);
 
@@ -460,14 +460,29 @@ void CGame::RenderFrame() {
     for every(index, toRemove.size()) {
         StripProjectile(toRemove[index]);
     }
+    /*
+    if (flycam_enabled) {
 
+        btTransform trans;
+        btRigidBody* player_rb = *m_RigidBodies.Get(m_Player);
+        player_rb->getMotionState()->getWorldTransform(trans);
+
+       
+        Light* player_light = m_pRenderer->lights.Get(m_Player);
+        player_light->position = *(Vec4*)&trans.getOrigin();   
+
+    }
+    */
     if (!flycam_enabled) {
         btRigidBody* body = *m_RigidBodies.Get(m_Player);
 
         btTransform trans;
         body->getMotionState()->getWorldTransform(trans);
+        Light* light = m_pRenderer->lights.Get(m_Player);
 
         m_pRenderer->m_pCamera->MoveTo(*(Vector3*)&trans.getOrigin());
+        light->position = *(Vec4*)&trans.getOrigin();
+
     } else {
         m_pRenderer->m_pCamera->MoveTo(player_pos);
     }
