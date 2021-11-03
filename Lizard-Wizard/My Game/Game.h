@@ -10,6 +10,7 @@
 #include "Renderer.h"
 #include "Math.h"
 #include "Defines.h"
+#include "Interpolation.h"
 #include <vector>
 
 // Bullet3 Inclusions
@@ -53,7 +54,7 @@ struct NPC {
     NPCState::e State;
     NPC() :
         Behavior(NPCBehavior::TURRET),
-        State(NPCState::WANDER)
+        State(NPCState::SLEEPING)
     {}
 };
 
@@ -62,7 +63,10 @@ struct Animation {
     Vec3 beginRot;
     Vec3 endPos;
     Vec3 endRot;
-    f32 length;
+    f32 time;
+    f32 maxSteps;
+    f32 steps;
+    f32 percent;
 };
 
 // Game Class
@@ -74,10 +78,6 @@ private:
     // Mouse Binds
     CustomBind m_leftClick;
     CustomBind m_rightClick;
-
-    // Model Table
-    Table<ModelInstance> m_ModelInstances;
-
     // Timing Table
     Table<f32> m_Timers;
 
@@ -96,6 +96,10 @@ private:
     Table<NPC> m_NPCs;
     Group m_NPCsCache;
     Group m_NPCsActive;
+
+    // Rendering Table
+    Table<ModelInstance> m_ModelInstances;
+    Group m_ModelsActive;
 
     // Parenting system
     Table<Group> m_Parents;
@@ -189,7 +193,9 @@ private:
     void CustomPhysicsStep();
     void RemoveRigidBody(btRigidBody*);
     void AddRigidBody(btRigidBody*, i32, i32);
-    void DestroyPhysicsOBject(btCollisionShape*);
+    void RBSetMassFriction(btRigidBody*, f32, f32);
+    void RBSetOriginForced(btRigidBody*, Vec3);
+    void DestroyPhysicsObject(btCollisionShape*);
     void InitializePhysics();
 
 
@@ -254,10 +260,10 @@ private:
     void Pathfind(Entity);
     void Attack(Entity);
     void Search(Entity);
-    void DirectNPC(Entity, btRigidBody*);
-    void PlaceNPC(Entity, Vec3, Vec3);
+    void DirectNPC(Entity);
+    void PlaceNPC(Vec3, Vec3);
     void InitializeNPCs();
-    void StripNPC(Entity);
+    void StripNPC();
 
     // ANIMATION MANAGER //
 

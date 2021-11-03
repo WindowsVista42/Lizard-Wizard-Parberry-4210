@@ -172,6 +172,7 @@
     <ClCompile Include="Helpers.cpp" />
     <ClCompile Include="CustomBind.cpp" />
     <ClCompile Include="Effects\DeferredEffect.cpp" />
+    <ClCompile Include="Interpolation.cpp" />
     <ClCompile Include="Math.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="Effects\LightingEffect.cpp" />

@@ -2,6 +2,19 @@
 #include "Defines.h"
 #include "Ecs.h"
 
+ModelInstance GetBoxModel(btRigidBody* body) {
+    ModelInstance instance = {};
+    btCollisionShape* currentShape = body->getCollisionShape();
+    btBoxShape* boxShape = reinterpret_cast<btBoxShape*>(currentShape);
+
+
+    instance.model = (u32)ModelIndex::Cube;
+    instance.world = MoveRotateScaleMatrix(body->getWorldTransform().getOrigin(), *(Quat*)&body->getWorldTransform().getRotation(), boxShape->getHalfExtentsWithMargin());
+    instance.texture = 1;
+
+    return instance;
+}
+
 void CGame::CreateTestingEnvironment() {
     const Vec3 position = Vec3(-10000.0, 0.0, -10000.0);
     const Vec3 scale = Vec3(6000.0, 1000.0, 6000.0);
@@ -16,6 +29,10 @@ void CGame::CreateTestingEnvironment() {
         m_TestingWallsFloors.AddExisting(e);
         m_RigidBodies.AddExisting(e, CreateBoxObject(Vec3(scale.x, thickness, scale.z), position + Vec3(0.0, -scale.y, 0.0), 0.0, 1.0, group, flag));
         m_TestingWallsFloors.AddExisting(e);
+
+        // Note (Ethan) :  For now we just have to deal with this.
+        m_ModelInstances.AddExisting(e, GetBoxModel(*m_RigidBodies.Get(e)));
+        m_ModelsActive.AddExisting(e);
     }
 
     // ceiling
@@ -24,6 +41,9 @@ void CGame::CreateTestingEnvironment() {
         m_TestingWallsFloors.AddExisting(e);
         m_RigidBodies.AddExisting(e, CreateBoxObject(Vec3(scale.x, thickness, scale.z), position + Vec3(0.0, scale.y, 0.0), 0.0, 1.0, group, flag));
         m_TestingWallsFloors.AddExisting(e);
+
+        m_ModelInstances.AddExisting(e, GetBoxModel(*m_RigidBodies.Get(e)));
+        m_ModelsActive.AddExisting(e);
     }
 
     // wall -X
@@ -32,6 +52,9 @@ void CGame::CreateTestingEnvironment() {
         m_TestingWallsFloors.AddExisting(e);
         m_RigidBodies.AddExisting(e, CreateBoxObject(Vec3(thickness, scale.y, scale.z), position + Vec3(-scale.x, 0.0, 0.0), 0.0, 1.0, group, flag));
         m_TestingWallsFloors.AddExisting(e);
+
+        m_ModelInstances.AddExisting(e, GetBoxModel(*m_RigidBodies.Get(e)));
+        m_ModelsActive.AddExisting(e);
     }
 
     // wall +X
@@ -40,6 +63,9 @@ void CGame::CreateTestingEnvironment() {
         m_TestingWallsFloors.AddExisting(e);
         m_RigidBodies.AddExisting(e, CreateBoxObject(Vec3(thickness, scale.y, scale.z), position + Vec3(scale.x, 0.0, 0.0), 0.0, 1.0, group, flag));
         m_TestingWallsFloors.AddExisting(e);
+
+        m_ModelInstances.AddExisting(e, GetBoxModel(*m_RigidBodies.Get(e)));
+        m_ModelsActive.AddExisting(e);
     }
 
     // wall -Z
@@ -48,6 +74,9 @@ void CGame::CreateTestingEnvironment() {
         m_TestingWallsFloors.AddExisting(e);
         m_RigidBodies.AddExisting(e, CreateBoxObject(Vec3(scale.x, scale.y, thickness), position + Vec3(0.0, 0.0, -scale.z), 0.0, 1.0, group, flag));
         m_TestingWallsFloors.AddExisting(e);
+
+        m_ModelInstances.AddExisting(e, GetBoxModel(*m_RigidBodies.Get(e)));
+        m_ModelsActive.AddExisting(e);
     }
 
     // wall +Z
@@ -56,6 +85,9 @@ void CGame::CreateTestingEnvironment() {
         m_TestingWallsFloors.AddExisting(e);
         m_RigidBodies.AddExisting(e, CreateBoxObject(Vec3(scale.x, scale.y, thickness), position + Vec3(0.0, 0.0, scale.z), 0.0, 1.0, group, flag));
         m_TestingWallsFloors.AddExisting(e);
+
+        m_ModelInstances.AddExisting(e, GetBoxModel(*m_RigidBodies.Get(e)));
+        m_ModelsActive.AddExisting(e);
     }
 
     // Lights
@@ -85,6 +117,7 @@ void CGame::CreateTestingEnvironment() {
 
                 Entity e = Entity();
                 m_ModelInstances.AddExisting(e, mi);
+                m_ModelsActive.AddExisting(e);
                 m_pRenderer->lights.AddExisting(e, {*(Vec4*)&light_pos, *(Vec4*)&light_color});
 
                 m_TestingLights.AddExisting(e);
@@ -111,6 +144,7 @@ void CGame::CreateTestingEnvironment() {
 
             Entity e = Entity();
             m_ModelInstances.AddExisting(e, mi);
+            m_ModelsActive.AddExisting(e);
             m_pRenderer->lights.AddExisting(e, {*(Vec4*)&model_pos, Vec4(0.2, 0.98, 0.5, 1.0) * 200.0f});
 
             m_TestingModels.AddExisting(e);

@@ -10,16 +10,17 @@
 
 */
 
-void RBSetMassFriction(btRigidBody* body, f32 mass, f32 friction) {
-    btVector3 inertia;
-    body->getCollisionShape()->calculateLocalInertia(mass, inertia);
-    body->setMassProps(mass, inertia);
-    body->setFriction(friction);
-}
+ModelInstance GetSphereModel(btRigidBody* body) {
+    ModelInstance instance = {};
+    btCollisionShape* currentShape = body->getCollisionShape();
+    btSphereShape* sphereShape = reinterpret_cast<btSphereShape*>(currentShape);
 
-void RBSetOriginForced(btRigidBody* body, Vec3 origin) {
-    body->getWorldTransform().setOrigin(origin);
-    body->clearForces();
+
+    instance.model = (u32)ModelIndex::Suzanne;
+    instance.world = MoveScaleMatrix(body->getWorldTransform().getOrigin(), Vector3(25.0f));
+    instance.texture = 1;
+
+    return instance;
 }
 
 void CGame::GenerateSimProjectile(
@@ -43,7 +44,7 @@ void CGame::GenerateSimProjectile(
         }
 
         Entity e = m_ProjectilesCache.RemoveTail();
-
+        m_ModelsActive.AddExisting(e);
         m_ProjectilesActive.AddExisting(e);
         m_Timers.AddExisting(e, 2.0f);
 
@@ -164,6 +165,30 @@ void CGame::GenerateRayProjectile(
     }
 }
 
+void CGame::StripProjectile(Entity e) {
+    m_Timers.Remove(e);
+    m_ProjectilesActive.Remove(e);
+    m_ProjectilesCache.AddExisting(e);
+    btRigidBody* projectile = *m_RigidBodies.Get(e);
+
+    // Change Attributes
+    Vec3 orig = Vec3(FLT_MAX, FLT_MAX, FLT_MAX);
+    RBSetOriginForced(projectile, orig);
+
+    // Move lights
+    m_pRenderer->lights.Get(e)->position = *(Vec4*)&orig;
+
+    // Disable Rendering
+    (*m_ModelInstances.Get(e)).world = MoveScaleMatrix(orig, Vector3(25.0f));
+    m_ModelsActive.Remove(e);
+
+    // Removes rigidbody from world to edit constant attributes.
+    m_pDynamicsWorld->removeRigidBody(projectile);
+
+    RBSetMassFriction(projectile, 0.0f, 0.0f);
+}
+
+
 void CGame::InitializeProjectiles() {
     for every(index, PROJECTILE_CACHE_SIZE) {
         // Create Rigidbody and get ECS identifier
@@ -181,26 +206,13 @@ void CGame::InitializeProjectiles() {
         // Prepare light
         Light newLight = { Vec4(FLT_MAX, FLT_MAX, FLT_MAX ,0), Vec4{150.0f, 30.0f, 10.0f, 0} };
 
+        // Prepare model
+        m_ModelInstances.AddExisting(e, GetSphereModel(*m_RigidBodies.Get(e)));
+        m_ModelsActive.AddExisting(e);
+
         // Insert into tables / groups
         m_pRenderer->lights.AddExisting(e, newLight);
         m_RigidBodies.AddExisting(e, newBody);
         m_ProjectilesCache.AddExisting(e);
     }
 }
-
-void CGame::StripProjectile(Entity e) {
-    m_Timers.Remove(e);
-    m_ProjectilesActive.Remove(e);
-    m_ProjectilesCache.AddExisting(e);
-    btRigidBody* projectile = *m_RigidBodies.Get(e);
-
-    Vec3 orig = Vec3(FLT_MAX, FLT_MAX, FLT_MAX);
-    RBSetOriginForced(projectile, orig);
-    m_pRenderer->lights.Get(e)->position = *(Vec4*)&orig;
-
-    // Removes rigidbody from world to edit constant attributes.
-    m_pDynamicsWorld->removeRigidBody(projectile);
-
-    RBSetMassFriction(projectile, 0.0f, 0.0f);
-}
-

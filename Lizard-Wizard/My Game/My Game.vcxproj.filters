@@ -21,6 +21,7 @@
     <ClCompile Include="Effects\LightingEffect.cpp" />
     <ClCompile Include="TestingEnvironment.cpp" />
     <ClCompile Include="AnimationManager.cpp" />
+    <ClCompile Include="Interpolation.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CustomBind.h" />
