@@ -9,8 +9,8 @@
 #include "CustomBind.h"
 #include "Renderer.h"
 #include "Math.h"
-#include "Defines.h"
 #include "Interpolation.h"
+#include "Defines.h"
 #include <vector>
 
 // Bullet3 Inclusions

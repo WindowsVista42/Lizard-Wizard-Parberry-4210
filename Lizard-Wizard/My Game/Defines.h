@@ -73,6 +73,7 @@ struct Mat4x4 : XMMATRIX {
 
 struct Vec3 : Vector3 {
     Vec3() {}
+    Vec3(const f32 splat) { this->x = splat; this->y = splat; this->z = splat; }
     Vec3(const f32 x, const f32 y, const f32 z) { this->x = x; this->y = y; this->z = z; }
 
     Vec3(const Vector3& other) { *this = *(Vec3*)&other; }
@@ -90,6 +91,7 @@ struct Vec3 : Vector3 {
 
 struct Vec4 : Vector4 {
     Vec4() {}
+    Vec4(const f32 splat) { this->x = splat; this->y = splat; this->z = splat; this->w = splat; }
     Vec4(const f32 x, const f32 y, const f32 z, const f32 w) { this->x = x; this->y = y; this->z = z; this->w = w; }
 
     Vec4(const Vector4& other) { *this = *(Vec4*)&other; }
@@ -151,7 +153,7 @@ struct Light {
 // SET YOUR DEFINES HERE
 
 namespace SoundIndex { enum e : u32 {
-    Clang, Grunt,
+    Clang, Grunt, Impact,
     Size  //MUST BE LAST
 };}
 

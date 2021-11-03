@@ -58,7 +58,7 @@ void Renderer::Initialize() {
         // Deferred Pass Output RT
         m_renderTextures[Descriptors::DeferredColor] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
         m_renderTextures[Descriptors::DeferredNormal] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
-        m_renderTextures[Descriptors::DeferredPosition] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black);
+        m_renderTextures[Descriptors::DeferredPosition] = RenderTexture(DXGI_FORMAT_R32G32B32A32_FLOAT, Colors::Black);
 
         // Lighting Pass Output RT
         m_renderTextures[Descriptors::LightingColor] = RenderTexture(DXGI_FORMAT_R16G16B16A16_FLOAT, Colors::Black); 

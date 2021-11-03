@@ -45,10 +45,10 @@ struct PixelOutput {
     float4 Color : SV_TARGET0;
 };
 
-static const float PI = 3.14159265f;
+static const float PI = 3.14159265;
 
 static const int AO_SAMPLE_COUNT = 1;
-static const float AO_TOTAL_SAMPLE_DISTANCE = 0.02f;
+static const float AO_TOTAL_SAMPLE_DISTANCE = 0.02;
 static const float AO_SAMPLE_DISTANCE = AO_TOTAL_SAMPLE_DISTANCE / float(AO_SAMPLE_COUNT * 2 + 1);
 static const float DIVI = float((AO_SAMPLE_COUNT * 2 + 1) * (AO_SAMPLE_COUNT * 2 + 1));
 
@@ -77,7 +77,7 @@ PixelOutput main(VertexOutput input) {
     const float pixel_camera_dist2 = dot(pixel_camera_diff, pixel_camera_diff);
     const float scl = 0.04;
 
-    float ao_strength = 1.0f;
+    float ao_strength = 1.0;
     for (uint x = 0; x < 9; x += 1) {
         const float2 sample_uv = samples[x];
     	const float3 sample_position = Position.Sample(Sampler, input.Texture + sample_uv).xyz;
@@ -96,22 +96,25 @@ PixelOutput main(VertexOutput input) {
     }
 
     // Calculate Lighting
-    float3 output_color = float3(0.0f, 0.0f, 0.0f);
+    float3 output_color = float3(0.0, 0.0, 0.0);
     for (uint index = 0; index < light_count; index += 1) {
         const float3 LIGHT_POSITION = Lights[index].Position.xyz;
         const float3 LIGHT_COLOR = Lights[index].Color.rgb;
 
-        const float3 position_diff = LIGHT_POSITION - pixel_position;
-        const float light_strength = 1.0f / sqrt(dot(position_diff, position_diff));
-        const float3 light_direction = normalize(position_diff);
+        const float3 diff = LIGHT_POSITION - pixel_position;
+
+        const float attenuation = 1.0 / sqrt(dot(diff, diff));
+
+        const float3 light_direction = normalize(diff);
         const float dotprod = dot(pixel_normal, light_direction);
-        const float3 shape = clamp((dotprod + 2.0) / 2.0, 0.0, 1.0);
-        const float3 light_color = LIGHT_COLOR * light_strength * shape;
+        const float shape = clamp((dotprod + 2.0) / 2.0, 0.0, 1.0);
+
+        const float3 light_color = LIGHT_COLOR * attenuation * shape;
 
         output_color += light_color * pixel_color;
     }
 
-    output.Color = float4(output_color * ao_strength, 1.0f);
+    output.Color = float4(output_color * ao_strength, 1.0);
 
     return output;
 }

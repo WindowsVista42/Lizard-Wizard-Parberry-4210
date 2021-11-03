@@ -23,6 +23,13 @@ ModelInstance GetSphereModel(btRigidBody* body) {
     return instance;
 }
 
+void RBSetCcd(btRigidBody* body, f32 threshold, f32 radius) {
+#ifndef _DEBUG
+    body->setCcdMotionThreshold(threshold);
+    body->setCcdSweptSphereRadius(radius);
+#endif
+}
+
 void CGame::GenerateSimProjectile(
     btCollisionObject* caster, 
     const Vec3 startPos, 
@@ -76,12 +83,7 @@ void CGame::GenerateSimProjectile(
         projectile->setAngularVelocity(Vec3(0, 0, 0));
 
         // Continuous Convex Collision (NOTE) Ethan : This is expensive, so only use it for projectiles.
-        // DISABLED UNTIL FIXED IN DEBUG
-        /*
-        newBody->setCcdMotionThreshold(100.0f);
-        newBody->setCcdSweptSphereRadius(75.0f);
-        */
-
+        //SetRigidBodyCcd(projectile, 10.0, 75.0f);
 
         f32 lum = 100.0f;
         m_pRenderer->lights.Get(e)->color = Vec4(projectileColor.x * lum, projectileColor.y * lum, projectileColor.z * lum, 0);
@@ -198,10 +200,7 @@ void CGame::InitializeProjectiles() {
 
         // Continuous Convex Collision (NOTE) Ethan : This is expensive, so only use it for projectiles.
         // DISABLED UNTIL FIXED IN DEBUG
-        /*
-        newBody->setCcdMotionThreshold(100.0f);
-        newBody->setCcdSweptSphereRadius(75.0f);
-        */
+        RBSetCcd(newBody, 50.0, 75.0f);
 
         // Prepare light
         Light newLight = { Vec4(FLT_MAX, FLT_MAX, FLT_MAX ,0), Vec4{150.0f, 30.0f, 10.0f, 0} };

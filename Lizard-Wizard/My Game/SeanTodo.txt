@@ -1,6 +1,0 @@
-* Main Renderer
-    + Figure out texture mapping
-    + Move Post Process pass to Lighting pass
-    + Create Tonemapping pass
-    + Create Ambient Occlusion pass
-    + Create Bloom pass

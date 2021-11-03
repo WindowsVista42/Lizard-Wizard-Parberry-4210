@@ -37,6 +37,7 @@ PixelOutput main(VertexOutput input) {
     float3 color0 = Color0.Sample(Sampler, input.Texture).rgb;
     float3 color1 = Color1.Sample(Sampler, input.Texture).rgb;
 
+    /*
     if (color1.r > 6.0) {
         color1.r = 6.0;
     }
@@ -48,6 +49,7 @@ PixelOutput main(VertexOutput input) {
     if (color1.b > 6.0) {
         color1.b = 6.0;
     }
+    */
 
     output.Color = float4(color0 + (color1 * Scale), 1.0f);
 

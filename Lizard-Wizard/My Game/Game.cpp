@@ -8,6 +8,7 @@
 #include "ComponentIncludes.h"
 #include "Helpers.h"
 #include "shellapi.h"
+#include "Interpolation.h"
 #include <vector>
 #include <iostream>
 
@@ -115,6 +116,7 @@ void CGame::LoadSounds(){
   m_pAudio->Initialize(SoundIndex::Size);
   m_pAudio->Load(SoundIndex::Grunt, "grunt");
   m_pAudio->Load(SoundIndex::Clang, "clang");
+  m_pAudio->Load(SoundIndex::Impact, "impact");
 }
 
 /// Release all of the DirectX12 objects by deleting the renderer.
@@ -159,11 +161,16 @@ void CGame::InputHandler() {
         body->applyCentralImpulse(jumpVector);
     }
 
-    if (m_pKeyboard->TriggerUp(VK_SPACE)) //play sound
+    if (m_pKeyboard->TriggerUp(VK_SPACE)) {//play sound
        //m_pAudio->play(eSound::Grunt);
+    }
 
     if (m_pKeyboard->TriggerDown(VK_BACK)) //restart game
         BeginGame(); //restart game
+
+    if (m_pKeyboard->TriggerDown('M')) {
+        m_pAudio->mute();
+    }
 
 
       //TODO(sean): make this framerate dependant
@@ -417,6 +424,8 @@ void CGame::RenderFrame() {
     m_pRenderer->m_pCamera->SetYaw(yaw);
     m_pRenderer->m_pCamera->SetPitch(pitch);
 
+    m_pAudio->SetListener(m_pRenderer->m_pCamera); // Update Audio
+
     // This handles the timers tables.
     std::vector<Entity> toRemove;
     for every(index, m_Timers.Size()) {
@@ -460,19 +469,7 @@ void CGame::RenderFrame() {
     for every(index, toRemove.size()) {
         StripProjectile(toRemove[index]);
     }
-    /*
-    if (flycam_enabled) {
 
-        btTransform trans;
-        btRigidBody* player_rb = *m_RigidBodies.Get(m_Player);
-        player_rb->getMotionState()->getWorldTransform(trans);
-
-       
-        Light* player_light = m_pRenderer->lights.Get(m_Player);
-        player_light->position = *(Vec4*)&trans.getOrigin();   
-
-    }
-    */
     if (!flycam_enabled) {
         btRigidBody* body = *m_RigidBodies.Get(m_Player);
 
@@ -506,7 +503,9 @@ void CGame::RenderFrame() {
                 instance.texture = 1;
                 f32 xoff = 400.0f * cosf(m_pTimer->GetTime());
                 f32 zoff = 400.0f * sinf(m_pTimer->GetTime());
-                instance.world = MoveScaleMatrix(Vector3(xoff, 50.0f, zoff), Vector3(100.0f, 100.0f, 100.0f));
+                instance.world = MoveScaleMatrix(HermiteLerp<Vec3>(Vec3(0.0, 0.0, 0.0), Vec3(1000.0, 500.0, -700.0), 0.8, 0.5, sinf(m_pTimer->GetTime())), Vector3(100.0f, 100.0f, 100.0f));
+                Vec3 b = Vec3(10.0, 10.0, 10.0) * 10.0;
+                //instance.world = MoveScaleMatrix(Vec3Lerp(Vec3(0.0, 0.0, 0.0), Vec3(1000.0, 500.0, -700.0), sinf(m_pTimer->GetTime())), Vector3(100.0f, 100.0f, 100.0f));
                 m_pRenderer->DrawModelInstance(&instance);
             }
 
@@ -628,8 +627,12 @@ void CGame::RenderFrame() {
     {
         m_pRenderer->BeginUIDrawing();
         if (m_bDrawHelpMessage) {
-            m_pRenderer->DrawScreenText(L"Press 'Escape' to toggle mouse.", Vector2(50.0, 50.0), Colors::White);
-            m_pRenderer->DrawScreenText(L"Toggle this message with 'F3'.", Vector2(50.0, 100.0), Colors::White);
+            m_pRenderer->DrawCenteredText(
+                L"Press 'Escape' to toggle mouse.\n"
+                L"Press 'M' to toggle audio.\n"
+                L"Toggle this message with 'F3'."
+                , Colors::White
+            );
         }
 
         if (m_bDrawFrameRate) {

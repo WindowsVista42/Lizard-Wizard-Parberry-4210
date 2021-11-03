@@ -1,5 +1,6 @@
 // Inclusions
 #include "Game.h"
+#include "Interpolation.h"
 
 /* Note(Ethan) : This is a prototype test for the NPC system, I will reduce comments once we get to making the release version.
 *

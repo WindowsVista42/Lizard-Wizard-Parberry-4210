@@ -1,5 +1,6 @@
 // Inclusions
 #include "Game.h"
+#include <ComponentIncludes.h>
 
 /* Note(Ethan) : This is the physics manager, it helps us clean up the game.cpp and further simplify how we use Bullet3.
 *
@@ -113,10 +114,10 @@ btRigidBody* CGame::CreateConvexObject(f32 mass, f32 friction, i32 group, i32 ma
 // Note(Ethan) : We need this for impact noises and bounce impulses.
 void CGame::PhysicsCollisionCallBack(btDynamicsWorld* p, btScalar t) {
     UNREFERENCED_PARAMETER(t);
-    const u32 numManifolds = (u32)p->getDispatcher()->getNumManifolds();
+    btDispatcher* pDispatcher = p->getDispatcher();
+    const u32 numManifolds = (u32)pDispatcher->getNumManifolds();
 
     for every(manifold, numManifolds) {
-        btDispatcher* pDispatcher = p->getDispatcher();
         btPersistentManifold* pManifold = pDispatcher->getManifoldByIndexInternal(manifold);
 
         // Get bodys
@@ -147,7 +148,7 @@ void CGame::CustomPhysicsStep() {
         if (m_ProjectilesActive.Contains(e)) {
             //printf("Projectile collision detected at : (%f, %f, %f)\n", pos.x, pos.y, pos.z);
             //std::cout << "Collision ID :" << e.id << std::endl;
-            //m_pAudio->play(SoundIndex::Clang, pos, 0.25, 0.0);
+            m_pAudio->play(SoundIndex::Impact, pos, 10.0, 0.5);
         }
         //m_pAudio->play(SoundIndex::Clang, pos, 0.25, 0.0);
     }
