@@ -65,7 +65,7 @@ void CGame::GenerateSimProjectile(
 
         // Set static attributes.
         RBSetMassFriction(projectile, 0.5f, 0.5f);
-        projectile->setRestitution(2.5f);
+        projectile->setRestitution(6.5f);
 
         // Re-add regidbody to world after static attribute edit.
         m_pDynamicsWorld->addRigidBody(projectile, 2, 0b00001);

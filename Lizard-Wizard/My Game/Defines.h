@@ -171,7 +171,7 @@ namespace NPCBehavior { enum e : u32 {
 };}
 
 namespace NPCState { enum e : u32 {
-    SLEEPING, WANDER, MOVING, PATHFINDING, ATTACKING, SEARCHING
+    SLEEPING, WANDER, MOVING, PATHFINDING, ATTACKING, SEARCHING, ANIMATING
 };}
 
 namespace RoomTag {

@@ -16,11 +16,33 @@ ModelInstance GetNPCModel(btRigidBody* body) {
     btBoxShape* boxShape = reinterpret_cast<btBoxShape*>(currentShape);
 
 
-    instance.model = (u32)ModelIndex::Cube;
+    instance.model = (u32)ModelIndex::ObeliskEnemy;
     instance.world = MoveRotateScaleMatrix(body->getWorldTransform().getOrigin(), *(Quat*)&body->getWorldTransform().getRotation(), boxShape->getHalfExtentsWithMargin());
     instance.texture = 1;
 
     return instance;
+}
+
+void CGame::Animate(Entity e) {
+    Animation* currentAnimation = m_Animations.Get(e);
+    NPC* currentNPC = m_NPCs.Get(e);
+    btRigidBody* npcBody = *m_RigidBodies.Get(e);
+
+    if (currentAnimation->steps == currentAnimation->maxSteps) {
+        m_Animations.Remove(e);
+        currentNPC->State = NPCState::SLEEPING;
+    }
+    else {
+        currentAnimation->percent = currentAnimation->steps / currentAnimation->maxSteps;
+        currentAnimation->steps = currentAnimation->steps + 1.0f;
+
+        Vec3 origin = Vec3Lerp(currentAnimation->beginPos, currentAnimation->endPos, currentAnimation->percent);
+        btTransform newTransform;
+        newTransform.setBasis(npcBody->getWorldTransform().getBasis());
+        newTransform.setOrigin(origin);
+        npcBody->getMotionState()->setWorldTransform(newTransform);
+        npcBody->setWorldTransform(newTransform);
+    }
 }
 
 void CGame::Sleep(Entity e) {
@@ -61,44 +83,37 @@ void CGame::Wander(Entity e) {
 }
 
 void CGame::Move(Entity e) {
-    if (m_Animations.Contains(e) != NULL) {
-        Animation* currentAnimation = m_Animations.Get(e);
-        NPC* currentNPC = m_NPCs.Get(e);
-        btRigidBody* npcBody = *m_RigidBodies.Get(e);
+    // Ensuring object is placed correctly in world.
+    btRigidBody* playerBody = *(m_RigidBodies.Get(m_Player));
+    btRigidBody* NPCBody = *m_RigidBodies.Get(e);
 
-        if (currentAnimation->steps == currentAnimation->maxSteps) {
-            m_Animations.Remove(e);
-            currentNPC->State = NPCState::SLEEPING;
-        } else {
-            currentAnimation->percent = currentAnimation->steps / currentAnimation->maxSteps;
-            currentAnimation->steps = currentAnimation->steps + 1.0f;
+    Vec3 origin = NPCBody->getWorldTransform().getOrigin();
+    Vec3 lookAt = playerBody->getWorldTransform().getOrigin() + playerBody->getLinearVelocity() / 4;
 
-            Vec3 origin = Vec3Lerp(currentAnimation->beginPos, currentAnimation->endPos, currentAnimation->percent);
-            btTransform newTransform;
-            newTransform.setBasis(*(btMatrix3x3*)&XMMatrixLookAtLH(origin, Vec3(1.0f, 0, 0), Vec3(0, 1.0f, 0)));
-            newTransform.setOrigin(origin);
-            npcBody->getMotionState()->setWorldTransform(newTransform);
-            npcBody->setWorldTransform(newTransform);
-        }
+    btTransform newTransform;
+    newTransform.setBasis(*(btMatrix3x3*)&XMMatrixLookAtLH(origin, Vec3(1.0f, 0, 0), Vec3(0, 1.0f, 0)));
+    newTransform.setOrigin(NPCBody->getWorldTransform().getOrigin());
 
-    } else {
-        Animation newAnimation;
-        btRigidBody* NPCBody = *(m_RigidBodies.Get(e));
-        btRigidBody* playerBody = *(m_RigidBodies.Get(m_Player));
+    NPCBody->getMotionState()->setWorldTransform(newTransform);
+    NPCBody->setWorldTransform(newTransform);
 
-        newAnimation.beginPos = NPCBody->getWorldTransform().getOrigin();
-        //newAnimation.beginRot = NPCBody->getWorldTransform().getOrigin().normalize();
+    // Animation
+    Animation newAnimation;
 
-        newAnimation.endPos = NPCBody->getWorldTransform().getOrigin() + Vec3(500.0f, 0, 0);
-        //newAnimation.endRot = NPCBody->getWorldTransform().getOrigin().normalize();
-        newAnimation.maxSteps = 60.0f;
-        newAnimation.steps = 0.0f;
+    newAnimation.beginPos = NPCBody->getWorldTransform().getOrigin();
+    newAnimation.beginRot = NPCBody->getWorldTransform().getOrigin().normalize();
 
-        newAnimation.time = 5.0f;
-        newAnimation.percent = 0.0f;
+    newAnimation.endPos = Vec3(-2000.0f, 0, 1500.0f);
+    newAnimation.endRot = NPCBody->getWorldTransform().getOrigin().normalize();
 
-        m_Animations.AddExisting(e, newAnimation);
-    }
+    newAnimation.maxSteps = 20.0f;
+    newAnimation.steps = 0.0f;
+
+    newAnimation.time = 5.0f;
+    newAnimation.percent = 0.0f;
+
+    m_Animations.AddExisting(e, newAnimation);
+    m_NPCs.Get(e)->State = NPCState::ANIMATING;
 }
 
 void CGame::Pathfind(Entity e) {
@@ -160,6 +175,9 @@ void CGame::DirectNPC(Entity e) {
         case NPCState::SLEEPING :
             Sleep(e);
             break;
+        case NPCState::ANIMATING :
+            Animate(e);
+            break;
         case NPCState::WANDER :
             Wander(e);
             break;
@@ -191,7 +209,7 @@ void CGame::PlaceNPC(Vec3 startPos, Vec3 lookDirection) {
     btTransform trans;
 
     Vec3 newPos = Vec3(startPos.x, startPos.y, startPos.z) + lookDirection * 5000.0f;
-    trans.setOrigin(Vec3(newPos.x, 500.0f, newPos.z));
+    trans.setOrigin(Vec3(newPos.x, 100.0f, newPos.z));
 
     f32 mass = 0.0f; // For now were making this static until we get a proper NPC movement system.
     f32 friction = 0.0f;
