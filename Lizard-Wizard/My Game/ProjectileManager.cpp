@@ -23,13 +23,6 @@ ModelInstance GetSphereModel(btRigidBody* body) {
     return instance;
 }
 
-void RBSetCcd(btRigidBody* body, f32 threshold, f32 radius) {
-#ifndef _DEBUG
-    body->setCcdMotionThreshold(threshold);
-    body->setCcdSweptSphereRadius(radius);
-#endif
-}
-
 void CGame::GenerateSimProjectile(
     btCollisionObject* caster, 
     const Vec3 startPos, 
@@ -78,9 +71,7 @@ void CGame::GenerateSimProjectile(
         m_pDynamicsWorld->addRigidBody(projectile, 2, 0b00001);
 
         // Set real-time attributes.
-        projectile->getWorldTransform().setOrigin(orig);
-        projectile->setLinearVelocity(Vec3(velDirection * projectileVelocity));
-        projectile->setAngularVelocity(Vec3(0, 0, 0));
+        RBTeleportLaunch(projectile, orig, Vec3(velDirection * projectileVelocity));
 
         // Continuous Convex Collision (NOTE) Ethan : This is expensive, so only use it for projectiles.
         //SetRigidBodyCcd(projectile, 10.0, 75.0f);
@@ -175,7 +166,7 @@ void CGame::StripProjectile(Entity e) {
 
     // Change Attributes
     Vec3 orig = Vec3(FLT_MAX, FLT_MAX, FLT_MAX);
-    RBSetOriginForced(projectile, orig);
+    RBTeleport(projectile, orig);
 
     // Move lights
     m_pRenderer->lights.Get(e)->position = *(Vec4*)&orig;
@@ -200,7 +191,7 @@ void CGame::InitializeProjectiles() {
 
         // Continuous Convex Collision (NOTE) Ethan : This is expensive, so only use it for projectiles.
         // DISABLED UNTIL FIXED IN DEBUG
-        RBSetCcd(newBody, 50.0, 75.0f);
+        RBSetCcd(newBody, 0.0001, 75.0f);
 
         // Prepare light
         Light newLight = { Vec4(FLT_MAX, FLT_MAX, FLT_MAX ,0), Vec4{150.0f, 30.0f, 10.0f, 0} };

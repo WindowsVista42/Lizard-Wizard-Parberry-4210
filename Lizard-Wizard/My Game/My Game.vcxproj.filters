@@ -22,6 +22,8 @@
     <ClCompile Include="TestingEnvironment.cpp" />
     <ClCompile Include="AnimationManager.cpp" />
     <ClCompile Include="Interpolation.cpp" />
+    <ClCompile Include="PlayerManager.cpp" />
+    <ClCompile Include="DrawManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CustomBind.h" />

@@ -17,7 +17,7 @@ ModelInstance GetNPCModel(btRigidBody* body) {
     btBoxShape* boxShape = reinterpret_cast<btBoxShape*>(currentShape);
 
 
-    instance.model = (u32)ModelIndex::ObeliskEnemy;
+    instance.model = (u32)ModelIndex::Obelisk;
     instance.world = MoveRotateScaleMatrix(body->getWorldTransform().getOrigin(), *(Quat*)&body->getWorldTransform().getRotation(), boxShape->getHalfExtentsWithMargin());
     instance.texture = 1;
 
@@ -248,7 +248,7 @@ void CGame::StripNPC() {
 
     // Set attributes.
     Vec3 orig = Vec3(FLT_MAX, FLT_MAX, FLT_MAX);
-    RBSetOriginForced(body, orig);
+    RBTeleport(body, orig);
 
     // Move lights
     m_pRenderer->lights.Get(e)->position = *(Vec4*)&orig;

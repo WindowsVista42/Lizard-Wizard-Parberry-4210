@@ -166,6 +166,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AnimationManager.cpp" />
+    <ClCompile Include="DrawManager.cpp" />
     <ClCompile Include="Effects\BloomEffect.cpp" />
     <ClCompile Include="Effects\EffectsCommon.cpp" />
     <ClCompile Include="GenerationManager.cpp" />
@@ -178,6 +179,7 @@
     <ClCompile Include="Effects\LightingEffect.cpp" />
     <ClCompile Include="NPCManager.cpp" />
     <ClCompile Include="PhysicsManager.cpp" />
+    <ClCompile Include="PlayerManager.cpp" />
     <ClCompile Include="ProjectileManager.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Game.cpp" />

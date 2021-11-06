@@ -236,4 +236,59 @@ public:
     }
 };
 
+struct Action {
+    u32 max_cooldown;
+    u32 max_active;
+
+    f32 windup;
+    f32 winddown;
+
+    f32 duration;
+    Group active;
+
+    f32 cooldown;
+    Group timers;
+};
+
+class Ecs {
+public:
+    template <typename A, typename T, typename F>
+    static void RemoveConditionally(T& table, Group& group, const F& filter) {
+        std::vector<Entity> to_remove;
+
+        for every(index, group.Size()) {
+            Entity e = group.Entities()[index];
+            A* t = table.Get(e);
+
+            if (filter(t)) {
+                to_remove.push_back(e);
+            }
+        }
+
+        for every(index, to_remove.size()) {
+            group.Remove(to_remove[index]);
+            table.Remove(to_remove[index]);
+        }
+    }
+
+    static void ActivateAction(Table<f32>& timers, Action& action) {
+        if (action.timers.Size() < action.max_cooldown && action.active.Size() < action.max_active) {
+            Entity e = Entity();
+            action.active.AddExisting(e);
+            timers.AddExisting(e, action.duration);
+
+            e = Entity();
+            action.timers.AddExisting(e);
+            timers.AddExisting(e, action.cooldown);
+        }
+    }
+
+    template <typename F>
+    static void ApplyEvery(Group& group, F& function) {
+        for every(index, group.Size()) {
+            function(group.Entities()[index]);
+        }
+    }
+};
+
 #endif

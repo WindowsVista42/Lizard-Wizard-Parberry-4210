@@ -125,12 +125,26 @@ private:
     Group m_TestingWallsFloors;
     Group m_TestingModels;
 
-
     i32 randomSeed;
 
     bool m_bDrawFrameRate = false; ///< Draw the frame rate.
     f32 m_frameRate;
     bool m_bDrawHelpMessage = true; ///< Draw the help message.
+
+
+    //TODO(sean): move these out of globals
+    f32 player_yaw = 0.0f;
+    f32 player_pitch = 0.0f;
+    f32 player_sens = 0.0333f;
+    
+    Vector3 flycam_pos = { -10000.0f, 0.0f, -10000.0f };
+    f32 flycam_speed = 1500.0f;
+    
+    bool flycam_enabled = false;
+    u32 render_mode = 1;
+
+    Action m_DashAction;
+    Action m_JumpAction;
     
     ////////////////////////
     // Internal Functions //
@@ -195,14 +209,18 @@ private:
     void RemoveRigidBody(btRigidBody*);
     void AddRigidBody(btRigidBody*, i32, i32);
     void RBSetMassFriction(btRigidBody*, f32, f32);
-    void RBSetOriginForced(btRigidBody*, Vec3);
+    void RBSetCcd(btRigidBody*, f32, f32);
+    void RBTeleportLaunch(btRigidBody*, Vec3, Vec3);
+    void RBTeleport(btRigidBody*, Vec3);
     void DestroyPhysicsObject(btCollisionShape*);
     void InitializePhysics();
 
 
     // PLAYER MANAGER //
-
-
+    void InitializePlayer();
+    void PlayerInput();
+    void UpdatePlayer();
+    void RenderPlayer();
 
     // UI MANAGER //
 
@@ -252,8 +270,6 @@ private:
     void InitializeProjectiles();
     void StripProjectile(Entity);
 
-
-
     // NPC MANAGER //
     void Animate(Entity);
     void Sleep(Entity);
@@ -269,9 +285,15 @@ private:
 
     // ANIMATION MANAGER //
 
-
     // TESTING ROOM //
     void CreateTestingEnvironment();
+
+    // UPDATE //
+    void Update();
+    void EcsUpdate();
+
+    // DRAW //
+    void DrawDebugModelsOnRB();
 
 public:
     Renderer* m_pRenderer; ///< Pointer to renderer.

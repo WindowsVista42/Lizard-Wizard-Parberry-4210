@@ -12,6 +12,13 @@
 */
 static CGame* Self;
 
+void CGame::RBSetCcd(btRigidBody* body, f32 threshold, f32 radius) {
+#ifndef _DEBUG
+    body->setCcdMotionThreshold(threshold);
+    body->setCcdSweptSphereRadius(radius);
+#endif
+}
+
 // Note(Ethan) : These functions help in the creation of Bullet3 physics objects.
 btTransform CGame::NewTransform(btCollisionShape* shape, Vec3 origin) {
     btTransform startTransform;
@@ -172,9 +179,15 @@ void CGame::RBSetMassFriction(btRigidBody* body, f32 mass, f32 friction) {
     body->setFriction(friction);
 }
 
-void CGame::RBSetOriginForced(btRigidBody* body, Vec3 origin) {
+void CGame::RBTeleport(btRigidBody* body, Vec3 origin) {
     body->getWorldTransform().setOrigin(origin);
     body->clearForces();
+}
+
+void CGame::RBTeleportLaunch(btRigidBody* body, Vec3 origin, Vec3 velocity) {
+    body->getWorldTransform().setOrigin(origin);
+    body->clearForces();
+    body->setLinearVelocity(velocity);
 }
 
 void CGame::DestroyPhysicsObject(btCollisionShape* shape) {
@@ -206,6 +219,8 @@ void CGame::InitializePhysics() {
     // m_Player Rigidbody | (Note) : Create this first, as the m_Player is currently indexed as [0] in the collision table.
     {
         btRigidBody* rb = CreateCapsuleObject(100.0f, 250.0f, Vec3(-10000.0, 100.0, -10000.0), 1.0f, 0.5f, 2, 0b00001);
+        RBSetMassFriction(rb, 1.0, 0.1);
+        RBSetCcd(rb, 1e-7, 200.0f);
         m_Player = m_RigidBodyMap.at(rb);
     }
 }
