@@ -55,7 +55,7 @@ struct NPC {
     NPCState::e State;
     NPC() :
         Behavior(NPCBehavior::TURRET),
-        State(NPCState::SLEEPING)
+        State(NPCState::MOVING)
     {}
 };
 
@@ -255,6 +255,7 @@ private:
 
 
     // NPC MANAGER //
+    void Animate(Entity);
     void Sleep(Entity);
     void Wander(Entity);
     void Move(Entity);

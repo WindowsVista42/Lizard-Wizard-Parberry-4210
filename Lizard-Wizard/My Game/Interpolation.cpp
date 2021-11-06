@@ -3,9 +3,9 @@
 // Vector Specific Interpolation
 Vec3 Vec3Lerp(Vec3 from, Vec3 to, f32 percent) {
     Vec3 newVector = Vec3(
-        from.x + (to.x - from.x) * percent,
-        from.y + (to.y - from.y) * percent,
-        from.z + (to.z - from.z) * percent
+        from.x + (to.x * percent),
+        from.y + (to.y * percent),
+        from.z + (to.z * percent)
     );
     return newVector;
 }
