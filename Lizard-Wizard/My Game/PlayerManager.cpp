@@ -9,7 +9,9 @@ static Entity Ae;
 static Entity We;
 static Entity Se;
 
-const static f32 move_timer = 0.125f;
+static Entity Staffe;
+
+const static f32 move_timer = 0.05f;
 
 f32 WindupWinddown(const f32 time, const f32 windup, const f32 winddown, const f32 duration) {
     if (time < 0.0f) {
@@ -42,6 +44,14 @@ void CGame::InitializePlayer() {
     Ae = m_Timers.Add(move_timer);
     We = m_Timers.Add(move_timer);
     Se = m_Timers.Add(move_timer);
+
+    Staffe = Entity();
+    ModelInstance staff_mi;
+    staff_mi.model = ModelIndex::Staff;
+    staff_mi.texture = TextureIndex::Other;
+    staff_mi.world = MoveScaleMatrix(Vec3(0.0f), Vec3(1000.0));
+    m_ModelInstances.AddExisting(Staffe, staff_mi);
+    m_ModelsActive.AddExisting(Staffe);
 }
 
 void CGame::PlayerInput() {
@@ -225,6 +235,23 @@ void CGame::UpdatePlayer() {
         flycam_pos += movedir * flycam_speed * m_pTimer->GetFrameTime();
     }
 
+    m_pRenderer->m_pCamera->SetYaw(player_yaw);
+    m_pRenderer->m_pCamera->SetPitch(player_pitch);
+
+    if (!flycam_enabled) {
+        btRigidBody* body = *m_RigidBodies.Get(m_Player);
+
+        btTransform trans;
+        body->getMotionState()->getWorldTransform(trans);
+        Light* light = m_pRenderer->lights.Get(m_Player);
+
+        m_pRenderer->m_pCamera->MoveTo(*(Vector3*)&trans.getOrigin());
+        light->position = *(Vec4*)&trans.getOrigin();
+
+    } else {
+        m_pRenderer->m_pCamera->MoveTo(flycam_pos);
+    }
+
     {
         movedir = Vec3::Zero;
         Vec3 lookdir = m_pRenderer->m_pCamera->GetViewVector();
@@ -233,25 +260,25 @@ void CGame::UpdatePlayer() {
 
         {
             f32* time = m_Timers.Get(De);
-            f32 factor = WindupWinddown(*time, 0.1f, 0.02f, move_timer);
+            f32 factor = WindupWinddown(*time, 0.02f, 0.02f, move_timer);
             movedir += normal * factor;
         }
 
         {
             f32* time = m_Timers.Get(Ae);
-            f32 factor = WindupWinddown(*time, 0.1f, 0.02f, move_timer);
+            f32 factor = WindupWinddown(*time, 0.02f, 0.02f, move_timer);
             movedir -= normal * factor;
         }
 
         {
             f32* time = m_Timers.Get(We);
-            f32 factor = WindupWinddown(*time, 0.1f, 0.02f, move_timer);
+            f32 factor = WindupWinddown(*time, 0.02f, 0.02f, move_timer);
             movedir += lookdir * factor;
         }
 
         {
             f32* time = m_Timers.Get(Se);
-            f32 factor = WindupWinddown(*time, 0.1f, 0.02f, move_timer);
+            f32 factor = WindupWinddown(*time, 0.02f, 0.02f, move_timer);
             movedir -= lookdir * factor;
         }
     }
@@ -279,19 +306,40 @@ void CGame::UpdatePlayer() {
     Ecs::ApplyEvery(m_JumpAction.active, [=](Entity e) {
         f32* time = m_Timers.Get(e);
 
-        f32 factor = WindupWinddown(*time, m_JumpAction.windup, m_JumpAction.winddown, m_JumpAction.duration);;
+        f32 factor = WindupWinddown(*time, m_JumpAction.windup, m_JumpAction.winddown, m_JumpAction.duration);
 
         Vec3 v = player_body->getLinearVelocity();
         player_body->setLinearVelocity(Vec3(v.x, 2000.0f * factor + 2000.0f, v.z));
     });
 
-    Ecs::RemoveConditionally<f32, Table<f32>>(m_Timers, m_DashAction.active, [](f32* a) -> bool { return *a <= 0.0f; });
-    Ecs::RemoveConditionally<f32, Table<f32>>(m_Timers, m_DashAction.timers, [](f32* a) -> bool { return *a <= 0.0f; });
+    auto CheckTimer = [=](Entity e) { return *m_Timers.Get(e) <= 0.0f; };
+    auto RemoveTimer = [=](Entity e) { m_Timers.Remove(e); };
 
-    Ecs::RemoveConditionally<f32, Table<f32>>(m_Timers, m_JumpAction.active, [](f32* a) -> bool { return *a <= 0.0f; });
-    Ecs::RemoveConditionally<f32, Table<f32>>(m_Timers, m_JumpAction.timers, [](f32* a) -> bool { return *a <= 0.0f; });
+    Ecs::RemoveConditionally(m_DashAction.active, CheckTimer, RemoveTimer);
+    Ecs::RemoveConditionally(m_DashAction.timers, CheckTimer, RemoveTimer);
+
+    Ecs::RemoveConditionally(m_JumpAction.active, CheckTimer, RemoveTimer);
+    Ecs::RemoveConditionally(m_JumpAction.timers, CheckTimer, RemoveTimer);
+
+    {
+        ModelInstance* mi = m_ModelInstances.Get(Staffe);
+        LBaseCamera* camera = m_pRenderer->m_pCamera;
+
+        Vec3 pos = camera->GetPos();
+        Vec3 orient;
+        orient.x = sinf(camera->GetPitch() - 1.0f) * sinf(camera->GetYaw());
+        orient.z = sinf(camera->GetPitch() - 1.0f) * cosf(camera->GetYaw());
+        orient.y = sinf(camera->GetPitch() - 1.0f);
+
+        f32 dist = 100.0f;
+        pos += dist * orient;
+
+        Quat rot = Quat::CreateFromYawPitchRoll(camera->GetYaw(), camera->GetPitch() + 1.0f, 0);
+
+        Vec3 scl = Vec3(100.0f);
+        mi->world = MoveRotateScaleMatrix(pos, rot, scl);
+    }
 }
 
 void CGame::RenderPlayer() {
-
 }

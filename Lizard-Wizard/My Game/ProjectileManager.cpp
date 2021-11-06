@@ -43,6 +43,10 @@ void CGame::GenerateSimProjectile(
             return;
         }
 
+        static u32 count = 0;
+        count += 1;
+        printf("%d\n", count);
+
         Entity e = m_ProjectilesCache.RemoveTail();
         m_ModelsActive.AddExisting(e);
         m_ProjectilesActive.AddExisting(e);
@@ -160,7 +164,7 @@ void CGame::GenerateRayProjectile(
 
 void CGame::StripProjectile(Entity e) {
     m_Timers.Remove(e);
-    m_ProjectilesActive.Remove(e);
+    //m_ProjectilesActive.Remove(e); // dont uncomment, youll end up removing things twice which is obviously bad
     m_ProjectilesCache.AddExisting(e);
     btRigidBody* projectile = *m_RigidBodies.Get(e);
 

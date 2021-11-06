@@ -64,6 +64,7 @@ void CGame::LoadModels() {
     m_pRenderer->LoadModel("suzanne", ModelIndex::Suzanne);
     m_pRenderer->LoadModel("obelisk", ModelIndex::Obelisk);
     m_pRenderer->LoadModel("sentry", ModelIndex::Sentry);
+    m_pRenderer->LoadModel("staff", ModelIndex::Staff);
 }
 
 void CGame::LoadImages(){
@@ -207,8 +208,8 @@ void CGame::EcsUpdate() {
         m_Timers.Components()[index] -= m_pTimer->GetFrameTime();
     }
 
-    static std::vector<Entity> toRemove;
-    toRemove.clear();
+    //static std::vector<Entity> toRemove;
+    //toRemove.clear();
 
     // This handles NPCs and lighting.
     for every(index, m_NPCsActive.Size()) {
@@ -229,41 +230,18 @@ void CGame::EcsUpdate() {
         DirectNPC(e);
     }
 
-    // This handles projectiles and lighting.
-    for every(index, m_ProjectilesActive.Size()) {
-        Entity e = m_ProjectilesActive.Entities()[index];
+    Ecs::ApplyEvery(m_ProjectilesActive, [=](Entity e) {
         btTransform trans;
-
+    
         (*m_RigidBodies.Get(e))->getMotionState()->getWorldTransform(trans);
         m_pRenderer->lights.Get(e)->position = *(Vec4*)&trans.getOrigin();
         
         (*m_ModelInstances.Get(e)).world = MoveScaleMatrix((*m_RigidBodies.Get(e))->getWorldTransform().getOrigin(), Vector3(25.0f));
-
-        if (*m_Timers.Get(e) < 0.0) {
-            toRemove.push_back(e);
-        }
-    }
+    });
 
     CustomPhysicsStep();
 
-    // Strip Projectiles.
-    for every(index, toRemove.size()) {
-        StripProjectile(toRemove[index]);
-    }
-
-    if (!flycam_enabled) {
-        btRigidBody* body = *m_RigidBodies.Get(m_Player);
-
-        btTransform trans;
-        body->getMotionState()->getWorldTransform(trans);
-        Light* light = m_pRenderer->lights.Get(m_Player);
-
-        m_pRenderer->m_pCamera->MoveTo(*(Vector3*)&trans.getOrigin());
-        light->position = *(Vec4*)&trans.getOrigin();
-
-    } else {
-        m_pRenderer->m_pCamera->MoveTo(flycam_pos);
-    }
+    Ecs::RemoveConditionally(m_ProjectilesActive, [=](Entity e) { return *m_Timers.Get(e) <= 0.0; }, [=](Entity e) { StripProjectile(e); });
 }
 
 /// Ask the object manager to draw the game objects. The renderer is notified
@@ -273,12 +251,6 @@ void CGame::RenderFrame() {
     //NOTE(sean): Everything out here will technically be known
     // *before* we start rendering, so I dont want to give the impression
     // that we create it *while* rendering, although you certainly can...
-    m_pRenderer->m_pCamera->SetYaw(player_yaw);
-    m_pRenderer->m_pCamera->SetPitch(player_pitch);
-
-    static f32 time = 0.0;
-    time += m_pTimer->GetFrameTime();
-
     m_pRenderer->BeginFrame();
 
     if (render_mode & 0b01) {

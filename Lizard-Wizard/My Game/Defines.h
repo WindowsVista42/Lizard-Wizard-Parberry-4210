@@ -159,6 +159,7 @@ namespace SoundIndex { enum e : u32 {
 
 namespace ModelIndex { enum e : u32 {
     Cube, Suzanne, Obelisk, Sentry,
+    Staff, Orb,
     Count // keep this last
 };}
 

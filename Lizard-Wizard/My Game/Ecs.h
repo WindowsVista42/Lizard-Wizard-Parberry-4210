@@ -252,22 +252,21 @@ struct Action {
 
 class Ecs {
 public:
-    template <typename A, typename T, typename F>
-    static void RemoveConditionally(T& table, Group& group, const F& filter) {
-        std::vector<Entity> to_remove;
+    template <typename F, typename R>
+    static void RemoveConditionally(Group& group, const F& filter, const R& remove) {
+        static std::vector<Entity> to_remove;
+        to_remove.clear();
 
         for every(index, group.Size()) {
             Entity e = group.Entities()[index];
-            A* t = table.Get(e);
-
-            if (filter(t)) {
+            if (filter(e)) {
                 to_remove.push_back(e);
             }
         }
 
-        for every(index, to_remove.size()) {
-            group.Remove(to_remove[index]);
-            table.Remove(to_remove[index]);
+        for (Entity e : to_remove) {
+            group.Remove(e);
+            remove(e);
         }
     }
 
