@@ -32,15 +32,15 @@ void CGame::InitializePlayer() {
     m_DashAction.cooldown = 4.0f;
     m_DashAction.windup = 0.05f;
     m_DashAction.winddown = 0.05f;
-    m_DashAction.delay = 1.0f;
+    m_DashAction.delay = 0.0f;
 
     m_JumpAction.max_active = 1;
-    m_JumpAction.max_cooldown = 2;
+    m_JumpAction.max_cooldown = 1;
     m_JumpAction.duration = 0.2f;
-    m_JumpAction.cooldown = 3.0f;
+    m_JumpAction.cooldown = 128.0f;
     m_JumpAction.windup = 0.02f;
     m_JumpAction.winddown = 0.1f;
-    m_JumpAction.delay = 1.0f;
+    m_JumpAction.delay = 0.5f;
 
     De = m_Timers.Add(move_timer);
     Ae = m_Timers.Add(move_timer);
@@ -74,31 +74,7 @@ void CGame::PlayerInput() {
 
     // Print screenshot button thing that will do stuff
     if (m_pKeyboard->TriggerDown('P')) {
-        //m_pRenderer->m_screenShot = true;
-        Vec3 Pos = m_pRenderer->m_pCamera->GetPos();
-        Vec3 Direction = Pos + Vec3(0, -1.0f, 0) * 500.0f;
-
-        btCollisionWorld::ClosestRayResultCallback rayResults(Pos, Direction);
-        m_pDynamicsWorld->rayTest(Pos, Direction, rayResults);
-        rayResults.m_collisionFilterGroup = 0b00100;
-        rayResults.m_collisionFilterMask = 0b00001;
-
-        btCollisionObject* hitObject = const_cast<btCollisionObject*>(rayResults.m_collisionObject);
-
-        Vec3 hitPosition = rayResults.m_hitPointWorld;
-
-        RayProjectile newRay;
-        newRay.Pos1 = Pos;
-        newRay.Pos2 = Direction;
-        newRay.Color = Colors::AliceBlue;
-        m_currentRayProjectiles.push_back(newRay);
-
-        if (rayResults.hasHit()) {
-            printf("On ground.\n");
-        }
-        else {
-            printf("In air.\n");
-        }
+        m_pRenderer->m_screenShot = true;
     }
 
     {
@@ -233,7 +209,7 @@ void CGame::UpdatePlayer() {
     // Check Player Location
     {
         Vec3 Pos = m_pRenderer->m_pCamera->GetPos();
-        Vec3 Direction = Pos + Vec3(0, -1.0f, 0) * 500.0f;
+        Vec3 Direction = Pos + Vec3(0, -1.0f, 0) * 255.0f;
 
         btCollisionWorld::ClosestRayResultCallback rayResults(Pos, Direction);
         m_pDynamicsWorld->rayTest(Pos, Direction, rayResults);
@@ -244,13 +220,26 @@ void CGame::UpdatePlayer() {
 
         Vec3 hitPosition = rayResults.m_hitPointWorld;
 
-        if (rayResults.hasHit() && m_InAir.Contains(m_Player)) {
-            //printf("On ground.\n");
-            m_InAir.Remove(m_Player);
+        if (rayResults.hasHit()) {
+            printf("On ground.\n");
+        } else {
+            printf("In air.\n");
         }
-        else {
-            //printf("In air.\n");
-            m_InAir.AddExisting(m_Player);
+
+        if (rayResults.hasHit() && m_InAir.Contains(m_Player)) {
+            printf("Player back on ground.\n");
+            m_InAir.Remove(m_Player);
+        } else if(rayResults.hasHit()) {
+            printf("On ground.\n");
+        } else {
+            printf("In air.\n");
+            if (!m_InAir.Contains(m_Player)) {
+                m_InAir.AddExisting(m_Player);
+            }
+        }
+
+        if (!m_InAir.Contains(m_Player)) {
+            m_JumpAction.timers.Clear();
         }
     }
 
@@ -365,8 +354,9 @@ void CGame::UpdatePlayer() {
         player_body->setLinearVelocity(Vec3(v.x, 2000.0f * factor + 2000.0f, v.z));
     });
 
+    auto CheckTimer = [=](Entity e) {return *m_Timers.Get(e) <= 0.0f; };
     auto CheckTimerDash = [=](Entity e) { return *m_Timers.Get(e) <= -m_DashAction.delay; };
-    auto CheckTimerJump = [=](Entity e) { return *m_Timers.Get(e) <= -m_JumpAction.delay || m_InAir.Contains(m_Player); };
+    auto CheckTimerJump = [=](Entity e) { return *m_Timers.Get(e) <= -m_JumpAction.delay; };
     auto RemoveTimer = [=](Entity e) { m_Timers.Remove(e); };
 
     {
@@ -384,11 +374,11 @@ void CGame::UpdatePlayer() {
     }
 
     // Check Jump Timer
-    Ecs::RemoveConditionally(m_JumpAction.active, CheckTimerJump, RemoveTimer);
+    Ecs::RemoveConditionally(m_JumpAction.active, CheckTimer, RemoveTimer);
     Ecs::RemoveConditionally(m_JumpAction.timers, CheckTimerJump, RemoveTimer);
 
     // Check Dash Timer
-    Ecs::RemoveConditionally(m_DashAction.active, CheckTimerDash, RemoveTimer);
+    Ecs::RemoveConditionally(m_DashAction.active, CheckTimer, RemoveTimer);
     Ecs::RemoveConditionally(m_DashAction.timers, CheckTimerDash, RemoveTimer);
 
 }

@@ -62,3 +62,13 @@ Vec3 RandomPointIn2DPlane(f32 bounding) {
 
     return Vec3(xnoise, 0.0f, znoise);
 }
+
+Vec3 BiasedPointIn2DPlane(f32 bounding, Vec3 origin, Vec3 bias) {
+    Vec3 direction = bias - origin;
+
+    direction.Normalize();
+
+    direction = JitterVec3(direction, -bounding, bounding);
+
+    return Vec3(direction.x, 0.0f, direction.z);
+}
