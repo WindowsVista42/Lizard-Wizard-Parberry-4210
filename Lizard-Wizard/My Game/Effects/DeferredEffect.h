@@ -23,6 +23,8 @@ public:
     void XM_CALLCONV SetProjection(DirectX::FXMMATRIX projection) override;
     void XM_CALLCONV SetMatrices(DirectX::FXMMATRIX world, DirectX::CXMMATRIX view, DirectX::CXMMATRIX projection) override;
 
+    void SetSolidColor(Vec4 solid_color);
+
     //TODO(sean): state setting functions
     //Something to set textures, idk
     void SetTextures(D3D12_GPU_DESCRIPTOR_HANDLE first_texture);
@@ -42,6 +44,7 @@ private:
     XMMATRIX m_view;
     XMMATRIX m_projection;
     XMMATRIX m_worldViewProjection;
+    Vec4 m_solid_color;
     DirectX::GraphicsResource m_constantBuffer;
 
     D3D12_GPU_DESCRIPTOR_HANDLE m_firstTexture;

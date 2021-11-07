@@ -242,6 +242,7 @@ struct Action {
 
     f32 windup;
     f32 winddown;
+    f32 delay;
 
     f32 duration;
     Group active;

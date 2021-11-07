@@ -32,13 +32,15 @@ void CGame::InitializePlayer() {
     m_DashAction.cooldown = 4.0f;
     m_DashAction.windup = 0.05f;
     m_DashAction.winddown = 0.05f;
+    m_DashAction.delay = 1.0f;
 
     m_JumpAction.max_active = 1;
     m_JumpAction.max_cooldown = 2;
     m_JumpAction.duration = 0.2f;
-    m_JumpAction.cooldown = 4.0f;
+    m_JumpAction.cooldown = 3.0f;
     m_JumpAction.windup = 0.02f;
     m_JumpAction.winddown = 0.1f;
+    m_JumpAction.delay = 1.0f;
 
     De = m_Timers.Add(move_timer);
     Ae = m_Timers.Add(move_timer);
@@ -324,6 +326,7 @@ void CGame::UpdatePlayer() {
     // Not sure about this syntax, might change because it might explode compile times
     Ecs::ApplyEvery(m_DashAction.active, [=](Entity e) {
         f32* time = m_Timers.Get(e);
+        if (*time < 0.0f) { return; }
 
         f32 factor = WindupWinddown(*time, m_DashAction.windup, m_DashAction.winddown, m_DashAction.duration);;
 
@@ -333,12 +336,23 @@ void CGame::UpdatePlayer() {
 
     Ecs::ApplyEvery(m_JumpAction.active, [=](Entity e) {
         f32* time = m_Timers.Get(e);
+        if (*time < 0.0f) { return; }
 
         f32 factor = WindupWinddown(*time, m_JumpAction.windup, m_JumpAction.winddown, m_JumpAction.duration);
 
         Vec3 v = player_body->getLinearVelocity();
         player_body->setLinearVelocity(Vec3(v.x, 2000.0f * factor + 2000.0f, v.z));
     });
+
+    auto CheckTimerDash = [=](Entity e) { return *m_Timers.Get(e) <= -m_DashAction.delay; };
+    auto CheckTimerJump = [=](Entity e) { return *m_Timers.Get(e) <= -m_JumpAction.delay; };
+    auto RemoveTimer = [=](Entity e) { m_Timers.Remove(e); };
+
+    Ecs::RemoveConditionally(m_DashAction.active, CheckTimerDash, RemoveTimer);
+    Ecs::RemoveConditionally(m_DashAction.timers, CheckTimerDash, RemoveTimer);
+
+    Ecs::RemoveConditionally(m_JumpAction.active, CheckTimerJump, RemoveTimer);
+    Ecs::RemoveConditionally(m_JumpAction.timers, CheckTimerJump, RemoveTimer);
 
     {
         ModelInstance* mi = m_ModelInstances.Get(Staffe);

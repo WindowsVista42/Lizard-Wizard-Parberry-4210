@@ -1066,6 +1066,7 @@ void Renderer::DrawModelInstance(ModelInstance* instance) {
     m_deferred->SetWorld(instance->world);
     m_deferred->SetView(XMLoadFloat4x4(&m_view));
     m_deferred->SetTextures(m_pDescriptorHeap->GetGpuHandle(instance->texture));
+    m_deferred->SetSolidColor(Vec4(1));
 
     m_deferred->Apply(m_pCommandList);
 
@@ -1078,3 +1079,26 @@ void Renderer::DrawModelInstance(ModelInstance* instance) {
     m_pCommandList->DrawIndexedInstanced(pmodel->index_count, 1, 0, 0, 0);
 }
 
+//void Renderer::DrawParticleInstance(ParticleInstance* instance) {
+//    //TODO(sean): check if this can be moved out when we finalize the debug and game drawing APIs
+//    m_deferred->SetWorld(instance->world);
+//    m_deferred->SetView(XMLoadFloat4x4(&m_view));
+//    m_deferred->SetTextures(m_pDescriptorHeap->GetGpuHandle(0));
+//
+//    Vec4 solid_color = *(Vec4*)&instance->color;
+//    solid_color.w = instance->brightness;
+//    m_deferred->SetSolidColor(solid_color);
+//
+//    m_deferred->Apply(m_pCommandList);
+//
+//    GameModel* pmodel = &m_models[instance->model];
+//    m_pCommandList->IASetVertexBuffers(0, 1, pmodel->vertex_view.get());
+//    m_pCommandList->IASetIndexBuffer(pmodel->index_view.get());
+//
+//    m_pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+//
+//    m_pCommandList->DrawIndexedInstanced(pmodel->index_count, 1, 0, 0, 0);
+//}
+
+void Renderer::UpdateParticles() {
+}
