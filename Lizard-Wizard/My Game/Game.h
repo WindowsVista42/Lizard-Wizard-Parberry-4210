@@ -53,9 +53,10 @@ struct Transform {
 struct NPC {
     NPCBehavior::e Behavior;
     NPCState::e State;
+    Vec3 QueuedMovement;
     NPC() :
         Behavior(NPCBehavior::TURRET),
-        State(NPCState::MOVING)
+        State(NPCState::SLEEPING)
     {}
 };
 
@@ -104,6 +105,15 @@ private:
 
     // Parenting system
     Table<Group> m_Parents;
+
+    // Health Table
+    Table<i32> m_HealthInstances;
+
+    // Mana Table
+    Table<i32> m_ManaInstances;
+
+    // In-Air Table
+    Group m_InAir;
 
     // Rooms / Generation Tables
     std::vector<Room> currentRooms;
@@ -274,7 +284,7 @@ private:
     void Animate(Entity);
     void Sleep(Entity);
     void Wander(Entity);
-    void Move(Entity);
+    void Move(Entity, Vec3);
     void Pathfind(Entity);
     void Attack(Entity);
     void Search(Entity);

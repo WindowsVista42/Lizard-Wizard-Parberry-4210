@@ -28,7 +28,6 @@ void CGame::Animate(Entity e) {
     Animation* currentAnimation = m_Animations.Get(e);
     NPC* currentNPC = m_NPCs.Get(e);
     btRigidBody* npcBody = *m_RigidBodies.Get(e);
-
     if (currentAnimation->steps == currentAnimation->maxSteps) {
         m_Animations.Remove(e);
         currentNPC->State = NPCState::SLEEPING;
@@ -37,7 +36,7 @@ void CGame::Animate(Entity e) {
         currentAnimation->percent = currentAnimation->steps / currentAnimation->maxSteps;
         currentAnimation->steps = currentAnimation->steps + 1.0f;
 
-        Vec3 origin = Vec3Lerp(currentAnimation->beginPos, currentAnimation->endPos, currentAnimation->percent);
+        Vec3 origin = LinearLerp(currentAnimation->beginPos, currentAnimation->endPos, currentAnimation->percent);
         btTransform newTransform;
         newTransform.setBasis(npcBody->getWorldTransform().getBasis());
         newTransform.setOrigin(origin);
@@ -47,6 +46,8 @@ void CGame::Animate(Entity e) {
 }
 
 void CGame::Sleep(Entity e) {
+    NPC* currentNPC = m_NPCs.Get(e);
+
     btRigidBody* playerBody = *(m_RigidBodies.Get(m_Player));
     btRigidBody* npcBody = *m_RigidBodies.Get(e);
 
@@ -62,13 +63,14 @@ void CGame::Sleep(Entity e) {
 
     f32 distance = npcBody->getWorldTransform().getOrigin().distance(playerBody->getWorldTransform().getOrigin());
     if (distance < 5000.0f) {
-        Attack(e);
+        currentNPC->State = NPCState::WANDER;
     }
 } 
 
 void CGame::Wander(Entity e) {
-    btRigidBody* playerBody = *(m_RigidBodies.Get(m_Player));
     NPC* currentNPC = m_NPCs.Get(e);
+
+    btRigidBody* playerBody = *(m_RigidBodies.Get(m_Player));
     btRigidBody* npcBody = *m_RigidBodies.Get(e);
 
     Vec3 origin = npcBody->getWorldTransform().getOrigin();
@@ -76,14 +78,18 @@ void CGame::Wander(Entity e) {
 
     btTransform newTransform;
     newTransform.setBasis(*(btMatrix3x3*)&XMMatrixLookAtLH(origin, Vec3(1.0f, 0, 0), Vec3(0, 1.0f, 0)));
-    newTransform.setOrigin(RandomPointInRadius(npcBody->getWorldTransform().getOrigin(), 100.0f));
+    newTransform.setOrigin(npcBody->getWorldTransform().getOrigin());
+
+    currentNPC->QueuedMovement = npcBody->getWorldTransform().getOrigin() + RandomPointIn2DPlane(1500.0f);
+
+    printf("Moving to (%f, %f, %f)\n", currentNPC->QueuedMovement.x, currentNPC->QueuedMovement.y, currentNPC->QueuedMovement.z );
 
     npcBody->getMotionState()->setWorldTransform(newTransform);
     npcBody->setWorldTransform(newTransform);
     currentNPC->State = NPCState::MOVING;
 }
 
-void CGame::Move(Entity e) {
+void CGame::Move(Entity e, Vec3 moveTo) {
     // Ensuring object is placed correctly in world.
     btRigidBody* playerBody = *(m_RigidBodies.Get(m_Player));
     btRigidBody* NPCBody = *m_RigidBodies.Get(e);
@@ -104,7 +110,7 @@ void CGame::Move(Entity e) {
     newAnimation.beginPos = NPCBody->getWorldTransform().getOrigin();
     newAnimation.beginRot = NPCBody->getWorldTransform().getOrigin().normalize();
 
-    newAnimation.endPos = Vec3(-2000.0f, 0, 1500.0f);
+    newAnimation.endPos = moveTo;
     newAnimation.endRot = NPCBody->getWorldTransform().getOrigin().normalize();
 
     newAnimation.maxSteps = 20.0f;
@@ -183,7 +189,7 @@ void CGame::DirectNPC(Entity e) {
             Wander(e);
             break;
         case NPCState::MOVING :
-            Move(e);
+            Move(e, m_NPCs.Get(e)->QueuedMovement);
             break;
         case NPCState::ATTACKING :
             Attack(e);

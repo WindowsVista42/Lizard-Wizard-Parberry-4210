@@ -152,7 +152,7 @@ void CGame::PlayerInput() {
 
     if(m_pRenderer->GetHwnd() == GetFocus()) { // check if focused window is us
         // I see you looking at 
-        //    _____this
+        //    _____   this
         //     . .
         //
         // i came, i saw, i praised, the lord, then break the law.
@@ -204,6 +204,34 @@ void CGame::PlayerInput() {
 }
 
 void CGame::UpdatePlayer() {
+    static const auto JumpTimer = [=](Entity e) {return true; };
+    static const auto DashTimer = [=](Entity e) { return !m_InAir.Contains(e) && *m_Timers.Get(e) <= 0.0f; };
+    static const auto RemoveTimer = [=](Entity e) { m_Timers.Remove(e); };
+
+    // Check Player Location
+    {
+        Vec3 Pos = m_pRenderer->m_pCamera->GetPos();
+        Vec3 Direction = Vec3(0, -1.0f, 0) * 50.0f;
+
+        btCollisionWorld::ClosestRayResultCallback rayResults(Pos, Direction);
+        m_pDynamicsWorld->rayTest(Pos, Direction, rayResults);
+        rayResults.m_collisionFilterGroup = 0b00100;
+        rayResults.m_collisionFilterMask = 0b00001;
+
+        btCollisionObject* hitObject = const_cast<btCollisionObject*>(rayResults.m_collisionObject);
+
+        Vec3 hitPosition = rayResults.m_hitPointWorld;
+
+
+        if (rayResults.hasHit() && m_InAir.Contains(m_Player)) {
+            m_InAir.Remove(m_Player);
+        }
+        else {
+            m_InAir.AddExisting(m_Player);
+        }
+    }
+
+
     if (m_leftClick.pressed) {
         GenerateSimProjectile(
             *m_RigidBodies.Get(m_Player),
@@ -312,15 +340,6 @@ void CGame::UpdatePlayer() {
         player_body->setLinearVelocity(Vec3(v.x, 2000.0f * factor + 2000.0f, v.z));
     });
 
-    auto CheckTimer = [=](Entity e) { return *m_Timers.Get(e) <= 0.0f; };
-    auto RemoveTimer = [=](Entity e) { m_Timers.Remove(e); };
-
-    Ecs::RemoveConditionally(m_DashAction.active, CheckTimer, RemoveTimer);
-    Ecs::RemoveConditionally(m_DashAction.timers, CheckTimer, RemoveTimer);
-
-    Ecs::RemoveConditionally(m_JumpAction.active, CheckTimer, RemoveTimer);
-    Ecs::RemoveConditionally(m_JumpAction.timers, CheckTimer, RemoveTimer);
-
     {
         ModelInstance* mi = m_ModelInstances.Get(Staffe);
         LBaseCamera* camera = m_pRenderer->m_pCamera;
@@ -334,6 +353,15 @@ void CGame::UpdatePlayer() {
         Vec3 scl = Vec3(100.0f);
         mi->world = MoveRotateScaleMatrix(pos, rot, scl);
     }
+
+    // Check Jump Timer
+    Ecs::RemoveConditionally(m_JumpAction.active, JumpTimer, RemoveTimer);
+    Ecs::RemoveConditionally(m_JumpAction.timers, JumpTimer, RemoveTimer);
+
+    // Check Dash Timer
+    Ecs::RemoveConditionally(m_DashAction.active, DashTimer, RemoveTimer);
+    Ecs::RemoveConditionally(m_DashAction.timers, DashTimer, RemoveTimer);
+
 }
 
 void CGame::RenderPlayer() {
