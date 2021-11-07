@@ -223,8 +223,7 @@ void CGame::UpdatePlayer() {
 
         if (rayResults.hasHit() && m_InAir.Contains(m_Player)) {
             m_InAir.Remove(m_Player);
-        }
-        else {
+        } else {
             m_InAir.AddExisting(m_Player);
         }
     }
