@@ -53,6 +53,7 @@ struct Transform {
 struct NPC {
     NPCBehavior::e Behavior;
     NPCState::e State;
+    u32 SearchAttempts;
     Vec3 QueuedMovement;
     NPC() :
         Behavior(NPCBehavior::TURRET),

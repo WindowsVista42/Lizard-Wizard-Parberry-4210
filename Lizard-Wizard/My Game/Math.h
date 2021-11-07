@@ -10,3 +10,4 @@ btQuaternion CalculateVelocity(Vec3 origin, Vec3 target, f32 time);
 
 // NPC Pathing
 Vec3 RandomPointIn2DPlane(f32 bounding);
+Vec3 BiasedPointIn2DPlane(f32 bounding, Vec3 origin, Vec3 bias);
