@@ -51,11 +51,17 @@ struct ParticleInstanceDesc {
     f32 initial_speed;
     Vec3 light_color;
     Vec3 model_scale;
+    u32 model;
+    u32 texture;
+    Vec3 solid_color;
+    u32 count;
+    f32 randomness;
 };
 
 struct ParticleInstance {
     Group particles;
     Vec3 model_scale;
+    Vec3 solid_color;
     Entity light;
     ModelInstance particle_instance;
 };

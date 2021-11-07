@@ -130,6 +130,7 @@ private:
     //std::vector<RayProjectile> m_currentRayProjectiles;
 
     Table<Transform> m_Transforms;
+    Table<ParticleInstance> m_ParticleInstances;
 
     Group m_TestingLights;
     Group m_TestingWallsFloors;
