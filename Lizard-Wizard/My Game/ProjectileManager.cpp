@@ -16,7 +16,7 @@ ModelInstance GetSphereModel(btRigidBody* body) {
     btSphereShape* sphereShape = reinterpret_cast<btSphereShape*>(currentShape);
 
 
-    instance.model = (u32)ModelIndex::Suzanne;
+    instance.model = ModelIndex::Cube;
     instance.world = MoveScaleMatrix(body->getWorldTransform().getOrigin(), Vector3(25.0f));
     instance.texture = 1;
 
@@ -58,13 +58,11 @@ void CGame::GenerateSimProjectile(
 
         projectile->clearForces();
 
-        Vec3 offset = Vec3(100.0f, 100.0f, 50.0f);
-
         btTransform trans;
         // UPDATE(sean): changed 300.0f to 100.0f, if you looked down, projectiles were spawning in the ground which would cause crashes on debug builds.
         // Because the projectiles are spawning so close to the camera it looks really jarring, so we're shifting them up 100 units.
         // In the future, we can probably tell the projectiles to spawn from the players wand.
-        Vec3 orig = Vec3(Vec3(startPos + newDirection * 100.0f) + Vec3(0, 100.0f, 0));
+        Vec3 orig = startPos + lookDirection * 200.0f;
 
         // Set static attributes.
         RBSetMassFriction(projectile, 0.5f, 0.5f);

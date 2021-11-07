@@ -23,7 +23,7 @@ sampler Sampler : register(s0);
 cbuffer Constants : register(b0) {
     float4x4 WorldViewProjection;
     float4x4 World;
-    float4 SolidColor;
+    float4 Glow;
 }
 
 struct VertexInput {
@@ -43,11 +43,6 @@ struct PixelOutput {
     float4 Diffuse : SV_TARGET0;
     float4 Normal : SV_TARGET1;
     float4 Position : SV_TARGET2;
-};
-
-struct Light {
-    float3 Position;
-    float3 Color;
 };
 
 #endif

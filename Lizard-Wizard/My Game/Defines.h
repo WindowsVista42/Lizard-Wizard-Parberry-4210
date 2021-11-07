@@ -114,12 +114,14 @@ struct Quat : Quaternion {
 
     Quat(const Vector4& other) { *this = *(Quat*)&other; }
     Quat(const btVector4& other) { *this = *(Quat*)&other; } 
+    Quat(const btQuaternion& other) { *this = *(Quat*)&other; } 
     Quat(const XMVECTOR& other) { *this = *(Quat*)&other; }
     Quat(const XMVECTORF32& other) { *this = *(Quat*)&other; }
     Quat(const XMFLOAT4& other) { *this = *(Quat*)&other; }
 
     operator Vector4() const { return *(Vector4*)this; }
     operator btVector4() const { return *(btVector4*)this; }
+    operator btQuaternion() const { return *(btQuaternion*)this; }
     operator XMVECTOR() const { return *(XMVECTOR*)this; }
     operator XMVECTORF32() const { return *(XMVECTORF32*)this; }
     operator XMFLOAT4() const { return *(XMFLOAT4*)this; }
@@ -165,7 +167,7 @@ namespace ModelIndex { enum e : u32 {
 
 namespace TextureIndex { enum e : u32 {
     Font, // keep this first
-    Other,
+    Other, White,
     Count // keep this last
 };}
 

@@ -1,5 +1,6 @@
 #include "Game.h"
 #include "Defines.h"
+#include "Interpolation.h"
 #include <ComponentIncludes.h>
 #include <vector>
 
@@ -10,8 +11,13 @@ static Entity We;
 static Entity Se;
 
 static Entity Staffe;
+static Entity Cubee;
+
+static Group orbs;
 
 const static f32 move_timer = 0.05f;
+
+static Vec3 staff_tip;
 
 f32 WindupWinddown(const f32 time, const f32 windup, const f32 winddown, const f32 duration) {
     if (time < 0.0f) {
@@ -50,10 +56,32 @@ void CGame::InitializePlayer() {
     Staffe = Entity();
     ModelInstance staff_mi;
     staff_mi.model = ModelIndex::Staff;
-    staff_mi.texture = TextureIndex::Other;
+    staff_mi.texture = TextureIndex::White;
     staff_mi.world = MoveScaleMatrix(Vec3(0.0f), Vec3(1000.0));
     m_ModelInstances.AddExisting(Staffe, staff_mi);
     m_ModelsActive.AddExisting(Staffe);
+
+    Cubee = Entity();
+    ModelInstance cube_mi;
+    cube_mi.model = ModelIndex::Cube;
+    cube_mi.texture = TextureIndex::White;
+    cube_mi.world = MoveScaleMatrix(Vec3(0.0f), Vec3(1000.0));
+    cube_mi.glow = Vec3(0.7, 0.7, 0.7);
+    m_ModelInstances.AddExisting(Cubee, cube_mi);
+    m_ModelsActive.AddExisting(Cubee);
+
+    for every(index, m_DashAction.max_cooldown) {
+        Entity e = orbs.Add();
+
+        ModelInstance mi;
+        mi.model = ModelIndex::Cube;
+        mi.texture = TextureIndex::White;
+        mi.world = XMMatrixIdentity();
+        mi.glow = Vec3(0.4, 0.4, 0.4);
+
+        m_ModelInstances.AddExisting(e, mi);
+        m_ModelsActive.AddExisting(e);
+    }
 }
 
 void CGame::PlayerInput() {
@@ -125,22 +153,23 @@ void CGame::PlayerInput() {
     }
 
     if (m_pKeyboard->TriggerDown(VK_LSHIFT)) {
-        Ecs::ActivateAction(m_Timers, m_DashAction);
+        static u32 index = 0;
+        Entity e = orbs.Entities()[index];
+
+        if (Ecs::ActivateAction(m_Timers, m_DashAction, e)) {
+            // play sound
+
+            // update entity to use
+            index += 1;
+            index %= orbs.Size();
+        };
     }
 
     if (m_pKeyboard->TriggerDown(VK_SPACE)) {
-        Ecs::ActivateAction(m_Timers, m_JumpAction);
-    }
-
-    /*
-    if (m_pKeyboard->TriggerDown(VK_SPACE)) {
-        if (player_data.active.Size() < player_data.max) {
-            Entity e = Entity();
-            player_data.active.AddExisting(e);
-            m_Timers.AddExisting(e, 0.5f);
+        if (Ecs::ActivateAction(m_Timers, m_JumpAction)) {
+            // play sound
         }
     }
-    */
 
     //TODO(sean): Ignore input if user has just refocused on the window
     static bool mouse_toggle = true;
@@ -247,7 +276,7 @@ void CGame::UpdatePlayer() {
     if (m_leftClick.pressed) {
         GenerateSimProjectile(
             *m_RigidBodies.Get(m_Player),
-            m_pRenderer->m_pCamera->GetPos(),
+            staff_tip,
             m_pRenderer->m_pCamera->GetViewVector(), 
             3, 
             8000.0, 
@@ -260,7 +289,7 @@ void CGame::UpdatePlayer() {
     if (m_rightClick.pressed) {
         GenerateRayProjectile(
             *m_RigidBodies.Get(m_Player),
-            m_pRenderer->m_pCamera->GetPos(), 
+            staff_tip, 
             m_pRenderer->m_pCamera->GetViewVector(), 
             3, 
             2, 
@@ -359,38 +388,71 @@ void CGame::UpdatePlayer() {
     auto CheckTimerJump = [=](Entity e) { return *m_Timers.Get(e) <= -m_JumpAction.delay; };
     auto RemoveTimer = [=](Entity e) { m_Timers.Remove(e); };
 
+    Vec3 staff_pos;
+    Quat staff_rot;
     {
         ModelInstance* mi = m_ModelInstances.Get(Staffe);
-        LBaseCamera* camera = m_pRenderer->m_pCamera;
-        Vec3 pos = camera->GetPos();
-        Vec3 offset = Vec3(50.0f, -50.0f, 0.0f);
-        f32 phi = camera->GetPitch();
-        f32 theta = camera->GetYaw();
+        LBaseCamera* cam = m_pRenderer->m_pCamera;
 
-        btMatrix3x3 trans;
-        trans[0][0] = cosf(phi) * cosf(theta);
-        trans[0][1] = -sinf(phi) * cosf(theta);
-        trans[0][2] = -sinf(theta);
+        Vec3 staff_offset = Vec3(80.0f, -60.0f, 100.0f);
+        Mat4x4 camera_rotation = XMMatrixRotationRollPitchYaw(cam->GetPitch(), cam->GetYaw(), cam->GetRoll());
 
-        trans[1][0] = sinf(phi);
-        trans[1][1] = cosf(phi);
-        trans[1][2] = 0.0f;
-
-        trans[2][0] = cosf(phi) * sinf(theta);
-        trans[2][1] = -sinf(phi) * sinf(theta);
-        trans[2][2] = cosf(theta);
-
-        offset = offset * trans;
-
-        //f32 dist = 50.0f;
-        //pos.y -= dist;
-        pos += offset;
-
-        Quat rot = Quat::CreateFromYawPitchRoll(camera->GetYaw(), camera->GetPitch() + 1.0f, 0);
-
+        staff_pos = cam->GetPos() + Vec3(XMVector3Transform(staff_offset, camera_rotation));
+        staff_rot = Quat::CreateFromYawPitchRoll(cam->GetYaw(), cam->GetPitch() + 0.6f, 0.0f);
         Vec3 scl = Vec3(100.0f);
-        mi->world = MoveRotateScaleMatrix(pos, rot, scl);
+
+        mi->world = MoveRotateScaleMatrix(staff_pos, staff_rot, scl);
     }
+
+    {
+        ModelInstance* mi = m_ModelInstances.Get(Cubee);
+
+        Vec3 particle_offset = Vec3(0.0f, 100.0f, 0.0f);
+        Mat4x4 staff_rotation = XMMatrixRotationQuaternion(staff_rot);
+
+        Vec3 particle_pos = staff_pos + Vec3(XMVector3Transform(particle_offset, staff_rotation));
+        Vec3 scl = Vec3(10.0f);
+
+        staff_tip = particle_pos;
+
+        static Entity light = m_pRenderer->lights.Add({Vec4(0), Vec4(15.0, 8.0, 2.5, 0.0)});
+        m_pRenderer->lights.Get(light)->position = *(Vec4*)&particle_pos;
+        mi->world = MoveScaleMatrix(particle_pos, scl);
+    }
+
+    f32 index = 1.0f;
+    Ecs::ApplyEvery(orbs, [&](Entity e) {
+        ModelInstance* mi = m_ModelInstances.Get(e);
+
+        auto RotationTranslation = [](Vec3 origin, Vec3 offset, Quat quat) {
+            Mat4x4 rot = XMMatrixRotationQuaternion(quat);
+            return origin + Vec3(XMVector3Transform(offset, rot));
+        };
+
+        f32 t = m_pTimer->GetTime() + (M_PI * 2.0f * (index / (f32)orbs.Size()));
+
+        f32 radius = 20.0f;
+        f32 height = 40.0f;
+        Vec3 particle_offset = Vec3(radius * sinf(t), height, radius * cosf(t));
+
+        Vec3 particle_pos = RotationTranslation(staff_pos, particle_offset, staff_rot);
+        Vec3 scl = Vec3(4.0f);
+
+        mi->world = MoveScaleMatrix(particle_pos, scl);
+        mi->glow = Vec3(1.0f);
+
+        index += 1.0f;
+    });
+
+    u32 i = 0;
+    Ecs::ApplyEvery(m_DashAction.timers, [&](Entity e) {
+        ModelInstance* mi = m_ModelInstances.Get(e);
+        f32 t = *m_Timers.Get(e);
+
+        mi->glow = Vec3(LinearLerp<f32>(1.0f, 0.0f, t / m_DashAction.cooldown));
+
+        i += 1;
+    });
 
     // Check Jump Timer
     Ecs::RemoveConditionally(m_JumpAction.active, CheckTimer, RemoveTimer);
@@ -399,7 +461,6 @@ void CGame::UpdatePlayer() {
     // Check Dash Timer
     Ecs::RemoveConditionally(m_DashAction.active, CheckTimer, RemoveTimer);
     Ecs::RemoveConditionally(m_DashAction.timers, CheckTimerDash, RemoveTimer);
-
 }
 
 void CGame::RenderPlayer() {

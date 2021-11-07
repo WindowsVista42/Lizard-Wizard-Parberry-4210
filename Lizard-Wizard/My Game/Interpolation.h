@@ -12,7 +12,7 @@ Vec3 Vec3NLerp(Vec3 from, Vec3 to, f32 percent);
 
 // Non-Type Specific Interpolation
 template <typename T>
-T LinearLerp(T& from, T& to, f32 percentage) {
+T LinearLerp(T from, T to, f32 percentage) {
     return from + percentage * (to - from);
 }
 

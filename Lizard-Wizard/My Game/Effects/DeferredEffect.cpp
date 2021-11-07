@@ -7,7 +7,7 @@ namespace {
     struct __declspec(align(16)) GameEffectConstants {
         XMMATRIX worldViewProjection;
         XMMATRIX world;
-        Vec4 solid_color;
+        Vec4 glow;
     };
 
     static_assert((sizeof(GameEffectConstants) % 16) == 0, "Constant Buffer size alignment");
@@ -94,7 +94,7 @@ void DeferredEffect::Apply(ID3D12GraphicsCommandList* command_list) {
         GameEffectConstants data = {};
         data.worldViewProjection = m_worldViewProjection;
         data.world = m_world;
-        data.solid_color = m_solid_color;
+        data.glow = m_glow;
 
         memcpy(constant_buffer.Memory(), &data, constant_buffer.Size());
         std::swap(m_constantBuffer, constant_buffer);
@@ -137,7 +137,7 @@ void XM_CALLCONV DeferredEffect::SetMatrices(DirectX::FXMMATRIX world, DirectX::
     m_dirtyFlags |= DirtyWorldViewProjectionMatrix;
 }
 
-void DeferredEffect::SetSolidColor(Vec4 solid_color) {
-    m_solid_color = solid_color;
+void DeferredEffect::SetGlow(Vec3 glow) {
+    m_glow = Vec4(glow.x, glow.y, glow.z, 0.0f) + Vec4(1.0f);
     m_dirtyFlags |= DirtyConstantBuffer;
 }

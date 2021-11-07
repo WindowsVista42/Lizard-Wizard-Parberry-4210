@@ -10,7 +10,7 @@ ModelInstance GetBoxModel(btRigidBody* body) {
 
     instance.model = (u32)ModelIndex::Cube;
     instance.world = MoveRotateScaleMatrix(body->getWorldTransform().getOrigin(), *(Quat*)&body->getWorldTransform().getRotation(), boxShape->getHalfExtentsWithMargin());
-    instance.texture = 1;
+    instance.texture = TextureIndex::White;
 
     return instance;
 }
@@ -112,7 +112,7 @@ void CGame::CreateTestingEnvironment() {
 
                 ModelInstance mi;
                 mi.model = ModelIndex::Cube;
-                mi.texture = 0u;
+                mi.texture = TextureIndex::White;
                 mi.world = MoveScaleMatrix(light_pos, light_scale);
 
                 Entity e = Entity();
@@ -139,7 +139,7 @@ void CGame::CreateTestingEnvironment() {
 
             ModelInstance mi;
             mi.model = index;
-            mi.texture = 0u;
+            mi.texture = TextureIndex::White;
             mi.world = MoveRotateScaleMatrix(model_pos, Quaternion::CreateFromAxisAngle(Vec3(0.0, 1.0, 0.0), M_PI / 2.0f), model_scale);
 
             Entity e = Entity();

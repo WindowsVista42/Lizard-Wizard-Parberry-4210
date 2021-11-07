@@ -5,6 +5,7 @@
 #include "Keyboard.h"
 #include <ScreenGrab.h>
 #include <BufferHelpers.h>
+#include <ComponentIncludes.h>
 
 Renderer::Renderer():
     LRenderer3D(),
@@ -1066,7 +1067,7 @@ void Renderer::DrawModelInstance(ModelInstance* instance) {
     m_deferred->SetWorld(instance->world);
     m_deferred->SetView(XMLoadFloat4x4(&m_view));
     m_deferred->SetTextures(m_pDescriptorHeap->GetGpuHandle(instance->texture));
-    m_deferred->SetSolidColor(Vec4(1));
+    m_deferred->SetGlow(instance->glow);
 
     m_deferred->Apply(m_pCommandList);
 
@@ -1082,7 +1083,6 @@ void Renderer::DrawModelInstance(ModelInstance* instance) {
 void Renderer::DrawParticleInstance(ParticleInstance* instance) {
     //TODO(sean): check if this can be moved out when we finalize the debug and game drawing APIs
     ModelInstance* pmi = &instance->particle_instance;
-    Vec4 solid_color = *(Vec4*)&instance->solid_color;
 
     Ecs::ApplyEvery(instance->particles, [=](Entity e) {
         Particle* particle = particles.Get(e);
@@ -1091,9 +1091,9 @@ void Renderer::DrawParticleInstance(ParticleInstance* instance) {
         m_deferred->SetWorld(pmi->world);
 
         m_deferred->SetView(XMLoadFloat4x4(&m_view));
-        m_deferred->SetTextures(m_pDescriptorHeap->GetGpuHandle(0));
+        m_deferred->SetTextures(m_pDescriptorHeap->GetGpuHandle(TextureIndex::White));
 
-        m_deferred->SetSolidColor(solid_color);
+        m_deferred->SetGlow(instance->glow);
 
         m_deferred->Apply(m_pCommandList);
 
@@ -1115,7 +1115,7 @@ ParticleInstance Renderer::CreateParticleInstance(ParticleInstanceDesc* desc) {
     instance.particle_instance.model = desc->model;
     instance.particle_instance.texture = desc->texture;
 
-    instance.solid_color = desc->solid_color;
+    instance.glow = desc->glow;
 
     for every(index, desc->count) {
         Entity e = Entity();
@@ -1136,10 +1136,12 @@ ParticleInstance Renderer::CreateParticleInstance(ParticleInstanceDesc* desc) {
 }
 
 void Renderer::UpdateParticles() {
+    f32 dt = m_pTimer->GetFrameTime();
+
     for every(index, particles.Size()) {
         Particle* p = &particles.Components()[index];
 
-        p->vel += p->acc;
-        p->pos += p->vel;
+        p->vel += p->acc * dt;
+        p->pos += p->vel * dt;
     }
 }

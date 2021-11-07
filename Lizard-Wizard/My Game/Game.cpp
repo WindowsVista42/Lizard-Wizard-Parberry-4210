@@ -70,7 +70,8 @@ void CGame::LoadModels() {
 void CGame::LoadImages(){
     m_pRenderer->BeginResourceUpload();
 
-    //m_pRenderer->LoadTextureI("test", TextureIndex::Other);
+    m_pRenderer->LoadTextureI("sample", TextureIndex::Other);
+    m_pRenderer->LoadTextureI("white", TextureIndex::White);
 
     m_pRenderer->EndResourceUpload();
 }
@@ -192,17 +193,16 @@ void CGame::InputHandler() {
     if (m_pKeyboard->TriggerDown('O')) {
         ParticleInstanceDesc desc = {};
         desc.count = 10;
-        desc.initial_speed = 10.0f;
+        desc.initial_speed = 100.0f;
         desc.light_color = Vec3(50.0f, 20.0f, 40.0f);
         desc.model = ModelIndex::Cube;
-        desc.texture = TextureIndex::Other;
+        desc.texture = TextureIndex::White;
         desc.model_scale = Vec3(10.0f);
         desc.origin = m_pRenderer->m_pCamera->GetPos() + m_pRenderer->m_pCamera->GetViewVector() * 500.0f;
         desc.randomness = 1.0f;
-        desc.solid_color = Vec3(1.0f);
+        desc.glow = Vec3(1.2f, 1.0f, 0.8f);
 
-        ParticleInstance instance = m_pRenderer->CreateParticleInstance(&desc);
-        m_ParticleInstances.Add(instance);
+        m_ParticleInstances.Add(m_pRenderer->CreateParticleInstance(&desc));
     }
 }
 
@@ -274,10 +274,9 @@ void CGame::RenderFrame() {
     if (render_mode & 0b01) {
         m_pRenderer->BeginDrawing();
 
-        for every(index, m_ModelsActive.Size()) {
-            Entity e = m_ModelsActive.Entities()[index];
+        Ecs::ApplyEvery(m_ModelsActive, [&](Entity e) {
             m_pRenderer->DrawModelInstance(m_ModelInstances.Get(e));
-        }
+        });
 
         for every(index, m_ParticleInstances.Size()) {
             ParticleInstance* p = &m_ParticleInstances.Components()[index];

@@ -24,6 +24,7 @@ struct DebugModel {
 struct ModelInstance {
     u32 model;
     u32 texture;
+    Vec3 glow;
     XMMATRIX world;
 
     ModelInstance();

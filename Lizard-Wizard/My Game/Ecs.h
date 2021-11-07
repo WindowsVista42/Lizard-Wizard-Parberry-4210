@@ -225,6 +225,11 @@ public:
         mapping.erase(e);
         return e;
     }
+
+    Entity GetTail() {
+        Entity e = entities.back();
+        return e;
+    }
 };
 
 struct Action {
@@ -262,7 +267,7 @@ public:
         }
     }
 
-    static void ActivateAction(Table<f32>& timers, Action& action) {
+    static bool ActivateAction(Table<f32>& timers, Action& action) {
         if (action.timers.Size() < action.max_cooldown && action.active.Size() < action.max_active) {
             Entity e = Entity();
             action.active.AddExisting(e);
@@ -271,7 +276,24 @@ public:
             e = Entity();
             action.timers.AddExisting(e);
             timers.AddExisting(e, action.cooldown);
+
+            return true;
         }
+        return false;
+    }
+
+    static bool ActivateAction(Table<f32>& timers, Action& action, Entity z) {
+        if (action.timers.Size() < action.max_cooldown && action.active.Size() < action.max_active) {
+            Entity e = Entity();
+            action.active.AddExisting(e);
+            timers.AddExisting(e, action.duration);
+
+            action.timers.AddExisting(z);
+            timers.AddExisting(z, action.cooldown);
+
+            return true;
+        }
+        return false;
     }
 
     template <typename F>
