@@ -325,9 +325,28 @@ void CGame::UpdatePlayer() {
         ModelInstance* mi = m_ModelInstances.Get(Staffe);
         LBaseCamera* camera = m_pRenderer->m_pCamera;
         Vec3 pos = camera->GetPos();
+        Vec3 offset = Vec3(50.0f, -50.0f, 0.0f);
+        f32 phi = camera->GetPitch();
+        f32 theta = camera->GetYaw();
 
-        f32 dist = 50.0f;
-        pos.y -= dist;
+        btMatrix3x3 trans;
+        trans[0][0] = cosf(phi) * cosf(theta);
+        trans[0][1] = -sinf(phi) * cosf(theta);
+        trans[0][2] = -sinf(theta);
+
+        trans[1][0] = sinf(phi);
+        trans[1][1] = cosf(phi);
+        trans[1][2] = 0.0f;
+
+        trans[2][0] = cosf(phi) * sinf(theta);
+        trans[2][1] = -sinf(phi) * sinf(theta);
+        trans[2][2] = cosf(theta);
+
+        offset = offset * trans;
+
+        //f32 dist = 50.0f;
+        //pos.y -= dist;
+        pos += offset;
 
         Quat rot = Quat::CreateFromYawPitchRoll(camera->GetYaw(), camera->GetPitch() + 1.0f, 0);
 

@@ -33,7 +33,7 @@ typedef VertexPositionColor VertexPC;
 #define BT_SHAPE_TYPE_CAPSULE 10
 
 /// These are for Cache size configurations
-#define MAX_RENDERED_LIGHTS 255
+#define LIGHTS_CACHE_SIZE 254
 #define PROJECTILE_CACHE_SIZE 64
 #define NPC_CACHE_SIZE 24
 
