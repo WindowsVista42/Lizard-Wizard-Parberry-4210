@@ -206,10 +206,6 @@ void CGame::PlayerInput() {
 }
 
 void CGame::UpdatePlayer() {
-    static const auto JumpTimer = [=](Entity e) {return true; };
-    static const auto DashTimer = [=](Entity e) { return !m_InAir.Contains(e) && *m_Timers.Get(e) <= 0.0f; };
-    static const auto RemoveTimer = [=](Entity e) { m_Timers.Remove(e); };
-
     // Check Player Location
     {
         Vec3 Pos = m_pRenderer->m_pCamera->GetPos();
@@ -348,12 +344,6 @@ void CGame::UpdatePlayer() {
     auto CheckTimerJump = [=](Entity e) { return *m_Timers.Get(e) <= -m_JumpAction.delay; };
     auto RemoveTimer = [=](Entity e) { m_Timers.Remove(e); };
 
-    Ecs::RemoveConditionally(m_DashAction.active, CheckTimerDash, RemoveTimer);
-    Ecs::RemoveConditionally(m_DashAction.timers, CheckTimerDash, RemoveTimer);
-
-    Ecs::RemoveConditionally(m_JumpAction.active, CheckTimerJump, RemoveTimer);
-    Ecs::RemoveConditionally(m_JumpAction.timers, CheckTimerJump, RemoveTimer);
-
     {
         ModelInstance* mi = m_ModelInstances.Get(Staffe);
         LBaseCamera* camera = m_pRenderer->m_pCamera;
@@ -369,12 +359,12 @@ void CGame::UpdatePlayer() {
     }
 
     // Check Jump Timer
-    Ecs::RemoveConditionally(m_JumpAction.active, JumpTimer, RemoveTimer);
-    Ecs::RemoveConditionally(m_JumpAction.timers, JumpTimer, RemoveTimer);
+    Ecs::RemoveConditionally(m_JumpAction.active, CheckTimerJump, RemoveTimer);
+    Ecs::RemoveConditionally(m_JumpAction.timers, CheckTimerJump, RemoveTimer);
 
     // Check Dash Timer
-    Ecs::RemoveConditionally(m_DashAction.active, DashTimer, RemoveTimer);
-    Ecs::RemoveConditionally(m_DashAction.timers, DashTimer, RemoveTimer);
+    Ecs::RemoveConditionally(m_DashAction.active, CheckTimerDash, RemoveTimer);
+    Ecs::RemoveConditionally(m_DashAction.timers, CheckTimerDash, RemoveTimer);
 
 }
 
