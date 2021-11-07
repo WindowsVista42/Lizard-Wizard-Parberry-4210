@@ -45,7 +45,6 @@ void CGame::GenerateSimProjectile(
 
         static u32 count = 0;
         count += 1;
-        printf("%d\n", count);
 
         Entity e = m_ProjectilesCache.RemoveTail();
         m_ModelsActive.AddExisting(e);

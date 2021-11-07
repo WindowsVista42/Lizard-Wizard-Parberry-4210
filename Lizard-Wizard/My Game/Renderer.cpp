@@ -1066,6 +1066,7 @@ void Renderer::DrawModelInstance(ModelInstance* instance) {
     m_deferred->SetWorld(instance->world);
     m_deferred->SetView(XMLoadFloat4x4(&m_view));
     m_deferred->SetTextures(m_pDescriptorHeap->GetGpuHandle(instance->texture));
+    m_deferred->SetSolidColor(Vec4(1));
 
     m_deferred->Apply(m_pCommandList);
 
@@ -1078,3 +1079,67 @@ void Renderer::DrawModelInstance(ModelInstance* instance) {
     m_pCommandList->DrawIndexedInstanced(pmodel->index_count, 1, 0, 0, 0);
 }
 
+void Renderer::DrawParticleInstance(ParticleInstance* instance) {
+    //TODO(sean): check if this can be moved out when we finalize the debug and game drawing APIs
+    ModelInstance* pmi = &instance->particle_instance;
+    Vec4 solid_color = *(Vec4*)&instance->solid_color;
+
+    Ecs::ApplyEvery(instance->particles, [=](Entity e) {
+        Particle* particle = particles.Get(e);
+
+        pmi->world = MoveScaleMatrix(particle->pos, instance->model_scale);
+        m_deferred->SetWorld(pmi->world);
+
+        m_deferred->SetView(XMLoadFloat4x4(&m_view));
+        m_deferred->SetTextures(m_pDescriptorHeap->GetGpuHandle(0));
+
+        m_deferred->SetSolidColor(solid_color);
+
+        m_deferred->Apply(m_pCommandList);
+
+        GameModel* pmodel = &m_models[instance->particle_instance.model];
+        m_pCommandList->IASetVertexBuffers(0, 1, pmodel->vertex_view.get());
+        m_pCommandList->IASetIndexBuffer(pmodel->index_view.get());
+
+        m_pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+        m_pCommandList->DrawIndexedInstanced(pmodel->index_count, 1, 0, 0, 0);
+    });
+}
+
+ParticleInstance Renderer::CreateParticleInstance(ParticleInstanceDesc* desc) {
+    ParticleInstance instance;
+    instance.light = lights.Add({ *(Vec4*)&desc->origin, *(Vec4*)&desc->light_color });
+    instance.model_scale = desc->model_scale;
+
+    instance.particle_instance.model = desc->model;
+    instance.particle_instance.texture = desc->texture;
+
+    instance.solid_color = desc->solid_color;
+
+    for every(index, desc->count) {
+        Entity e = Entity();
+
+        Particle particle;
+        particle.pos = desc->origin;
+        Vec3 vel = Vec3(GameRandom::Randf32(), GameRandom::Randf32(), GameRandom::Randf32());
+        vel.x -= 0.5; vel.y -= 0.5; vel.z -= 0.5;
+        vel.Normalize();
+        particle.vel = desc->initial_speed * vel;
+        particle.acc = Vec3(0);
+
+        instance.particles.AddExisting(e);
+        particles.AddExisting(e, particle);
+    }
+
+    return instance;
+}
+
+void Renderer::UpdateParticles() {
+    for every(index, particles.Size()) {
+        Particle* p = &particles.Components()[index];
+
+        p->vel += p->acc;
+        p->pos += p->vel;
+    }
+}

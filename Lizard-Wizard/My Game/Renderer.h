@@ -20,87 +20,6 @@
 #define MAX_LIGHTS 254
 #define BLOOM_PASS_COUNT 4
 
-template <typename E, const usize N>
-struct RenderPass {
-    std::shared_ptr<E> effect;
-    //std::unique_ptr<DescriptorHeap> resources;
-    //std::unique_ptr<DescriptorHeap> renders;
-    //std::array<RenderTexture, N> textures;
-
-    void InitDescs(
-        ID3D12Device* device,
-        usize width,
-        usize height
-    ) {
-        for every(index, N) {
-            textures[index].Init(
-                device, 
-                resources->GetCpuHandle(index),
-                renders->GetCpuHandle(index),
-                width,
-                height 
-            );
-        }
-    }
-
-    void SetAsInput(ID3D12GraphicsCommandList* command_list) {
-//        ID3D12DescriptorHeap* heaps[] = { resources->Heap() };
-//        command_list->SetDescriptorHeaps(_countof(heaps), heaps);
-//
-        for every(index, N) {
-            textures[index].TransitionTo(command_list, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-        }
-    }
-
-    void SetAsOutput(ID3D12GraphicsCommandList* command_list) {
-        std::array<CD3DX12_CPU_DESCRIPTOR_HANDLE, N> descriptors;
-        for every(index, N) {
-            descriptors[index] = renders->GetCpuHandle(index);
-        }
-
-        command_list->OMSetRenderTargets(N, descriptors.data(), FALSE, 0);
-
-        for every(index, N) {
-            textures[index].TransitionTo(command_list, D3D12_RESOURCE_STATE_RENDER_TARGET);
-        }
-    }
-
-    void SetAsOutput(ID3D12GraphicsCommandList* command_list, const CD3DX12_CPU_DESCRIPTOR_HANDLE dsvDescriptor) {
-        std::array<CD3DX12_CPU_DESCRIPTOR_HANDLE, N> descriptors;
-        for every(index, N) {
-            descriptors[index] = renders->GetCpuHandle(index);
-        }
-
-        command_list->OMSetRenderTargets(N, descriptors.data(), FALSE, &dsvDescriptor);
-
-        for every(index, N) {
-            textures[index].TransitionTo(command_list, D3D12_RESOURCE_STATE_RENDER_TARGET);
-        }
-    }
-
-    void ClearRenderTargetViews(ID3D12GraphicsCommandList* command_list) {
-        for every(index, N) {
-            D3D12_CPU_DESCRIPTOR_HANDLE handle = renders->GetCpuHandle(index);
-            Vec4 clear_color = textures[index].m_clearColor;
-            command_list->ClearRenderTargetView(handle, clear_color, 0, 0);
-        }
-    }
-
-    void CreateHeaps(ID3D12Device* device) {
-        renders = std::make_unique<DescriptorHeap>(
-            device,
-            D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
-            D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
-            N
-        );
-    }
-
-    const usize n() {
-        const auto n = N;
-        return n;
-    }
-};
-
 namespace Descriptors { enum e : u32 {
     DeferredColor, // <-- Input
     DeferredNormal, // <-- Input
@@ -120,6 +39,32 @@ namespace Descriptors { enum e : u32 {
     BloomOutput, // <-- Lighting + Combine0 | Output --> Tonemap --> Backbuffer
     Count
 };}
+
+struct Particle {
+    Vec3 pos;
+    Vec3 vel;
+    Vec3 acc;
+};
+
+struct ParticleInstanceDesc {
+    Vec3 origin;
+    f32 initial_speed;
+    Vec3 light_color;
+    Vec3 model_scale;
+    u32 model;
+    u32 texture;
+    Vec3 solid_color;
+    u32 count;
+    f32 randomness;
+};
+
+struct ParticleInstance {
+    Group particles;
+    Vec3 model_scale;
+    Vec3 solid_color;
+    Entity light;
+    ModelInstance particle_instance;
+};
 
 //NOTE(sean): A lot of this implementation is reverse-engineered based on what LSpriteRenderer does
 //The DirectXTK12 docs are super helpful for all of this as well :)
@@ -162,6 +107,9 @@ public:
     LBaseCamera* m_pCamera = nullptr;
 
     Table<Light> lights;
+    Table<Particle> particles;
+
+    void UpdateParticles();
 
     Renderer();
     virtual ~Renderer();
@@ -218,7 +166,9 @@ public:
     u32 GetResolutionWidth();
     u32 GetResolutionHeight();
 
+    ParticleInstance CreateParticleInstance(ParticleInstanceDesc* desc);
     void DrawModelInstance(ModelInstance* instance);
+    void DrawParticleInstance(ParticleInstance* instance);
     void LoadModel(const char* name, u32 model_index);
     void LoadTextureI(const char* name, u32 texture_index);
 

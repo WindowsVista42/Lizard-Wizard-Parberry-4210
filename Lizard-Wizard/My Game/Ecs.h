@@ -128,11 +128,7 @@ public:
 
     // Checks if a Entity is a member of table.
     b8 Contains(Entity e) {
-        if (mapping[e]) {
-            return true;
-        } else {
-            return false;
-        }
+        return mapping.find(e) != mapping.end();
     }
 
     /// Get the number of components in the table.
@@ -209,12 +205,7 @@ public:
 
     // Checks if a Entity is a member of group.
     b8 Contains(Entity e) {
-        if (mapping[e]) {
-            return true;
-        }
-        else {
-            return false;
-        }
+        return mapping.find(e) != mapping.end();
     }
 
     /// Get the number of entities in this group.
@@ -242,6 +233,7 @@ struct Action {
 
     f32 windup;
     f32 winddown;
+    f32 delay;
 
     f32 duration;
     Group active;

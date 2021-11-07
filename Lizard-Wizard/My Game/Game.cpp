@@ -188,6 +188,22 @@ void CGame::InputHandler() {
             }
         }
     }
+
+    if (m_pKeyboard->TriggerDown('O')) {
+        ParticleInstanceDesc desc = {};
+        desc.count = 10;
+        desc.initial_speed = 10.0f;
+        desc.light_color = Vec3(50.0f, 20.0f, 40.0f);
+        desc.model = ModelIndex::Cube;
+        desc.texture = TextureIndex::Other;
+        desc.model_scale = Vec3(10.0f);
+        desc.origin = m_pRenderer->m_pCamera->GetPos() + m_pRenderer->m_pCamera->GetViewVector() * 500.0f;
+        desc.randomness = 1.0f;
+        desc.solid_color = Vec3(1.0f);
+
+        ParticleInstance instance = m_pRenderer->CreateParticleInstance(&desc);
+        m_ParticleInstances.Add(instance);
+    }
 }
 
 /// Draw the current frame rate to a hard-coded position in the window.
@@ -242,6 +258,8 @@ void CGame::EcsUpdate() {
     CustomPhysicsStep();
 
     Ecs::RemoveConditionally(m_ProjectilesActive, [=](Entity e) { return *m_Timers.Get(e) <= 0.0; }, [=](Entity e) { StripProjectile(e); });
+
+    m_pRenderer->UpdateParticles();
 }
 
 /// Ask the object manager to draw the game objects. The renderer is notified
@@ -259,6 +277,11 @@ void CGame::RenderFrame() {
         for every(index, m_ModelsActive.Size()) {
             Entity e = m_ModelsActive.Entities()[index];
             m_pRenderer->DrawModelInstance(m_ModelInstances.Get(e));
+        }
+
+        for every(index, m_ParticleInstances.Size()) {
+            ParticleInstance* p = &m_ParticleInstances.Components()[index];
+            m_pRenderer->DrawParticleInstance(p);
         }
 
         m_pRenderer->EndDrawing();

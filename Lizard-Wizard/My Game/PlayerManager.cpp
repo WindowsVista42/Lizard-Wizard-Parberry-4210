@@ -32,13 +32,15 @@ void CGame::InitializePlayer() {
     m_DashAction.cooldown = 4.0f;
     m_DashAction.windup = 0.05f;
     m_DashAction.winddown = 0.05f;
+    m_DashAction.delay = 0.0f;
 
     m_JumpAction.max_active = 1;
-    m_JumpAction.max_cooldown = 2;
+    m_JumpAction.max_cooldown = 1;
     m_JumpAction.duration = 0.2f;
-    m_JumpAction.cooldown = 4.0f;
+    m_JumpAction.cooldown = 128.0f;
     m_JumpAction.windup = 0.02f;
     m_JumpAction.winddown = 0.1f;
+    m_JumpAction.delay = 0.5f;
 
     De = m_Timers.Add(move_timer);
     Ae = m_Timers.Add(move_timer);
@@ -152,7 +154,7 @@ void CGame::PlayerInput() {
 
     if(m_pRenderer->GetHwnd() == GetFocus()) { // check if focused window is us
         // I see you looking at 
-        //    _____this
+        //    _____   this
         //     . .
         //
         // i came, i saw, i praised, the lord, then break the law.
@@ -204,6 +206,44 @@ void CGame::PlayerInput() {
 }
 
 void CGame::UpdatePlayer() {
+    // Check Player Location
+    {
+        Vec3 Pos = m_pRenderer->m_pCamera->GetPos();
+        Vec3 Direction = Pos + Vec3(0, -1.0f, 0) * 255.0f;
+
+        btCollisionWorld::ClosestRayResultCallback rayResults(Pos, Direction);
+        m_pDynamicsWorld->rayTest(Pos, Direction, rayResults);
+        rayResults.m_collisionFilterGroup = 0b00100;
+        rayResults.m_collisionFilterMask = 0b00001;
+
+        btCollisionObject* hitObject = const_cast<btCollisionObject*>(rayResults.m_collisionObject);
+
+        Vec3 hitPosition = rayResults.m_hitPointWorld;
+
+        if (rayResults.hasHit()) {
+            printf("On ground.\n");
+        } else {
+            printf("In air.\n");
+        }
+
+        if (rayResults.hasHit() && m_InAir.Contains(m_Player)) {
+            printf("Player back on ground.\n");
+            m_InAir.Remove(m_Player);
+        } else if(rayResults.hasHit()) {
+            printf("On ground.\n");
+        } else {
+            printf("In air.\n");
+            if (!m_InAir.Contains(m_Player)) {
+                m_InAir.AddExisting(m_Player);
+            }
+        }
+
+        if (!m_InAir.Contains(m_Player)) {
+            m_JumpAction.timers.Clear();
+        }
+    }
+
+
     if (m_leftClick.pressed) {
         GenerateSimProjectile(
             *m_RigidBodies.Get(m_Player),
@@ -296,6 +336,7 @@ void CGame::UpdatePlayer() {
     // Not sure about this syntax, might change because it might explode compile times
     Ecs::ApplyEvery(m_DashAction.active, [=](Entity e) {
         f32* time = m_Timers.Get(e);
+        if (*time < 0.0f) { return; }
 
         f32 factor = WindupWinddown(*time, m_DashAction.windup, m_DashAction.winddown, m_DashAction.duration);;
 
@@ -305,6 +346,7 @@ void CGame::UpdatePlayer() {
 
     Ecs::ApplyEvery(m_JumpAction.active, [=](Entity e) {
         f32* time = m_Timers.Get(e);
+        if (*time < 0.0f) { return; }
 
         f32 factor = WindupWinddown(*time, m_JumpAction.windup, m_JumpAction.winddown, m_JumpAction.duration);
 
@@ -312,14 +354,10 @@ void CGame::UpdatePlayer() {
         player_body->setLinearVelocity(Vec3(v.x, 2000.0f * factor + 2000.0f, v.z));
     });
 
-    auto CheckTimer = [=](Entity e) { return *m_Timers.Get(e) <= 0.0f; };
+    auto CheckTimer = [=](Entity e) {return *m_Timers.Get(e) <= 0.0f; };
+    auto CheckTimerDash = [=](Entity e) { return *m_Timers.Get(e) <= -m_DashAction.delay; };
+    auto CheckTimerJump = [=](Entity e) { return *m_Timers.Get(e) <= -m_JumpAction.delay; };
     auto RemoveTimer = [=](Entity e) { m_Timers.Remove(e); };
-
-    Ecs::RemoveConditionally(m_DashAction.active, CheckTimer, RemoveTimer);
-    Ecs::RemoveConditionally(m_DashAction.timers, CheckTimer, RemoveTimer);
-
-    Ecs::RemoveConditionally(m_JumpAction.active, CheckTimer, RemoveTimer);
-    Ecs::RemoveConditionally(m_JumpAction.timers, CheckTimer, RemoveTimer);
 
     {
         ModelInstance* mi = m_ModelInstances.Get(Staffe);
@@ -353,6 +391,15 @@ void CGame::UpdatePlayer() {
         Vec3 scl = Vec3(100.0f);
         mi->world = MoveRotateScaleMatrix(pos, rot, scl);
     }
+
+    // Check Jump Timer
+    Ecs::RemoveConditionally(m_JumpAction.active, CheckTimer, RemoveTimer);
+    Ecs::RemoveConditionally(m_JumpAction.timers, CheckTimerJump, RemoveTimer);
+
+    // Check Dash Timer
+    Ecs::RemoveConditionally(m_DashAction.active, CheckTimer, RemoveTimer);
+    Ecs::RemoveConditionally(m_DashAction.timers, CheckTimerDash, RemoveTimer);
+
 }
 
 void CGame::RenderPlayer() {
