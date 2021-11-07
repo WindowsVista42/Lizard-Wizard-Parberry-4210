@@ -74,7 +74,31 @@ void CGame::PlayerInput() {
 
     // Print screenshot button thing that will do stuff
     if (m_pKeyboard->TriggerDown('P')) {
-        m_pRenderer->m_screenShot = true;
+        //m_pRenderer->m_screenShot = true;
+        Vec3 Pos = m_pRenderer->m_pCamera->GetPos();
+        Vec3 Direction = Pos + Vec3(0, -1.0f, 0) * 500.0f;
+
+        btCollisionWorld::ClosestRayResultCallback rayResults(Pos, Direction);
+        m_pDynamicsWorld->rayTest(Pos, Direction, rayResults);
+        rayResults.m_collisionFilterGroup = 0b00100;
+        rayResults.m_collisionFilterMask = 0b00001;
+
+        btCollisionObject* hitObject = const_cast<btCollisionObject*>(rayResults.m_collisionObject);
+
+        Vec3 hitPosition = rayResults.m_hitPointWorld;
+
+        RayProjectile newRay;
+        newRay.Pos1 = Pos;
+        newRay.Pos2 = Direction;
+        newRay.Color = Colors::AliceBlue;
+        m_currentRayProjectiles.push_back(newRay);
+
+        if (rayResults.hasHit()) {
+            printf("On ground.\n");
+        }
+        else {
+            printf("In air.\n");
+        }
     }
 
     {
@@ -209,7 +233,7 @@ void CGame::UpdatePlayer() {
     // Check Player Location
     {
         Vec3 Pos = m_pRenderer->m_pCamera->GetPos();
-        Vec3 Direction = Vec3(0, -1.0f, 0) * 50.0f;
+        Vec3 Direction = Pos + Vec3(0, -1.0f, 0) * 500.0f;
 
         btCollisionWorld::ClosestRayResultCallback rayResults(Pos, Direction);
         m_pDynamicsWorld->rayTest(Pos, Direction, rayResults);
@@ -220,11 +244,12 @@ void CGame::UpdatePlayer() {
 
         Vec3 hitPosition = rayResults.m_hitPointWorld;
 
-
         if (rayResults.hasHit() && m_InAir.Contains(m_Player)) {
+            //printf("On ground.\n");
             m_InAir.Remove(m_Player);
         }
         else {
+            //printf("In air.\n");
             m_InAir.AddExisting(m_Player);
         }
     }
@@ -341,7 +366,7 @@ void CGame::UpdatePlayer() {
     });
 
     auto CheckTimerDash = [=](Entity e) { return *m_Timers.Get(e) <= -m_DashAction.delay; };
-    auto CheckTimerJump = [=](Entity e) { return *m_Timers.Get(e) <= -m_JumpAction.delay; };
+    auto CheckTimerJump = [=](Entity e) { return *m_Timers.Get(e) <= -m_JumpAction.delay || m_InAir.Contains(m_Player); };
     auto RemoveTimer = [=](Entity e) { m_Timers.Remove(e); };
 
     {
