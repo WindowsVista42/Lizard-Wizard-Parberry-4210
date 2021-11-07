@@ -20,10 +20,6 @@
 #define MAX_LIGHTS 254
 #define BLOOM_PASS_COUNT 4
 
-struct ParticleInstance {
-
-};
-
 namespace Descriptors { enum e : u32 {
     DeferredColor, // <-- Input
     DeferredNormal, // <-- Input
@@ -48,6 +44,20 @@ struct Particle {
     Vec3 pos;
     Vec3 vel;
     Vec3 acc;
+};
+
+struct ParticleInstanceDesc {
+    Vec3 origin;
+    f32 initial_speed;
+    Vec3 light_color;
+    Vec3 model_scale;
+};
+
+struct ParticleInstance {
+    Group particles;
+    Vec3 model_scale;
+    Entity light;
+    ModelInstance particle_instance;
 };
 
 //NOTE(sean): A lot of this implementation is reverse-engineered based on what LSpriteRenderer does
@@ -92,8 +102,6 @@ public:
 
     Table<Light> lights;
     Table<Particle> particles;
-    Group m_ActiveParticles;
-    Group m_CachedParticles;
 
     void UpdateParticles();
 
@@ -152,6 +160,7 @@ public:
     u32 GetResolutionWidth();
     u32 GetResolutionHeight();
 
+    ParticleInstance CreateParticleInstance(ParticleInstanceDesc* desc);
     void DrawModelInstance(ModelInstance* instance);
     void DrawParticleInstance(ParticleInstance* instance);
     void LoadModel(const char* name, u32 model_index);
