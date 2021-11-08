@@ -11,6 +11,7 @@
 #include "Math.h"
 #include "Interpolation.h"
 #include "Defines.h"
+#include "Ecs.h"
 #include <vector>
 
 // Bullet3 Inclusions
@@ -151,6 +152,10 @@ private:
     Group m_TestingWallsFloors;
     Group m_TestingModels;
 
+    Group m_RoomLights;
+    Group m_RoomWallsFloors;
+    Group m_RoomModels;
+
     i32 randomSeed;
 
     bool m_bDrawFrameRate = false; ///< Draw the frame rate.
@@ -252,7 +257,11 @@ private:
 
 
 
+    
+
     // GENERATION MANAGER //
+    void CreateNewRoom(Vec3);
+    void CreateNewHall(Vec3);
     void CreateCorridorRoom(Vec3);
     void CreateEWHall(Vec3);
     void CreateNSHall(Vec3);
