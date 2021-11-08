@@ -109,6 +109,8 @@ void CGame::BeginGame(){
 /// Poll the keyboard state and respond to the key presses that happened since
 /// the last frame
 void CGame::InputHandler() {
+    if (!(m_pRenderer->GetHwnd() == GetFocus())) { return; }
+
     m_pKeyboard->GetState();
 
     if (m_pKeyboard->TriggerDown(VK_F1))
@@ -119,11 +121,6 @@ void CGame::InputHandler() {
 
     if (m_pKeyboard->TriggerDown(VK_F3))
         m_bDrawHelpMessage = !m_bDrawHelpMessage;
-
-
-    if (m_pKeyboard->TriggerUp(VK_SPACE)) {//play sound
-       //m_pAudio->play(eSound::Grunt);
-    }
 
     if (m_pKeyboard->TriggerDown(VK_BACK)) {//restart game
         BeginGame(); //restart game
@@ -216,7 +213,7 @@ void CGame::DrawFrameRateText(){
   //m_pRenderer->DrawScreenText(s.c_str(), pos); //draw to screen
 }
 
-void CGame::EcsUpdate() {
+void CGame::EcsPreUpdate() {
     m_pAudio->SetListener(m_pRenderer->m_pCamera); // Update Audio
 
     // This handles the timers tables.
@@ -224,9 +221,17 @@ void CGame::EcsUpdate() {
         m_Timers.Components()[index] -= m_pTimer->GetFrameTime();
     }
 
-    //static std::vector<Entity> toRemove;
-    //toRemove.clear();
+    for every(index, m_Mana.Size()) {
+        Mana* mana = &m_Mana.Components()[index];
+        f32* timer = m_Timers.Get(mana->timer);
 
+        btClamp<f32>(*timer, 0.0, FLT_MAX);
+        mana->value = (i32)(((mana->recharge * (f32)mana->max) - *timer) / mana->recharge);
+    }
+}
+
+
+void CGame::EcsUpdate() {
     // This handles NPCs and lighting.
     for every(index, m_NPCsActive.Size()) {
         Entity e = m_NPCsActive.Entities()[index];
@@ -334,6 +339,7 @@ void CGame::Update() {
         m_pDynamicsWorld->stepSimulation(m_pTimer->GetFrameTime(), 10); // Step Physics
         m_frameRate = m_pTimer->GetFPS();
 
+        EcsPreUpdate();
         UpdatePlayer();
         EcsUpdate();
     });
@@ -347,4 +353,14 @@ void CGame::ProcessFrame(){
     Update(); // update internal data
 
     RenderFrame(); // render a frame of animation
+}
+
+Mana CGame::NewMana(i32 max, f32 recharge) {
+    Mana mana;
+    mana.value = max;
+    mana.max = max;
+    mana.recharge = recharge;
+    mana.timer = m_Timers.Add(0.0f);
+
+    return mana;
 }

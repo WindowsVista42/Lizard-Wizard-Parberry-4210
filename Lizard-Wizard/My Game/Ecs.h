@@ -91,7 +91,12 @@ public:
     /// Remove an "Entity" from the Table.
     void Remove(Entity e) {
         // Get the index of the item to be removed
-        //if (mapping.count(e) != 1) { std::cout << typeid(T).name() << "Item not found!\n"; exit(1); }
+#ifdef _DEBUG
+        // Sean: YOU TRIED TO GET SOMETHING THAT WASN'T THERE
+        // Look at the call stack and figure out where and why.
+        if (mapping.find(e) == mapping.end()) { char* ptr = 0; *ptr = 0; }
+#endif
+
         usize index = mapping[e];
 
         // Write last item to index
@@ -122,7 +127,11 @@ public:
 
     /// Get the component corresponding to the Entity.
     T* Get(Entity e) {
-        //if (mapping.count(e) != 1) { std::cout << typeid(*this).name() << " Item not found!\n"; exit(1); }
+#ifdef _DEBUG
+        // Sean: YOU TRIED TO GET SOMETHING THAT WASN'T THERE
+        // Look at the call stack and figure out where and why.
+        if (mapping.find(e) == mapping.end()) { char* ptr = 0; *ptr = 0; }
+#endif
         return &components[mapping[e]];
     }
 
@@ -178,7 +187,13 @@ public:
 
     /// Remove an existing "Entity" from the group.
     void Remove(Entity e) {
-        usize index = mapping[e];
+#ifdef _DEBUG
+        // Sean: YOU TRIED TO GET SOMETHING THAT WASN'T THERE
+        // Look at the call stack and figure out where and why.
+        if (mapping.find(e) == mapping.end()) { char* ptr = 0; *ptr = 0; }
+#endif
+
+        usize index = mapping.at(e);
 
         // Write last item to index
         if (index != entities.size() - 1) {
@@ -220,6 +235,8 @@ public:
     }
 
     Entity RemoveTail() {
+        if (entities.size() == 0) { char* ptr = 0; *ptr = 0; };
+
         Entity e = entities.back();
         entities.pop_back();
         mapping.erase(e);

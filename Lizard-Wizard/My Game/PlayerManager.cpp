@@ -19,6 +19,9 @@ const static f32 move_timer = 0.05f;
 
 static Vec3 staff_tip;
 
+static Entity player_health_timer;
+static Entity player_recast_timer;
+
 f32 WindupWinddown(const f32 time, const f32 windup, const f32 winddown, const f32 duration) {
     if (time < 0.0f) {
         return 0.0f;
@@ -82,6 +85,11 @@ void CGame::InitializePlayer() {
         m_ModelInstances.AddExisting(e, mi);
         m_ModelsActive.AddExisting(e);
     }
+
+    m_Healths.AddExisting(m_Player, 4);
+    m_Mana.AddExisting(m_Player, NewMana(4, 0.5f));
+
+    m_pRenderer->lights.AddExisting(m_Player, { Vec4(0), Vec4(50.0f, 10.0f, 5.0f, 0.0f)});
 }
 
 void CGame::PlayerInput() {
@@ -181,7 +189,7 @@ void CGame::PlayerInput() {
         just_mouse_toggle = false;
     }
 
-    if(m_pRenderer->GetHwnd() == GetFocus()) { // check if focused window is us
+    {
         // I see you looking at 
         //    _____   this
         //     . .
@@ -249,31 +257,24 @@ void CGame::UpdatePlayer() {
 
         Vec3 hitPosition = rayResults.m_hitPointWorld;
 
-        if (rayResults.hasHit()) {
-            printf("On ground.\n");
-        } else {
-            printf("In air.\n");
+        if (rayResults.hasHit() && m_InAir.Contains(m_Player)) {
+            m_InAir.Remove(m_Player);
+        } else if(!m_InAir.Contains(m_Player)) {
+            m_InAir.AddExisting(m_Player);
         }
 
-        if (rayResults.hasHit() && m_InAir.Contains(m_Player)) {
-            printf("Player back on ground.\n");
-            m_InAir.Remove(m_Player);
-        } else if(rayResults.hasHit()) {
-            printf("On ground.\n");
-        } else {
-            printf("In air.\n");
-            if (!m_InAir.Contains(m_Player)) {
-                m_InAir.AddExisting(m_Player);
-            }
-        }
 
         if (!m_InAir.Contains(m_Player)) {
             m_JumpAction.timers.Clear();
         }
     }
 
+    Mana* player_mana = m_Mana.Get(m_Player);
+    f32* mana_timer = m_Timers.Get(player_mana->timer);
+    btRigidBody* player_body = *m_RigidBodies.Get(m_Player);
+    player_body->activate();
 
-    if (m_leftClick.pressed) {
+    if (m_leftClick.pressed && player_mana->value > 0) {
         GenerateSimProjectile(
             *m_RigidBodies.Get(m_Player),
             staff_tip,
@@ -284,6 +285,9 @@ void CGame::UpdatePlayer() {
             Colors::PaleVioletRed,
             true
         );
+
+        *mana_timer = player_mana->Decrement(1);
+        printf("%f\n", *mana_timer);
     }
 
     if (m_rightClick.pressed) {
@@ -308,15 +312,10 @@ void CGame::UpdatePlayer() {
     m_pRenderer->m_pCamera->SetPitch(player_pitch);
 
     if (!flycam_enabled) {
-        btRigidBody* body = *m_RigidBodies.Get(m_Player);
-
-        btTransform trans;
-        body->getMotionState()->getWorldTransform(trans);
         Light* light = m_pRenderer->lights.Get(m_Player);
 
-        m_pRenderer->m_pCamera->MoveTo(*(Vector3*)&trans.getOrigin());
-        light->position = *(Vec4*)&trans.getOrigin();
-
+        m_pRenderer->m_pCamera->MoveTo(Vec3(player_body->getWorldTransform().getOrigin()));
+        light->position = *(Vec4*)&m_pRenderer->m_pCamera->GetPos();
     } else {
         m_pRenderer->m_pCamera->MoveTo(flycam_pos);
     }
@@ -354,9 +353,6 @@ void CGame::UpdatePlayer() {
 
     if (movedir != Vec3(0)) { movedir.Normalize(); }
 
-    btRigidBody* player_body = *m_RigidBodies.Get(m_Player);
-    player_body->activate();
-
     static const f32 move_speed = 3000.0f;
 
     Vec3 newvel = Vec3(Vec3(0, player_body->getLinearVelocity().y(), 0) + Vec3(movedir * move_speed));
@@ -373,6 +369,7 @@ void CGame::UpdatePlayer() {
         player_body->setLinearVelocity(Vec3(bodyvel + (movedir * 10000.0f * factor)));
     });
 
+    // jump action timer connection
     Ecs::ApplyEvery(m_JumpAction.active, [=](Entity e) {
         f32* time = m_Timers.Get(e);
         if (*time < 0.0f) { return; }
@@ -383,11 +380,7 @@ void CGame::UpdatePlayer() {
         player_body->setLinearVelocity(Vec3(v.x, 2000.0f * factor + 2000.0f, v.z));
     });
 
-    auto CheckTimer = [=](Entity e) {return *m_Timers.Get(e) <= 0.0f; };
-    auto CheckTimerDash = [=](Entity e) { return *m_Timers.Get(e) <= -m_DashAction.delay; };
-    auto CheckTimerJump = [=](Entity e) { return *m_Timers.Get(e) <= -m_JumpAction.delay; };
-    auto RemoveTimer = [=](Entity e) { m_Timers.Remove(e); };
-
+    // staff
     Vec3 staff_pos;
     Quat staff_rot;
     {
@@ -404,6 +397,7 @@ void CGame::UpdatePlayer() {
         mi->world = MoveRotateScaleMatrix(staff_pos, staff_rot, scl);
     }
 
+    // cube on top of staff
     {
         ModelInstance* mi = m_ModelInstances.Get(Cubee);
 
@@ -418,8 +412,12 @@ void CGame::UpdatePlayer() {
         static Entity light = m_pRenderer->lights.Add({Vec4(0), Vec4(15.0, 8.0, 2.5, 0.0)});
         m_pRenderer->lights.Get(light)->position = *(Vec4*)&particle_pos;
         mi->world = MoveScaleMatrix(particle_pos, scl);
+        mi->glow = Vec3((f32)player_mana->value / (f32)player_mana->max); // switch back to this if we find its easier to tell
+
+        //printf("%d\n", player_mana->value);
     }
 
+    // cubes that spin around staff
     f32 index = 1.0f;
     Ecs::ApplyEvery(orbs, [&](Entity e) {
         ModelInstance* mi = m_ModelInstances.Get(e);
@@ -444,6 +442,7 @@ void CGame::UpdatePlayer() {
         index += 1.0f;
     });
 
+    // dash action timers connection to cubes that spin
     u32 i = 0;
     Ecs::ApplyEvery(m_DashAction.timers, [&](Entity e) {
         ModelInstance* mi = m_ModelInstances.Get(e);
@@ -453,6 +452,12 @@ void CGame::UpdatePlayer() {
 
         i += 1;
     });
+
+    // remove old timers
+    auto CheckTimer = [=](Entity e) { return *m_Timers.Get(e) <= 0.0f; };
+    auto CheckTimerDash = [=](Entity e) { return *m_Timers.Get(e) <= -m_DashAction.delay; };
+    auto CheckTimerJump = [=](Entity e) { return *m_Timers.Get(e) <= -m_JumpAction.delay; };
+    auto RemoveTimer = [=](Entity e) { m_Timers.Remove(e); };
 
     // Check Jump Timer
     Ecs::RemoveConditionally(m_JumpAction.active, CheckTimer, RemoveTimer);

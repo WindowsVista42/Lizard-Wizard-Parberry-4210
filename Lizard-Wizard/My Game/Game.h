@@ -72,6 +72,20 @@ struct Animation {
     f32 percent;
 };
 
+struct Mana {
+    i32 value;
+    i32 max;
+    f32 recharge;
+    Entity timer;
+
+    f32 Decrement(i32 count) {
+        if (this->value - count < 0) { count = this->value; }
+        this->value -= count;
+        printf("%f\n", this->recharge * ((f32)this->max - (f32)(this->value)));
+        return this->recharge * ((f32)this->max - (f32)(this->value));
+    }
+};
+
 // Game Class
 class CGame:
     public LComponent, 
@@ -108,10 +122,10 @@ private:
     Table<Group> m_Parents;
 
     // Health Table
-    Table<i32> m_HealthInstances;
+    Table<i32> m_Healths;
 
     // Mana Table
-    Table<i32> m_ManaInstances;
+    Table<Mana> m_Mana;
 
     // In-Air Table
     Group m_InAir;
@@ -301,11 +315,15 @@ private:
     void CreateTestingEnvironment();
 
     // UPDATE //
+    void EcsPreUpdate();
     void Update();
     void EcsUpdate();
 
     // DRAW //
     void DrawDebugModelsOnRB();
+
+    // MANA //
+    Mana NewMana(i32 max, f32 recharge);
 
 public:
     Renderer* m_pRenderer; ///< Pointer to renderer.
