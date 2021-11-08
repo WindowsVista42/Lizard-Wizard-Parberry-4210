@@ -270,7 +270,7 @@ void CGame::UpdatePlayer() {
     }
 
     Mana* player_mana = m_Mana.Get(m_Player);
-    f32* mana_timer = m_Timers.Get(player_mana->timer);
+    f32* mana_timer = &player_mana->timer;
     btRigidBody* player_body = *m_RigidBodies.Get(m_Player);
     player_body->activate();
 

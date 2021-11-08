@@ -77,7 +77,7 @@ struct Mana {
     i32 value;
     i32 max;
     f32 recharge;
-    Entity timer;
+    f32 timer;
 
     f32 Decrement(i32 count) {
         if (this->value - count < 0) { count = this->value; }

@@ -223,10 +223,10 @@ void CGame::EcsPreUpdate() {
 
     for every(index, m_Mana.Size()) {
         Mana* mana = &m_Mana.Components()[index];
-        f32* timer = m_Timers.Get(mana->timer);
 
-        btClamp<f32>(*timer, 0.0, FLT_MAX);
-        mana->value = (i32)(((mana->recharge * (f32)mana->max) - *timer) / mana->recharge);
+        mana->timer -= m_pTimer->GetFrameTime();
+        btClamp<f32>(mana->timer, 0.0, FLT_MAX);
+        mana->value = (i32)(((mana->recharge * (f32)mana->max) - mana->timer) / mana->recharge);
     }
 }
 
@@ -260,7 +260,8 @@ void CGame::EcsUpdate() {
         (*m_ModelInstances.Get(e)).world = MoveScaleMatrix((*m_RigidBodies.Get(e))->getWorldTransform().getOrigin(), Vector3(25.0f));
     });
 
-    CustomPhysicsStep();
+    //Sean: we have this disabled because its lashing out and crashing
+    //CustomPhysicsStep();
 
     Ecs::RemoveConditionally(m_ProjectilesActive, [=](Entity e) { return *m_Timers.Get(e) <= 0.0; }, [=](Entity e) { StripProjectile(e); });
 
@@ -360,7 +361,7 @@ Mana CGame::NewMana(i32 max, f32 recharge) {
     mana.value = max;
     mana.max = max;
     mana.recharge = recharge;
-    mana.timer = m_Timers.Add(0.0f);
+    mana.timer = 0.0f;
 
     return mana;
 }
