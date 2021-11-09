@@ -65,6 +65,7 @@ void CGame::LoadModels() {
     m_pRenderer->LoadModel("obelisk", ModelIndex::Obelisk);
     m_pRenderer->LoadModel("sentry", ModelIndex::Sentry);
     m_pRenderer->LoadModel("staff", ModelIndex::Staff);
+    m_pRenderer->LoadModel("quad", ModelIndex::Quad);
 }
 
 void CGame::LoadImages(){

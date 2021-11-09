@@ -125,7 +125,7 @@ void CGame::CreateNewHall(Vec3 roomCenter) {
 
     // East Wall +X
     {
-        Entity e = Entity();
+        Entity e = Entity();Staff
         m_RoomWallsFloors.AddExisting(e);
         m_RigidBodies.AddExisting(e, CreateBoxObject(Vec3(1.0f, scale.y, scale.z), roomCenter + Vec3(scale.x, scale.y, 0.0f), 0.0f, 1.5f, group, flag));
         m_RoomWallsFloors.AddExisting(e);
@@ -272,7 +272,7 @@ void CGame::CreateNormalRoom(Vec3 roomCenter) {
 void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount) {
     u32 randomX = GameRandom::Randu32(1, X_ROOMS - 1);
     u32 randomY = GameRandom::Randu32(1, Y_ROOMS - 1);
-    u32 randomNum = GameRandom::Randu32(1, 4);
+    u32 randomNum = GameRandom::Randu32(1, 4);Staff
 
     // Generate Spawn Room
     Room initialRoom;
