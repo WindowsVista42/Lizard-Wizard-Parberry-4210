@@ -192,7 +192,7 @@ void CGame::InitializeProjectiles() {
 
         // Continuous Convex Collision (NOTE) Ethan : This is expensive, so only use it for projectiles.
         // DISABLED UNTIL FIXED IN DEBUG
-        RBSetCcd(newBody, 0.0001, 75.0f);
+        RBSetCcd(newBody, 1e-7f, 0.50f);
 
         // Prepare light
         Light newLight = { Vec4(FLT_MAX, FLT_MAX, FLT_MAX ,0), Vec4{150.0f, 30.0f, 10.0f, 0} };

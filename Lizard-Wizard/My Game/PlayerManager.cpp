@@ -279,7 +279,7 @@ void CGame::UpdatePlayer() {
             *m_RigidBodies.Get(m_Player),
             staff_tip,
             m_pRenderer->m_pCamera->GetViewVector(), 
-            3, 
+            1, 
             8000.0, 
             0.5, 
             Colors::PaleVioletRed,
