@@ -133,7 +133,7 @@ private:
 
     // Rooms / Generation Tables
     std::vector<Room> currentRooms;
-    Room currentMap[X_ROOMS][Y_ROOMS];
+    std::array<std::array<Room, Y_ROOMS>, X_ROOMS> currentMap;
 
     // Collision Table (Simply put, we store all currently colliding objects here.)
     Table<Entity> m_IgnoredCollisionPairs;
