@@ -289,8 +289,8 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount) {
         u32 recounter = 1;
         b8 placed = false;
 
-        randomX = GameRandom::Randu32(1, X_ROOMS - 1);
-        randomY = GameRandom::Randu32(1, Y_ROOMS - 1);
+        randomX = GameRandom::Randu32(1, X_ROOMS - 2);
+        randomY = GameRandom::Randu32(1, Y_ROOMS - 2);
         randomNum = GameRandom::Randu32(1, 4);
 
         if (currentMap[randomX][randomY].currentTag == RoomTag::UNFILLED) {
