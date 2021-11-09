@@ -29,8 +29,8 @@
 /// any destructors are run.
 
 // Configuration Defines
-#define X_ROOMS 12
-#define Y_ROOMS 36
+#define X_ROOMS 10
+#define Y_ROOMS 10
 
 // Structs
 struct Room {

@@ -89,6 +89,7 @@ void CGame::LoadSounds(){
 
 void CGame::Release() {
     delete m_pRenderer;
+    DestroyRooms();
 }
 
 /// Ask the object manager to create the game objects. There's only one in this

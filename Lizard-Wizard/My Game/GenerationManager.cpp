@@ -5,7 +5,7 @@ ModelInstance GetBoxyModel(btRigidBody* body) {
     btCollisionShape* currentShape = body->getCollisionShape();
     btBoxShape* boxShape = reinterpret_cast<btBoxShape*>(currentShape);
 
-    instance.model = (u32)ModelIndex::Cube;
+    instance.model = ModelIndex::Cube;
     instance.world = MoveRotateScaleMatrix(body->getWorldTransform().getOrigin(), *(Quat*)&body->getWorldTransform().getRotation(), boxShape->getHalfExtentsWithMargin());
     instance.texture = TextureIndex::White;
 
@@ -279,7 +279,8 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount) {
     initialRoom.origin = roomCenter;
     initialRoom.currentTag = RoomTag::NORMAL;
     CreateNewRoom(roomCenter);
-    currentMap[randomX][randomY];
+    currentMap[1][1];
+    
 
     // Generate Boss Room
 
@@ -297,8 +298,6 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount) {
 
             currentMap[randomX][randomY].currentTag = RoomTag::NORMAL;
             CreateNewRoom(currentMap[randomX][randomY].origin);
-            
-            // Note: the randomNum is only assigning the south tag
 
             // Randomly assigns exit tag
             if (randomNum == 1) {
@@ -320,42 +319,60 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount) {
             case 1: // Spawn Hallway North (+Z) of Normal Room
                 if (currentMap[randomX][randomY].currentExit == ExitTag::NORTHEX)
                 {
-                   
+                    if (currentMap[randomX][randomY + 1].currentTag == RoomTag::NORMAL)
+                    {
+                        break;
+                    }
+                    else 
+                    {
                         currentMap[randomX][randomY + 1].currentTag = RoomTag::NSHALL;
                         CreateNewHall(currentMap[randomX][randomY + 1].origin);
-                    
-                    
+                    }
                 }
                 break;
 
             case 2: // Spawn Hallway East (+X) of Normal Room
                 if (currentMap[randomX][randomY].currentExit == ExitTag::EASTEX)
                 {
-                   
+                    if (currentMap[randomX + 1][randomY].currentTag == RoomTag::NORMAL)
+                    {
+                        break;
+                    }
+                    else
+                    {
                         currentMap[randomX + 1][randomY].currentTag = RoomTag::EWHALL;
                         CreateNewHall(currentMap[randomX + 1][randomY].origin);
-                    
-
+                    }
                 }
                 break;
 
             case 3: // Spawn Hallway South (-Z) of Normal Room
                 if (currentMap[randomX][randomY].currentExit == ExitTag::SOUTHEX)
                 {
-                    
-                    currentMap[randomX][randomY - 1].currentTag = RoomTag::NSHALL;
-                    CreateNewHall(currentMap[randomX][randomY - 1].origin);
-
+                    if (currentMap[randomX][randomY - 1].currentTag == RoomTag::NORMAL)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        currentMap[randomX][randomY - 1].currentTag = RoomTag::NSHALL;
+                        CreateNewHall(currentMap[randomX][randomY - 1].origin);
+                    }                   
                 }
                 break;
 
             case 4: // Spawn Hallway North (-X) of Normal Room
                 if (currentMap[randomX][randomY].currentExit == ExitTag::WESTEX)
                 {
+                    if (currentMap[randomX - 1][randomY].currentTag == RoomTag::NORMAL)
+                    {
+                        break;
+                    }
+                    else
+                    {
                         currentMap[randomX - 1][randomY].currentTag = RoomTag::EWHALL;
                         CreateNewHall(currentMap[randomX - 1][randomY].origin);
-                    
-
+                    }
                 }
                 break;
 
@@ -367,6 +384,7 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount) {
 }
 
 void CGame::DestroyRooms() {
+    delete[] currentMap;
 
 }
 
