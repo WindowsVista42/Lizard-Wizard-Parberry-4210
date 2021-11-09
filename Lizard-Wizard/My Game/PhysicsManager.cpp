@@ -142,18 +142,17 @@ void CGame::PhysicsCollisionCallBack(btDynamicsWorld* p, btScalar t) {
         // Determine whether we need to ignore the given collision for a few frames, we might need to make a method
         // to completely disable collision announcements between two objects incase something is resting on another object.
 
-        if (Self->m_IgnoredCollisionPairs.Contains(pEntity0)) { // Check pEntity0
-            if (Self->m_IgnoredCollisionPairs.Get(pEntity0) == &pEntity1) {
+        if (Self->m_CollisionPairs.Contains(pEntity0)) { // Check pEntity0
+            if (Self->m_CollisionPairs.Get(pEntity0) == &pEntity1) {
                 ignoreCollision = true;
             }
         }
 
-        if (Self->m_IgnoredCollisionPairs.Contains(pEntity1)) { // Check pEntity1
-            if (Self->m_IgnoredCollisionPairs.Get(pEntity1) == &pEntity0) {
+        if (Self->m_CollisionPairs.Contains(pEntity1)) { // Check pEntity1
+            if (Self->m_CollisionPairs.Get(pEntity1) == &pEntity0) {
                 ignoreCollision = true;
             }
         }
-
 
         // Add to the collision table if we don't want to ignore this collision.
         if (ignoreCollision == false) {
@@ -167,8 +166,8 @@ void CGame::PhysicsCollisionCallBack(btDynamicsWorld* p, btScalar t) {
                     Self->m_CurrentCollisions.AddExisting(pEntity1);
 
                     // Add collisions to ignore table to prevent spamming of collisions.
-                    Self->m_IgnoredCollisionPairs.AddExisting(pEntity0, pEntity0);
-                    Self->m_IgnoredCollisionPairs.AddExisting(pEntity1, pEntity1);
+                    Self->m_CollisionPairs.AddExisting(pEntity0, pEntity0);
+                    Self->m_CollisionPairs.AddExisting(pEntity1, pEntity1);
                 }
             }
         } else { // Ignore this collision because we don't want to spam collisions multiple times.
@@ -179,20 +178,29 @@ void CGame::PhysicsCollisionCallBack(btDynamicsWorld* p, btScalar t) {
 
 void CGame::CustomPhysicsStep() {
     // This plays a sound for all collisions. (NOTE) Ethan : Will be moved into CGame once I move all physics stepping into a new custom function.
-    for every(index, m_CurrentCollisions.Size()) {
-        Entity e = m_CurrentCollisions.Entities()[index];
-        Vec3 pos = (*m_RigidBodies.Get(e))->getWorldTransform().getOrigin();
+    for every(index, m_CollisionPairs.Size()) {
+        Entity e = m_CollisionPairs.Entities()[index];
+
+        btRigidBody* body0 = (*m_RigidBodies.Get(e));
+        btRigidBody* body1 = (*m_RigidBodies.Get(*m_CollisionPairs.Get(e)));
+
+        Vec3 pos0 = body0->getWorldTransform().getOrigin();
+        Vec3 pos1 = body1->getWorldTransform().getOrigin();
+
+        Vec3 lVelocity0 = body0->getLinearVelocity();
+        Vec3 lVelocity1 = body1->getLinearVelocity();
 
         // Collision event example
         // (Warning) Ethan : This can get fairly expensive if we stack if-statements and switch-statements so try to tie everything together in the ECS to remain efficient.
         if (m_ProjectilesActive.Contains(e)) {
             //printf("Projectile collision detected at : (%f, %f, %f)\n", pos.x, pos.y, pos.z);
             //std::cout << "Collision ID :" << e.id << std::endl;
-            m_pAudio->play(SoundIndex::Impact, pos, 10.0, 0.5);
+            m_pAudio->play(SoundIndex::Impact, pos0, 10.0f, 0.5);
         }
         //m_pAudio->play(SoundIndex::Clang, pos, 0.25, 0.0);
     }
     m_CurrentCollisions.Clear();
+    m_CollisionPairs.Clear();
 }
 
 // Helper Functions, these will be helpful when we don't want to keep passing the dynamics world to managers.
