@@ -13,10 +13,14 @@
 static CGame* Self;
 
 void CGame::RBSetCcd(btRigidBody* body, f32 threshold, f32 radius) {
-#ifndef _DEBUG
+    /*
+    #ifndef _DEBUG
+        body->setCcdMotionThreshold(threshold);
+        body->setCcdSweptSphereRadius(radius);
+    #endif
+    */
     body->setCcdMotionThreshold(threshold);
     body->setCcdSweptSphereRadius(radius);
-#endif
 }
 
 // Note(Ethan) : These functions help in the creation of Bullet3 physics objects.
@@ -123,6 +127,7 @@ void CGame::PhysicsCollisionCallBack(btDynamicsWorld* p, btScalar t) {
     UNREFERENCED_PARAMETER(t);
     btDispatcher* pDispatcher = p->getDispatcher();
     const u32 numManifolds = (u32)pDispatcher->getNumManifolds();
+    b8 ignoreCollision = false;
 
     for every(manifold, numManifolds) {
         btPersistentManifold* pManifold = pDispatcher->getManifoldByIndexInternal(manifold);
@@ -133,13 +138,41 @@ void CGame::PhysicsCollisionCallBack(btDynamicsWorld* p, btScalar t) {
         Entity pEntity0 = Self->m_RigidBodyMap.at(pBody0);
         Entity pEntity1 = Self->m_RigidBodyMap.at(pBody1);
 
-        const int numContacts = pManifold->getNumContacts();
-        if (numContacts > 0 && !Self->m_CurrentCollisions.Contains(pEntity0)) { //guard
-            for every(contact, numContacts){
-                btManifoldPoint& pt = pManifold->getContactPoint(contact);
-                Self->m_CurrentCollisions.AddExisting(pEntity0);
-                Self->m_CurrentCollisions.AddExisting(pEntity1);
+
+        // Determine whether we need to ignore the given collision for a few frames, we might need to make a method
+        // to completely disable collision announcements between two objects incase something is resting on another object.
+
+        if (Self->m_IgnoredCollisionPairs.Contains(pEntity0)) { // Check pEntity0
+            if (Self->m_IgnoredCollisionPairs.Get(pEntity0) == &pEntity1) {
+                ignoreCollision = true;
             }
+        }
+
+        if (Self->m_IgnoredCollisionPairs.Contains(pEntity1)) { // Check pEntity1
+            if (Self->m_IgnoredCollisionPairs.Get(pEntity1) == &pEntity0) {
+                ignoreCollision = true;
+            }
+        }
+
+
+        // Add to the collision table if we don't want to ignore this collision.
+        if (ignoreCollision == false) {
+            const int numContacts = pManifold->getNumContacts();
+            if (numContacts > 0 && !Self->m_CurrentCollisions.Contains(pEntity0)) {
+                for every(contact, numContacts) {
+                    btManifoldPoint& pt = pManifold->getContactPoint(contact);
+
+                    // Add new collisions to the table.
+                    Self->m_CurrentCollisions.AddExisting(pEntity0);
+                    Self->m_CurrentCollisions.AddExisting(pEntity1);
+
+                    // Add collisions to ignore table to prevent spamming of collisions.
+                    Self->m_IgnoredCollisionPairs.AddExisting(pEntity0, pEntity0);
+                    Self->m_IgnoredCollisionPairs.AddExisting(pEntity1, pEntity1);
+                }
+            }
+        } else { // Ignore this collision because we don't want to spam collisions multiple times.
+            return;
         }
     }
 }

@@ -136,6 +136,7 @@ private:
     Room currentMap[X_ROOMS][Y_ROOMS];
 
     // Collision Table (Simply put, we store all currently colliding objects here.)
+    Table<Entity> m_IgnoredCollisionPairs;
     Group m_CurrentCollisions;
 
     // UserInput Vector
