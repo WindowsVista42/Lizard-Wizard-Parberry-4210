@@ -65,6 +65,7 @@ void CGame::LoadModels() {
     m_pRenderer->LoadModel("obelisk", ModelIndex::Obelisk);
     m_pRenderer->LoadModel("sentry", ModelIndex::Sentry);
     m_pRenderer->LoadModel("staff", ModelIndex::Staff);
+    m_pRenderer->LoadModel("quad", ModelIndex::Quad);
 }
 
 void CGame::LoadImages(){
@@ -262,7 +263,7 @@ void CGame::EcsUpdate() {
     });
 
     //Sean: we have this disabled because its lashing out and crashing
-    //CustomPhysicsStep();
+    CustomPhysicsStep();
 
     Ecs::RemoveConditionally(m_ProjectilesActive, [=](Entity e) { return *m_Timers.Get(e) <= 0.0; }, [=](Entity e) { StripProjectile(e); });
 
