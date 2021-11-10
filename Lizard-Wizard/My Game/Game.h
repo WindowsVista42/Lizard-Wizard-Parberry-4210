@@ -263,6 +263,11 @@ private:
     // GENERATION MANAGER //
     void CreateNewRoom(Vec3);
     void CreateNewHall(Vec3);
+    void CreateNewCorridor(Vec3);
+    void CreateNorthWestL(Vec3);
+    void CreateNorthEastL(Vec3);
+    void CreateSouthWestL(Vec3);
+    void CreateSouthEastL(Vec3);
     void CreateCorridorRoom(Vec3);
     void CreateEWHall(Vec3);
     void CreateNSHall(Vec3);

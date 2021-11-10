@@ -181,7 +181,7 @@ namespace NPCState { enum e : u32 {
 
 namespace RoomTag {
     enum tag : u32 {
-        UNFILLED, CORRIDOR, NSHALL, EWHALL, NORMAL
+        UNFILLED, CORRIDOR, NSHALL, EWHALL, NORMAL, BOSS, SPAWN, NWL, SWL, NEL, SEL
     };
 }
 
