@@ -41,6 +41,7 @@ private:
 
     u32 m_dirtyFlags;
     XMMATRIX m_world;
+    XMMATRIX m_transposeWorld;
     XMMATRIX m_view;
     XMMATRIX m_projection;
     XMMATRIX m_worldViewProjection;

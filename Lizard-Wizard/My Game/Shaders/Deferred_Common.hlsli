@@ -23,6 +23,7 @@ sampler Sampler : register(s0);
 cbuffer Constants : register(b0) {
     float4x4 WorldViewProjection;
     float4x4 World;
+    float4x4 TransposeWorld;
     float4 Glow;
 }
 

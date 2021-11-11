@@ -7,6 +7,7 @@ namespace {
     struct __declspec(align(16)) GameEffectConstants {
         XMMATRIX worldViewProjection;
         XMMATRIX world;
+        XMMATRIX transposeWorld;
         Vec4 glow;
     };
 
@@ -94,6 +95,7 @@ void DeferredEffect::Apply(ID3D12GraphicsCommandList* command_list) {
         GameEffectConstants data = {};
         data.worldViewProjection = m_worldViewProjection;
         data.world = m_world;
+        data.transposeWorld = m_transposeWorld;
         data.glow = m_glow;
 
         memcpy(constant_buffer.Memory(), &data, constant_buffer.Size());
@@ -117,6 +119,7 @@ void DeferredEffect::Apply(ID3D12GraphicsCommandList* command_list) {
 
 void XM_CALLCONV DeferredEffect::SetWorld(DirectX::FXMMATRIX world) {
     m_world = world;
+    m_transposeWorld = world;
     m_dirtyFlags |= DirtyWorldViewProjectionMatrix | DirtyWorldMatrix;
 }
 
