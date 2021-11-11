@@ -72,3 +72,8 @@ Vec3 BiasedPointIn2DPlane(f32 bounding, Vec3 origin, Vec3 bias) {
 
     return Vec3(direction.x, 0.0f, direction.z);
 }
+
+Vec3 RotatePointAroundOrigin(Vec3 origin, Vec3 point, Quat quat) {
+   Mat4x4 rotation = XMMatrixRotationQuaternion(quat);
+   return origin + Vec3(XMVector3Transform(point, rotation));
+}

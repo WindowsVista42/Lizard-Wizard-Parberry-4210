@@ -216,19 +216,6 @@ void CGame::DrawFrameRateText(){
 
 void CGame::EcsPreUpdate() {
     m_pAudio->SetListener(m_pRenderer->m_pCamera); // Update Audio
-
-    // This handles the timers tables.
-    for every(index, m_Timers.Size()) {
-        m_Timers.Components()[index] -= m_pTimer->GetFrameTime();
-    }
-
-    for every(index, m_Mana.Size()) {
-        Mana* mana = &m_Mana.Components()[index];
-
-        mana->timer -= m_pTimer->GetFrameTime();
-        btClamp<f32>(mana->timer, 0.0, FLT_MAX);
-        mana->value = (i32)(((mana->recharge * (f32)mana->max) - mana->timer) / mana->recharge);
-    }
 }
 
 
@@ -267,6 +254,19 @@ void CGame::EcsUpdate() {
     Ecs::RemoveConditionally(m_ProjectilesActive, [=](Entity e) { return *m_Timers.Get(e) <= 0.0; }, [=](Entity e) { StripProjectile(e); });
 
     m_pRenderer->UpdateParticles();
+
+    // This handles the timers tables.
+    for every(index, m_Timers.Size()) {
+        m_Timers.Components()[index] -= m_pTimer->GetFrameTime();
+    }
+
+    for every(index, m_Mana.Size()) {
+        Mana* mana = &m_Mana.Components()[index];
+
+        mana->timer -= m_pTimer->GetFrameTime();
+        btClamp<f32>(mana->timer, 0.0, FLT_MAX);
+        mana->value = (i32)(((mana->recharge * (f32)mana->max) - mana->timer) / mana->recharge);
+    }
 }
 
 /// Ask the object manager to draw the game objects. The renderer is notified

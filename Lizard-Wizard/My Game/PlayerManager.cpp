@@ -329,24 +329,32 @@ void CGame::UpdatePlayer() {
         {
             f32* time = m_Timers.Get(De);
             f32 factor = WindupWinddown(*time, 0.02f, 0.02f, move_timer);
+            //f32 factor = 0.0f;
+            //if (*time > 0.0f) { factor = 1.0f; }
             movedir += normal * factor;
         }
 
         {
             f32* time = m_Timers.Get(Ae);
             f32 factor = WindupWinddown(*time, 0.02f, 0.02f, move_timer);
+            //f32 factor = 0.0f;
+            //if (*time > 0.0f) { factor = 1.0f; }
             movedir -= normal * factor;
         }
 
         {
             f32* time = m_Timers.Get(We);
             f32 factor = WindupWinddown(*time, 0.02f, 0.02f, move_timer);
+            //f32 factor = 0.0f;
+            //if (*time > 0.0f) { factor = 1.0f; }
             movedir += lookdir * factor;
         }
 
         {
             f32* time = m_Timers.Get(Se);
             f32 factor = WindupWinddown(*time, 0.02f, 0.02f, move_timer);
+            //f32 factor = 0.0f;
+            //if (*time > 0.0f) { factor = 1.0f; }
             movedir -= lookdir * factor;
         }
     }
@@ -383,14 +391,17 @@ void CGame::UpdatePlayer() {
     // staff
     Vec3 staff_pos;
     Quat staff_rot;
+
     {
         ModelInstance* mi = m_ModelInstances.Get(Staffe);
         LBaseCamera* cam = m_pRenderer->m_pCamera;
 
-        Vec3 staff_offset = Vec3(80.0f, -60.0f, 100.0f);
-        Mat4x4 camera_rotation = XMMatrixRotationRollPitchYaw(cam->GetPitch(), cam->GetYaw(), cam->GetRoll());
+        staff_pos = RotatePointAroundOrigin(
+            cam->GetPos(), 
+            Vec3(80.0f, -60.0f, 100.0f), 
+            Quat::CreateFromYawPitchRoll(cam->GetYaw(), cam->GetPitch(), cam->GetRoll())
+        );
 
-        staff_pos = cam->GetPos() + Vec3(XMVector3Transform(staff_offset, camera_rotation));
         staff_rot = Quat::CreateFromYawPitchRoll(cam->GetYaw(), cam->GetPitch() + 0.6f, 0.0f);
         Vec3 scl = Vec3(100.0f);
 
@@ -401,10 +412,12 @@ void CGame::UpdatePlayer() {
     {
         ModelInstance* mi = m_ModelInstances.Get(Cubee);
 
-        Vec3 particle_offset = Vec3(0.0f, 100.0f, 0.0f);
-        Mat4x4 staff_rotation = XMMatrixRotationQuaternion(staff_rot);
+        Vec3 particle_pos = RotatePointAroundOrigin(
+            staff_pos,
+            Vec3(0.0f, 100.0f, 0.0f),
+            staff_rot
+        );
 
-        Vec3 particle_pos = staff_pos + Vec3(XMVector3Transform(particle_offset, staff_rotation));
         Vec3 scl = Vec3(10.0f);
 
         staff_tip = particle_pos;
