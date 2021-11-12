@@ -29,14 +29,11 @@
 /// any destructors are run.
 
 // Configuration Defines
-#define X_ROOMS 10
-#define Y_ROOMS 10
+#define X_ROOMS 40
+#define Z_ROOMS 40
 
 // Structs
 struct Room {
-    u32 currentTag;
-    u32 currentExit;
-    Vec3 origin;
 };
 
 struct RayProjectile {
@@ -132,8 +129,7 @@ private:
     Group m_InAir;
 
     // Rooms / Generation Tables
-    std::vector<Room> currentRooms;
-    std::array<std::array<Room, Y_ROOMS>, X_ROOMS> currentMap;
+    std::array<std::array<bool, Z_ROOMS>, X_ROOMS> currentMap; // empty or not empty, could be optimized with a bitfield
 
     // Collision Table (Simply put, we store all currently colliding objects here.)
     Table<Entity> m_CollisionPairs;
@@ -261,20 +257,12 @@ private:
     
 
     // GENERATION MANAGER //
-    void CreateNewRoom(Vec3);
-    void CreateNewHall(Vec3);
-    void CreateNewCorridor(Vec3);
-    void CreateNorthWestL(Vec3);
-    void CreateNorthEastL(Vec3);
-    void CreateSouthWestL(Vec3);
-    void CreateSouthEastL(Vec3);
-    void CreateCorridorRoom(Vec3);
-    void CreateEWHall(Vec3);
-    void CreateNSHall(Vec3);
-    void CreateNormalRoom(Vec3);
     void GenerateRooms(Vec3, const i32);
     void DestroyRooms();
     void InitializeGeneration();
+    std::pair<u32, u32> FindClosestPoint(std::pair<u32, u32>, std::pair<u32, u32>);
+    void RemoveConnectedPoints(std::pair<u32, u32> start, std::vector<std::pair<u32, u32>>&);
+    std::vector<std::pair<u32, u32>> Pathfind(std::pair<u32, u32>, std::pair<u32, u32>);
 
 
     // PROJECTILE MANAGER //

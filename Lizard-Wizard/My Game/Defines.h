@@ -87,6 +87,10 @@ struct Vec3 : Vector3 {
     operator XMVECTOR() const { return *(XMVECTOR*)this; }
     operator XMVECTORF32() const { return *(XMVECTORF32*)this; }
     operator XMFLOAT3() const { return *(XMFLOAT3*)this; }
+
+    void Print() {
+        printf("(%f, %f, %f)\n", x, y, z);
+    }
 };
 
 struct Vec4 : Vector4 {
