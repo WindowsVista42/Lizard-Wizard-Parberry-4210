@@ -166,7 +166,7 @@ private:
     f32 player_sens = 0.0333f;
     
     Vector3 flycam_pos = { -10000.0f, 0.0f, -10000.0f };
-    f32 flycam_speed = 3000.0f;
+    f32 flycam_speed = 6000.0f;
     
     bool flycam_enabled = false;
     u32 render_mode = 1;

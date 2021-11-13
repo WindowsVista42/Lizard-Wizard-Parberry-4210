@@ -7,7 +7,6 @@
 // - Add functional scatter (cover, blocks on walls)
 // - Add obstacles
 // - Add particles
-// - Impl Pathfinding
 // - Performance: batch geometry
 
 static const Vec3 room_scale = Vec3(1000.0f, 1000.0f, 1000.0f);
@@ -114,38 +113,43 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
         i32 x = start.first;
         i32 z = start.second;
 
-        //// Sean: hot glue fix for the 
-        //i32 false_count = currentMap[start.first][start.second] ? -1 : 0;
-        u32 false_count = 0;
-
         do {
-            if (abs(start.first - x) < abs(start.second - z)) { // right or left
-                m_GameMap[x][z] = true;
-                if (x != X_ROOMS - 2) { x += dirx; }
-                else { z += dirz; }
-            } else { // up or down
-                m_GameMap[x][z] = true;
-                if (z != Z_ROOMS - 2) { z += dirz; }
-                else { x += dirx; }
+            i32 xdiff = abs(end.first - x);
+            i32 zdiff = abs(end.second - z);
+
+            i32 cx = x;
+            i32 cz = z;
+
+            if (xdiff > zdiff) {
+                if (CheckBounds(cx + dirx, cz)) {
+                    x += dirx;
+                } else if (CheckBounds(cx, cz + dirz)) {
+                    z += dirz;
+                }
+            } else {
+                if (CheckBounds(cx, cz + dirz)) {
+                    z += dirz;
+                } else if (CheckBounds(cx + dirx, cz)) {
+                    x += dirx;
+                }
             }
 
-            if (m_GameMap[x][z] == false) {
-                false_count += 1;
-            }
-        } while (false_count < 2 && (x != end.first || z != end.second));
+            m_GameMap[cx][cz] = true;
+
+        } while (!m_GameMap[x][z] && (x != end.first || z != end.second));
     };
 
     // Sean: Fix gaps by repeatedly adding hallways
     // Sean: I messed up the algo somewhere so this has to be WIDTH - 2 and HEIGHT - 2 :|, still gives correct results :)
-    Point2 nearest_to_end = FindClosestPoint(std::make_pair(0, 0), std::make_pair(X_ROOMS - 2, Z_ROOMS - 2));
+    Point2 nearest_to_end = FindClosestPoint(std::make_pair(1, 1), std::make_pair(X_ROOMS - 2, Z_ROOMS - 2));
     while (nearest_to_end != std::make_pair<u32, u32>(X_ROOMS - 2, Z_ROOMS - 2)) {
         Point2 nearest_to_nearest = FindClosestPoint(std::make_pair(X_ROOMS - 2, Z_ROOMS - 2), nearest_to_end);
         DrawLineUntilOccupied(nearest_to_end, nearest_to_nearest);
-        nearest_to_end = FindClosestPoint(std::make_pair(0, 0), std::make_pair(X_ROOMS - 2, Z_ROOMS - 2));
+        nearest_to_end = FindClosestPoint(std::make_pair(1, 1), std::make_pair(X_ROOMS - 2, Z_ROOMS - 2));
     }
 
     // Sean: Remove dangling rooms
-    std::unordered_set<u64> connected = FindConnected(std::make_pair(0, 0));
+    std::unordered_set<u64> connected = FindConnected(std::make_pair(1, 1));
     for every(x, X_ROOMS) {
         for every(z, Z_ROOMS) {
             if (connected.find(make_key(x, z)) == connected.end()) {
@@ -251,8 +255,8 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
     for every(i, LIGHT_COUNT_ROOMS) {
         bool skip = false;
 
-        u32 x = GameRandom::Randu32(1, X_ROOMS - 1);
-        u32 z = GameRandom::Randu32(1, Z_ROOMS - 1);
+        u32 x = GameRandom::Randu32(3, X_ROOMS - 4);
+        u32 z = GameRandom::Randu32(3, Z_ROOMS - 4);
 
         auto ipos = std::make_pair(x, z);
 
@@ -264,6 +268,7 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
 
         if(!skip) {
             Vec3 pos = IndexToWorld(ipos.first, ipos.second); 
+            pos.Print();
 
             Entity e = Entity();
 
