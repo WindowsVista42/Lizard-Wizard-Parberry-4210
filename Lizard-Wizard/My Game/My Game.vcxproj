@@ -197,6 +197,7 @@
     <ClInclude Include="CustomBind.h" />
     <ClInclude Include="Effects\DeferredEffect.h" />
     <ClInclude Include="Math.h" />
+    <ClInclude Include="BinaryHeap.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="Effects\LightingEffect.h" />
     <ClInclude Include="Renderer.h" />

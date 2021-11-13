@@ -40,7 +40,7 @@ void CGame::Initialize() {
     InitializeNPCs();
     InitializePlayer();
 
-    GenerateRooms(Vec3(0,0,0), 200);
+    GenerateRooms(Vec3(0, 0, 0), 100, 300, 0);
 
     // Lets bind this action to to the user's mouse. For key values : https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
     m_leftClick = CustomBind::New(VK_LBUTTON);

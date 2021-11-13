@@ -42,6 +42,7 @@
     <ClInclude Include="Effects\TonemapEffect.h" />
     <ClInclude Include="Effects\LightingEffect.h" />
     <ClInclude Include="Interpolation.h" />
+    <ClInclude Include="BinaryHeap.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="My Game.rc" />

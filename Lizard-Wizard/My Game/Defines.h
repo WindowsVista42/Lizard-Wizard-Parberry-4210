@@ -27,6 +27,8 @@ typedef double f64;
 typedef VertexPositionNormalTexture VertexPNT;
 typedef VertexPositionColor VertexPC;
 
+typedef std::pair<u32, u32> Point2;
+
 #define every(name, count) (usize (name) = 0; (name) < (count); (name) += 1)
 
 #define BT_SHAPE_TYPE_BOX 0

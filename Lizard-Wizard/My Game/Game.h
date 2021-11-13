@@ -129,7 +129,7 @@ private:
     Group m_InAir;
 
     // Rooms / Generation Tables
-    std::array<std::array<bool, Z_ROOMS>, X_ROOMS> currentMap; // empty or not empty, could be optimized with a bitfield
+    std::array<std::array<bool, Z_ROOMS>, X_ROOMS> m_GameMap; // empty or not empty, could be optimized with a bitfield
 
     // Collision Table (Simply put, we store all currently colliding objects here.)
     Table<Entity> m_CollisionPairs;
@@ -257,13 +257,15 @@ private:
     
 
     // GENERATION MANAGER //
-    void GenerateRooms(Vec3, const i32);
+    Vec3 m_roomCenter;
+    void GenerateRooms(Vec3, const i32, const i32, const i32);
     void DestroyRooms();
     void InitializeGeneration();
-    std::pair<u32, u32> FindClosestPoint(std::pair<u32, u32>, std::pair<u32, u32>);
-    void RemoveConnectedPoints(std::pair<u32, u32> start, std::vector<std::pair<u32, u32>>&);
-    std::vector<std::pair<u32, u32>> Pathfind(std::pair<u32, u32>, std::pair<u32, u32>);
-
+    Vec3 IndexToWorld(u32 x, u32 z);
+    bool CheckBounds(i32 x, i32 z);
+    Point2 FindClosestPoint(Point2, Point2);
+    std::vector<Point2> Pathfind(Point2, Point2);
+    std::unordered_set<u64> FindConnected(Point2 start);
 
     // PROJECTILE MANAGER //
     void GenerateSimProjectile(
