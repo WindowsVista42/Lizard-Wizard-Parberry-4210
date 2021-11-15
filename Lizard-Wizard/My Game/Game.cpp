@@ -65,6 +65,7 @@ void CGame::LoadModels() {
     m_pRenderer->LoadModel("obelisk", ModelIndex::Obelisk);
     m_pRenderer->LoadModel("sentry", ModelIndex::Sentry);
     m_pRenderer->LoadModel("staff", ModelIndex::Staff);
+    m_pRenderer->LoadModel("hand", ModelIndex::Hand);
     m_pRenderer->LoadModel("quad", ModelIndex::Quad);
 }
 
@@ -221,8 +222,7 @@ void CGame::EcsPreUpdate() {
 
 void CGame::EcsUpdate() {
     // This handles NPCs and lighting.
-    for every(index, m_NPCsActive.Size()) {
-        Entity e = m_NPCsActive.Entities()[index];
+    Ecs::ApplyEvery(m_NPCsActive, [=](Entity e) {
         btTransform trans;
         btCollisionShape* currentShape = (*m_RigidBodies.Get(e))->getCollisionShape();
         btBoxShape* boxShape = reinterpret_cast<btBoxShape*>(currentShape);
@@ -231,13 +231,13 @@ void CGame::EcsUpdate() {
         m_pRenderer->lights.Get(e)->position = *(Vec4*)&trans.getOrigin();
 
         (*m_ModelInstances.Get(e)).world = MoveRotateScaleMatrix(
-            (*m_RigidBodies.Get(e))->getWorldTransform().getOrigin(), 
-            *(Quat*)&(*m_RigidBodies.Get(e))->getWorldTransform().getRotation(), 
+            (*m_RigidBodies.Get(e))->getWorldTransform().getOrigin(),
+            *(Quat*)&(*m_RigidBodies.Get(e))->getWorldTransform().getRotation(),
             boxShape->getHalfExtentsWithMargin()
         );
 
         DirectNPC(e);
-    }
+    });
 
     Ecs::ApplyEvery(m_ProjectilesActive, [=](Entity e) {
         btTransform trans;
@@ -252,26 +252,21 @@ void CGame::EcsUpdate() {
         RayProjectile currentRay = *m_Rays.Get(e);
 
         Vec3 direction = (currentRay.Pos2 - currentRay.Pos1); direction.Normalize();
-        Vec3 origin = currentRay.Pos1;
-        Vec3 cross = XMVector3Cross(currentRay.Pos1, currentRay.Pos2);
+        Vec3 origin = currentRay.Pos2; // dont worry about this it works okay
 
-        f32 dot = currentRay.Pos1.Dot(currentRay.Pos2);
         f32 distance = DistanceBetweenVectors(currentRay.Pos1, currentRay.Pos2);
 
-        Quat rotation = Quaternion::CreateFromAxisAngle(cross, dot);
-        Quat turn = direction.y != 1.0f ?
-            Quat::CreateFromAxisAngle(Vec3(0.0f, 1.0f, 0.0f), -M_PI / 2.0f) :
-            Quat::CreateFromAxisAngle(Vec3(1.0f, 0.0f, 0.0f), M_PI);
-        rotation *= turn;
+        Vec3 axis = direction.Cross(Vec3(1.0f, 0.0f, 0.0f));
+        f32 angle = acos(direction.Dot(Vec3(1.0f, 0.0f, 0.0f)));
+        Quat rotation = Quat::CreateFromAxisAngle(axis, angle);
 
         (*m_ModelInstances.Get(e)).world = MoveRotateScaleMatrix(
             origin,
             rotation,
-            Vec3(15.0f, 15.0f, distance)
+            Vec3(distance, 15.0f, 15.0f)
         );
     });
 
-    //Sean: we have this disabled because its lashing out and crashing
     CustomPhysicsStep();
 
     Ecs::RemoveConditionally(m_ProjectilesActive, [=](Entity e) { return *m_Timers.Get(e) <= 0.0; }, [=](Entity e) { StripProjectile(e); });
@@ -379,14 +374,4 @@ void CGame::ProcessFrame(){
     Update(); // update internal data
 
     RenderFrame(); // render a frame of animation
-}
-
-Mana CGame::NewMana(i32 max, f32 recharge) {
-    Mana mana;
-    mana.value = max;
-    mana.max = max;
-    mana.recharge = recharge;
-    mana.timer = 0.0f;
-
-    return mana;
 }

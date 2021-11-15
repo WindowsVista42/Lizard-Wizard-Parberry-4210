@@ -12,8 +12,10 @@ static Entity Se;
 
 static Entity Staffe;
 static Entity Cubee;
+static Entity Hande;
 
-static Group orbs;
+static Group mana_orbs;
+static Group health_orbs;
 
 const static f32 move_timer = 0.05f;
 
@@ -60,7 +62,8 @@ void CGame::InitializePlayer() {
     ModelInstance staff_mi;
     staff_mi.model = ModelIndex::Staff;
     staff_mi.texture = TextureIndex::White;
-    staff_mi.world = MoveScaleMatrix(Vec3(0.0f), Vec3(1000.0));
+    staff_mi.world = XMMatrixIdentity();
+    staff_mi.glow = Vec3(0.0f);
     m_ModelInstances.AddExisting(Staffe, staff_mi);
     m_ModelsActive.AddExisting(Staffe);
 
@@ -68,26 +71,48 @@ void CGame::InitializePlayer() {
     ModelInstance cube_mi;
     cube_mi.model = ModelIndex::Cube;
     cube_mi.texture = TextureIndex::White;
-    cube_mi.world = MoveScaleMatrix(Vec3(0.0f), Vec3(1000.0));
-    cube_mi.glow = Vec3(0.7, 0.7, 0.7);
+    cube_mi.world = XMMatrixIdentity();
+    cube_mi.glow = Vec3(0.7f, 0.7f, 0.7f);
     m_ModelInstances.AddExisting(Cubee, cube_mi);
     m_ModelsActive.AddExisting(Cubee);
 
     for every(index, m_DashAction.max_cooldown) {
-        Entity e = orbs.Add();
+        Entity e = mana_orbs.Add();
 
         ModelInstance mi;
         mi.model = ModelIndex::Cube;
         mi.texture = TextureIndex::White;
         mi.world = XMMatrixIdentity();
-        mi.glow = Vec3(0.4, 0.4, 0.4);
-
+        mi.glow = Vec3(0.4f, 0.4f, 0.4f);
         m_ModelInstances.AddExisting(e, mi);
         m_ModelsActive.AddExisting(e);
     }
 
-    m_Healths.AddExisting(m_Player, 4);
-    m_Mana.AddExisting(m_Player, NewMana(4, 0.5f));
+    //Hande = Entity();
+    //ModelInstance hand_mi;
+    //hand_mi.model = ModelIndex::Hand;
+    //hand_mi.texture = TextureIndex::White;
+    //hand_mi.world = XMMatrixIdentity();
+    //hand_mi.glow = Vec3(0.0f);
+    //m_ModelInstances.AddExisting(Hande, hand_mi);
+    //m_ModelsActive.AddExisting(Hande);
+
+    Health player_health = Health::New(4, 4);
+
+    for every(index, player_health.max) {
+        Entity e = health_orbs.Add();
+
+        ModelInstance mi;
+        mi.model = ModelIndex::Cube;
+        mi.texture = TextureIndex::White;
+        mi.world = XMMatrixIdentity();
+        mi.glow = Vec3(1.0f, 0.4f, 0.4f);
+        m_ModelInstances.AddExisting(e, mi);
+        m_ModelsActive.AddExisting(e);
+    }
+
+    m_Healths.AddExisting(m_Player, player_health);
+    m_Mana.AddExisting(m_Player, Mana::New(4, 0.5f));
 
     m_pRenderer->lights.AddExisting(m_Player, { Vec4(0), Vec4(50.0f, 10.0f, 5.0f, 0.0f)});
 }
@@ -175,14 +200,14 @@ void CGame::PlayerInput() {
 
     if (m_pKeyboard->TriggerDown(VK_LSHIFT)) {
         static u32 index = 0;
-        Entity e = orbs.Entities()[index];
+        Entity e = mana_orbs.Entities()[index];
 
         if (Ecs::ActivateAction(m_Timers, m_DashAction, e)) {
             // play sound
 
             // update entity to use
             index += 1;
-            index %= orbs.Size();
+            index %= mana_orbs.Size();
         };
     }
 
@@ -492,7 +517,7 @@ void CGame::UpdatePlayer() {
 
     // cubes that spin around staff
     f32 index = 1.0f;
-    Ecs::ApplyEvery(orbs, [&](Entity e) {
+    Ecs::ApplyEvery(mana_orbs, [&](Entity e) {
         ModelInstance* mi = m_ModelInstances.Get(e);
 
         auto RotationTranslation = [](Vec3 origin, Vec3 offset, Quat quat) {
@@ -500,7 +525,7 @@ void CGame::UpdatePlayer() {
             return origin + Vec3(XMVector3Transform(offset, rot));
         };
 
-        f32 t = m_pTimer->GetTime() + (M_PI * 2.0f * (index / (f32)orbs.Size()));
+        f32 t = m_pTimer->GetTime() + (M_PI * 2.0f * (index / (f32)mana_orbs.Size()));
 
         f32 radius = 20.0f;
         f32 height = 40.0f;
@@ -514,6 +539,57 @@ void CGame::UpdatePlayer() {
 
         index += 1.0f;
     });
+
+    // Hand
+    Vec3 hand_pos;
+    Quat hand_rot;
+
+    //auto SetModelFancy = [&](ModelInstance* mi, Vec3 origin, Vec3 offset, Vec3 orientation, Vec3 orientation_offset, Vec3 scale) {
+    //    Vec3 pos = RotatePointAroundOrigin(
+    //        origin, 
+    //        offset, 
+    //        Quat::CreateFromYawPitchRoll(orientation.x, orientation.y, orientation.z)
+    //    );
+
+    //    Quat rot = Quat::CreateFromYawPitchRoll(
+    //        orientation.x + orientation_offset.x, 
+    //        orientation.y + orientation_offset.y, 
+    //        orientation.z + orientation_offset.z
+    //    );
+
+    //    Vec3 scl = scale;
+
+    //    mi->world = MoveRotateScaleMatrix(pos, rot, scl);
+    //};
+
+    //{
+    //    ModelInstance* mi = m_ModelInstances.Get(Hande);
+    //    LBaseCamera* cam = m_pRenderer->m_pCamera;
+
+    //    //SetModelFancy(
+    //    //     mi,
+    //    //     cam->GetPos(),
+    //    //     Vec3(-80.0f, -60.0f, 100.0f),
+    //    //     Vec3(cam->GetYaw(), cam->GetPitch(), cam->GetRoll()),
+    //    //     Vec3(0.0f, M_PI / 2.0f, 0.0f), Vec3(100.0f)
+    //    //);
+
+    //    hand_pos = RotatePointAroundOrigin(
+    //        cam->GetPos(), 
+    //        Vec3(-40.0f, -60.0f, 100.0f), 
+    //        Quat::CreateFromYawPitchRoll(cam->GetYaw(), cam->GetPitch(), cam->GetRoll())
+    //    );
+
+    //    hand_rot = Quat::CreateFromYawPitchRoll(cam->GetYaw(), cam->GetPitch(), 0.0f);
+    //    Vec3 scl = Vec3(100.0f);
+
+    //    mi->world = MoveRotateScaleMatrix(hand_pos, hand_rot, scl);
+    //}
+
+    // Cubes that spin around hand
+    {
+        Health* player_health = m_Healths.Get(m_Player);
+    }
 
     // dash action timers connection to cubes that spin
     u32 i = 0;

@@ -7,7 +7,7 @@
 // - Add functional scatter (cover, blocks on walls)
 // - Add obstacles
 // - Add particles
-// - Performance: batch geometry
+// - Performance: batch geometry (by material)
 
 static const Vec3 room_scale = Vec3(1000.0f, 1000.0f, 1000.0f);
 static const u32 room_group = 0b00001;
@@ -149,11 +149,32 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
     }
 
     // Sean: Remove dangling rooms
-    std::unordered_set<u64> connected = FindConnected(std::make_pair(1, 1));
-    for every(x, X_ROOMS) {
-        for every(z, Z_ROOMS) {
-            if (connected.find(make_key(x, z)) == connected.end()) {
-                m_GameMap[x][z] = false;
+    std::vector<Point2> connected_all;
+    std::vector<Point2> connected_walls;
+    {
+        std::unordered_set<u64> connected_set = FindConnected(std::make_pair(1, 1));
+        for every(x, X_ROOMS) {
+            for every(z, Z_ROOMS) {
+                if (connected_set.find(make_key(x, z)) == connected_set.end()) {
+                    m_GameMap[x][z] = false;
+                }
+            }
+        }
+
+        for (auto it = connected_set.begin(); it != connected_set.end(); it++) {
+            u64 v = (*it);
+            u32 x = v >> 32;
+            u32 z = (v << 32) >> 32;
+            connected_all.push_back(std::make_pair(x, z));
+
+            if (CheckBounds(x - 1, z) && !m_GameMap[x - 1][z]) {
+                connected_walls.push_back(std::make_pair(x, z));
+            } else if (CheckBounds(x + 1, z) && !m_GameMap[x + 1][z]) {
+                connected_walls.push_back(std::make_pair(x, z));
+            } else if (CheckBounds(x, z - 1) && !m_GameMap[x][z - 1]) {
+                connected_walls.push_back(std::make_pair(x, z));
+            } else if (CheckBounds(x, z + 1) && !m_GameMap[x][z + 1]) {
+                connected_walls.push_back(std::make_pair(x, z));
             }
         }
     }
@@ -181,12 +202,13 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
         }
 
         Vec3 body_scale;
+        const f32 thickness = 10.0f;
         if (fabs(side.x) == 1.0f) {
-            body_scale = Vec3(2.0f, room_scale.y, room_scale.z);
+            body_scale = Vec3(thickness, room_scale.y, room_scale.z);
         } else if (fabs(side.y) == 1.0f) {
-            body_scale = Vec3(room_scale.x, 2.0f, room_scale.z);
+            body_scale = Vec3(room_scale.x, thickness, room_scale.z);
         } else if (fabs(side.z) == 1.0f) {
-            body_scale = Vec3(room_scale.x, room_scale.y, 2.0f);
+            body_scale = Vec3(room_scale.x, room_scale.y, thickness);
         } else {
             ABORT_EQ_FORMAT(0, 0, "Input placement was not valid!");
         }
@@ -247,45 +269,98 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
         }
     }
 
+    auto ScatterHorizontal = [&](
+        const usize scatter_count,
+        const f32 y, 
+        const u32 s_lower, const u32 s_upper,
+        const u32 sy_lower, const u32 sy_upper,
+        const u32 h_lower
+    ) {
+        for every(i, scatter_count) {
+            u32 idx = GameRandom::Randu32(0, connected_all.size() - 1);
+
+            u32 x = connected_all[idx].first;
+            u32 z = connected_all[idx].second;
+    
+            f32 fx = (f32)GameRandom::Randu32(0, 2 * (u32)room_scale.x) - (room_scale.x / 2.0f);
+            f32 fz = (f32)GameRandom::Randu32(0, 2 * (u32)room_scale.x) - (room_scale.x / 2.0f);
+    
+            f32 s = (f32)GameRandom::Randu32(s_lower, s_upper);
+            f32 sy = (f32)GameRandom::Randu32(sy_lower, sy_upper);
+            f32 h = (f32)GameRandom::Randu32(h_lower, (u32)sy) - (sy / 2.0f);
+    
+            Vec3 position = IndexToWorld(x, z);
+            position.x += fx;
+            position.z += fz;
+            position.y = y + h;
+    
+            Entity e = Entity();
+            ModelInstance mi;
+            mi.model = ModelIndex::Cube;
+            mi.texture = TextureIndex::White;
+            mi.glow = Vec3(0.0f);
+            mi.world = MoveScaleMatrix(position, Vec3(s, sy, s));
+    
+            m_ModelInstances.AddExisting(e, mi);
+            m_ModelsActive.AddExisting(e);
+        }
+    };
+
+    ScatterHorizontal(600, -room_scale.y, 100, 700, 5, 30, 5);
+    ScatterHorizontal(600, room_scale.y, 100, 700, 5, 30, 5);
+
+    auto ScatterWalls = [&](
+        const usize scatter_count
+    ) {
+        for every(i, scatter_count) {
+            u32 idx = GameRandom::Randu32(0, connected_walls.size() - 1);
+
+            u32 x = connected_walls[idx].first;
+            u32 z = connected_walls[idx].second;
+
+        }
+    };
+
+    ScatterWalls(1000);
+
     // Sean:
     // randomly choose tiles to place lights into
     // but dont choose the same tile twice
     std::unordered_set<u64> light_placements;
     #define LIGHT_COUNT_ROOMS 40
     for every(i, LIGHT_COUNT_ROOMS) {
-        bool skip = false;
+        u32 idx = GameRandom::Randu32(0, connected_walls.size() - 1);
 
-        u32 x = GameRandom::Randu32(3, X_ROOMS - 4);
-        u32 z = GameRandom::Randu32(3, Z_ROOMS - 4);
+        u32 x = connected_walls[idx].first;
+        u32 z = connected_walls[idx].second;
 
-        auto ipos = std::make_pair(x, z);
+        auto Check = [&](u32 cx, u32 cz) {
+            return light_placements.find(make_key(x, z)) != light_placements.end();
+        };
 
-        if (!m_GameMap[x][z] || light_placements.find(make_key(ipos.first, ipos.second)) != light_placements.end()) {
-            skip = true; i -= 1;
-        } else {
-            light_placements.insert(make_key(ipos.first, ipos.second));
+        if (Check(x, z) && Check(x - 1, z) && Check(x + 1, z) && Check(x, z - 1) && Check(x, z + 1)) {
+            i -= 1; continue;
         }
 
-        if(!skip) {
-            Vec3 pos = IndexToWorld(ipos.first, ipos.second); 
-            pos.Print();
+        light_placements.insert(make_key(x, z));
 
-            Entity e = Entity();
+        Vec3 pos = IndexToWorld(x, z); 
 
-            Light light;
-            light.color = Vec4(100.0f, 100.0f, 100.0f, 0.0f);
-            light.position = Vec4(pos.x, pos.y, pos.z, 0.0f);
-            m_pRenderer->lights.AddExisting(e, light);
-            m_TestingLights.AddExisting(e);
+        Entity e = Entity();
 
-            ModelInstance model;
-            model.glow = 2.0f;
-            model.model = ModelIndex::Cube;
-            model.texture = TextureIndex::White;
-            model.world = MoveScaleMatrix(pos, Vec3(50.0f));
-            m_ModelInstances.AddExisting(e, model);
-            m_ModelsActive.AddExisting(e);
-        }
+        Light light;
+        light.color = Vec4(100.0f, 100.0f, 100.0f, 0.0f);
+        light.position = Vec4(pos.x, pos.y, pos.z, 0.0f);
+        m_pRenderer->lights.AddExisting(e, light);
+        m_TestingLights.AddExisting(e);
+
+        ModelInstance model;
+        model.glow = 2.0f;
+        model.model = ModelIndex::Cube;
+        model.texture = TextureIndex::White;
+        model.world = MoveScaleMatrix(pos, Vec3(50.0f));
+        m_ModelInstances.AddExisting(e, model);
+        m_ModelsActive.AddExisting(e);
     }
 }
 
@@ -330,15 +405,11 @@ Point2 CGame::FindClosestPoint(Point2 start, Point2 end) {
             best_point = current;
         }
 
-        // Find valid neighbors.
-
-        u32 next_count = 0;
-        Point2 next[4];
+        // Find and add valid neighbors.
 
         auto AddConditionally = [&](i32 x, i32 z) {
             if (CheckBounds(x, z) && m_GameMap[x][z] && traversed.find(make_key(x, z)) == traversed.end()) {
-                next[next_count] = std::make_pair(x, z);
-                next_count += 1;
+                frontier.push_back(std::make_pair(x, z));
             }
         };
 
@@ -355,12 +426,6 @@ Point2 CGame::FindClosestPoint(Point2 start, Point2 end) {
 
         cx = current.first; cz = current.second + 1;
         AddConditionally(cx, cz);
-
-        // Add neighbors to frontier.
-
-        for every(index, next_count) {
-            frontier.push_back(next[index]);
-        }
     }
 
     traversed.clear();
@@ -371,7 +436,6 @@ Point2 CGame::FindClosestPoint(Point2 start, Point2 end) {
 
 std::unordered_set<u64> CGame::FindConnected(Point2 start) {
     static std::vector<Point2> frontier = std::vector<Point2>();
-
     std::unordered_set<u64> traversed = std::unordered_set<u64>();
 
     if (m_GameMap[start.first][start.second] == false) { return traversed; } // start is invalid
@@ -385,15 +449,11 @@ std::unordered_set<u64> CGame::FindConnected(Point2 start) {
         frontier.pop_back();
         traversed.insert(make_key(current.first, current.second));
 
-        // Find valid neighbors.
-
-        u32 next_count = 0;
-        Point2 next[4];
+        // Find and add valid neighbors.
 
         auto AddConditionally = [&](i32 x, i32 z) {
             if (CheckBounds(x, z) && m_GameMap[x][z] && traversed.find(make_key(x, z)) == traversed.end()) {
-                next[next_count] = std::make_pair(x, z);
-                next_count += 1;
+                frontier.push_back(std::make_pair(x, z));
             }
         };
 
@@ -410,12 +470,6 @@ std::unordered_set<u64> CGame::FindConnected(Point2 start) {
 
         cx = current.first; cz = current.second + 1;
         AddConditionally(cx, cz);
-
-        // Add neighbors to frontier.
-
-        for every(index, next_count) {
-            frontier.push_back(next[index]);
-        }
     }
 
     frontier.clear();

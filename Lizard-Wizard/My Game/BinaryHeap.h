@@ -5,6 +5,7 @@
 #include "Defines.h"
 
 // Standard Binary Min Heap.
+// See an example usage of this Binary Heap in CGame::Pathfind()
 // If you want a max heap then flip <'s and >'s.
 template <typename T>
 class BinaryHeap {

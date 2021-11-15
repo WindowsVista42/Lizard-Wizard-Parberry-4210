@@ -82,6 +82,29 @@ struct Mana {
         printf("%f\n", this->recharge * ((f32)this->max - (f32)(this->value)));
         return this->recharge * ((f32)this->max - (f32)(this->value));
     }
+
+    static Mana New(i32 max, f32 recharge) {
+        Mana mana;
+        mana.value = max;
+        mana.max = max;
+        mana.recharge = recharge;
+        mana.timer = 0.0f;
+    
+        return mana;
+    }
+};
+
+struct Health {
+    i32 current;
+    i32 max;
+
+    static Health New(i32 current, i32 max) {
+        Health health;
+        health.current = current;
+        health.max = max;
+
+        return health;
+    }
 };
 
 // Game Class
@@ -126,7 +149,7 @@ private:
     Table<Group> m_Parents;
 
     // Health Table
-    Table<i32> m_Healths;
+    Table<Health> m_Healths;
 
     // Mana Table
     Table<Mana> m_Mana;
@@ -336,6 +359,9 @@ private:
 
     // MANA //
     Mana NewMana(i32 max, f32 recharge);
+
+    // HEALTH //
+    Health NewHealth(i32 starting, i32 max);
 
 public:
     Renderer* m_pRenderer; ///< Pointer to renderer.
