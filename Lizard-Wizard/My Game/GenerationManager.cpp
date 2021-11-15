@@ -362,6 +362,27 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
         m_ModelInstances.AddExisting(e, model);
         m_ModelsActive.AddExisting(e);
     }
+
+    { // spawn light in player room
+        Vec3 pos = IndexToWorld(1, 1);
+
+        Entity e = Entity();
+
+        Light light;
+        light.color = Vec4(100.0f, 100.0f, 100.0f, 0.0f);
+        light.position = Vec4(pos.x, pos.y, pos.z, 0.0f);
+        m_pRenderer->lights.AddExisting(e, light);
+        m_TestingLights.AddExisting(e);
+
+        ModelInstance model;
+        model.glow = 2.0f;
+        model.model = ModelIndex::Cube;
+        model.texture = TextureIndex::White;
+        model.world = MoveScaleMatrix(pos, Vec3(50.0f));
+        m_ModelInstances.AddExisting(e, model);
+        m_ModelsActive.AddExisting(e);
+    }
+
 }
 
 void CGame::DestroyRooms() {

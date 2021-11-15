@@ -262,7 +262,7 @@ void CGame::InitializePhysics() {
 
     // m_Player Rigidbody | (Note) : Create this first, as the m_Player is currently indexed as [0] in the collision table.
     {
-        btRigidBody* rb = CreateCapsuleObject(100.0f, 250.0f, Vec3(-10000.0, 100.0, -10000.0), 1.0f, 0.5f, 2, 0b00001);
+        btRigidBody* rb = CreateCapsuleObject(100.0f, 250.0f, IndexToWorld(1, 1), 1.0f, 0.5f, 2, 0b00001);
         RBSetMassFriction(rb, 1.0, 0.1);
         RBSetCcd(rb, 1e-7, 200.0f);
         m_Player = m_RigidBodyMap.at(rb);

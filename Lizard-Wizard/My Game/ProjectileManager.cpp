@@ -17,7 +17,7 @@ ModelInstance GetSphereModel(btRigidBody* body) {
 
     instance.model = ModelIndex::Cube;
     instance.world = MoveScaleMatrix(body->getWorldTransform().getOrigin(), Vector3(25.0f));
-    instance.texture = 1;
+    instance.texture = TextureIndex::White;
 
     return instance;
 }

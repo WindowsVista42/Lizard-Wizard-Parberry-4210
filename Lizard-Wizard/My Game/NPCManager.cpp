@@ -1,4 +1,4 @@
-// Inclusions
+/// Inclusions
 #include "Game.h"
 #include "Interpolation.h"
 
@@ -57,12 +57,12 @@ void CGame::Sleep(Entity e) {
     btRigidBody* playerBody = *(m_RigidBodies.Get(m_Player));
     btRigidBody* npcBody = *m_RigidBodies.Get(e);
 
-    SetNPCRender(npcBody, npcBody->getWorldTransform().getOrigin(), npcBody->getWorldTransform().getBasis());
-
     f32 distance = npcBody->getWorldTransform().getOrigin().distance(playerBody->getWorldTransform().getOrigin());
-    if (distance < 5000.0f) {
+    if (distance < 7500.0f) {
         currentNPC->State = NPCState::ATTACKING;
     }
+
+    SetNPCRender(npcBody, npcBody->getWorldTransform().getOrigin(), npcBody->getWorldTransform().getBasis());
 } 
 
 void CGame::Wander(Entity e) {
@@ -71,15 +71,22 @@ void CGame::Wander(Entity e) {
     btRigidBody* playerBody = *(m_RigidBodies.Get(m_Player));
     btRigidBody* npcBody = *m_RigidBodies.Get(e);
 
-    SetNPCRender(npcBody, npcBody->getWorldTransform().getOrigin(), npcBody->getWorldTransform().getBasis());
 
-    currentNPC->QueuedMovement = npcBody->getWorldTransform().getOrigin() + Vec3(BiasedPointIn2DPlane(0.8f, npcBody->getWorldTransform().getOrigin(), playerBody->getWorldTransform().getOrigin()) * 1000.0f);
+    //std::vector<Point2> path = Pathfind(WorldToIndex(npcBody->getWorldTransform().getOrigin()), WorldToIndex(playerBody->getWorldTransform().getOrigin()));
+    //if (path.size() > 1) {
+    //    currentNPC->QueuedMovement = IndexToWorld(path[1].first, path[1].second);
+    //} else {
+        currentNPC->QueuedMovement = npcBody->getWorldTransform().getOrigin() + Vec3(BiasedPointIn2DPlane(0.8f, npcBody->getWorldTransform().getOrigin(), playerBody->getWorldTransform().getOrigin()) * 1000.0f);
+    //}
+    //currentNPC->QueuedMovement = playerBody->getWorldTransform().getOrigin();
+
+    SetNPCRender(npcBody, npcBody->getWorldTransform().getOrigin(), npcBody->getWorldTransform().getBasis());
     currentNPC->State = NPCState::MOVING;
 }
 
 void CGame::Move(Entity e, Vec3 moveTo) {
     // Ensuring object is placed correctly in world.
-    btRigidBody* playerBody = *(m_RigidBodies.Get(m_Player));
+    //btRigidBody* playerBody = *(m_RigidBodies.Get(m_Player));
     btRigidBody* npcBody = *m_RigidBodies.Get(e);
 
     SetNPCRender(npcBody, npcBody->getWorldTransform().getOrigin(), npcBody->getWorldTransform().getBasis());
@@ -88,10 +95,10 @@ void CGame::Move(Entity e, Vec3 moveTo) {
     Animation newAnimation;
 
     newAnimation.beginPos = npcBody->getWorldTransform().getOrigin();
-    newAnimation.beginRot = npcBody->getWorldTransform().getOrigin().normalize();
+    newAnimation.beginRot = Vec3(0);//npcBody->getWorldTransform().getOrigin().normalize();
 
     newAnimation.endPos = moveTo;
-    newAnimation.endRot = npcBody->getWorldTransform().getOrigin().normalize();
+    newAnimation.endRot = Vec3(0);// npcBody->getWorldTransform().getOrigin().normalize();
 
     newAnimation.maxSteps = 20.0f;
     newAnimation.steps = 0.0f;
@@ -104,7 +111,6 @@ void CGame::Move(Entity e, Vec3 moveTo) {
 }
 
 void CGame::Pathfind(Entity e) {
-    // (Note) Ethan : I have this implanted in the diagram but I need a more complete generation system before I can implement this.
 }
 
 void CGame::Attack(Entity e) {
@@ -122,7 +128,7 @@ void CGame::Attack(Entity e) {
     SetNPCRender(npcBody, origin, newMat);
 
     f32 distance = npcBody->getWorldTransform().getOrigin().distance(playerBody->getWorldTransform().getOrigin());
-    if (distance < 5000.0f) {
+    if (distance < 7500.0f) {
         waitTimer = *m_Timers.Get(e);
         if (waitTimer < 0.0f) {
             m_Timers.Remove(e);
@@ -151,14 +157,13 @@ void CGame::Search(Entity e) {
     btRigidBody* playerBody = *(m_RigidBodies.Get(m_Player));
     btRigidBody* npcBody = *m_RigidBodies.Get(e);
 
-    if (currentNPC->SearchAttempts >= 3) {
-        SetNPCRender(npcBody, npcBody->getWorldTransform().getOrigin(), npcBody->getWorldTransform().getBasis());
+    if (currentNPC->SearchAttempts >= 5) {
         // cant do much till pathfinding lolololooololololol
         currentNPC->State = NPCState::SLEEPING;
         currentNPC->SearchAttempts = 0;
     } else {
         f32 distance = npcBody->getWorldTransform().getOrigin().distance(playerBody->getWorldTransform().getOrigin());
-        if (distance < 5000.0f) {
+        if (distance < 2500.0f) {
             currentNPC->State = NPCState::ATTACKING;
             currentNPC->SearchAttempts = 0;
         } else {
@@ -166,7 +171,7 @@ void CGame::Search(Entity e) {
             currentNPC->SearchAttempts++;
         }
     }
-
+    SetNPCRender(npcBody, npcBody->getWorldTransform().getOrigin(), npcBody->getWorldTransform().getBasis());
 }
 
 /*
@@ -187,6 +192,15 @@ void CGame::DetermineBehavior(Entity e) {
 
 // Contains most of the logical code for handling NPCs
 void CGame::DirectNPC(Entity e) {
+
+    // Update associated light position
+    btRigidBody* body = *m_RigidBodies.Get(e);
+
+    // Sean: this made me very sad
+    //if (body->getWorldTransform().getOrigin().x() > 5.0f) { m_NPCs.Get(e)->LastPosition = body->getWorldTransform().getOrigin(); }
+    m_NPCs.Get(e)->LastPosition = body->getWorldTransform().getOrigin();
+    m_pRenderer->lights.Get(e)->position = *(Vec4*)&m_NPCs.Get(e)->LastPosition;
+
     switch (m_NPCs.Get(e)->State)
     {
         case NPCState::SLEEPING :
@@ -214,9 +228,6 @@ void CGame::DirectNPC(Entity e) {
             return;
     }
 
-    // Update associated light position
-    btRigidBody* body = *m_RigidBodies.Get(e);
-    m_pRenderer->lights.Get(e)->position = *(Vec4*)&body->getWorldTransform().getOrigin();
 }
 
 // Places a cached NPC.
@@ -235,7 +246,7 @@ void CGame::PlaceNPC(Vec3 startPos, Vec3 lookDirection) {
     btVector3 inertia;
 
     // Set attributes.
-    body->getWorldTransform().setOrigin(Vec3(newPos.x, 100.0f, newPos.z));
+    body->getWorldTransform().setOrigin(Vec3(newPos.x, -1000.0f, newPos.z));
     body->getCollisionShape()->calculateLocalInertia(mass, inertia);
     body->setMassProps(mass, inertia);
     body->setFriction(friction);

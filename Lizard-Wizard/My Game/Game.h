@@ -57,6 +57,7 @@ struct NPC {
     NPCState::e State;
     u32 SearchAttempts;
     Vec3 QueuedMovement;
+    Vec3 LastPosition;
     NPC() :
         Behavior(NPCBehavior::TURRET),
         State(NPCState::SLEEPING)

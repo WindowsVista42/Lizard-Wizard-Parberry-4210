@@ -324,7 +324,7 @@ void CGame::UpdatePlayer() {
                     1,
                     32000.0,
                     0.01,
-                    Colors::DarkCyan,
+                    Vec4(0.1f, 0.5f, 0.8f, 0.0f),
                     SoundIndex::IceImpact1,
                     true
                 );
@@ -340,7 +340,7 @@ void CGame::UpdatePlayer() {
                     3,
                     32000.0,
                     0.01,
-                    Vec4(3.0f, 1.0f, 0.5f, 0.0f),
+                    Vec4(0.7f, 0.5, 0.1f, 0.0f),
                     SoundIndex::LightningCast,
                     true
                 );
@@ -355,7 +355,7 @@ void CGame::UpdatePlayer() {
                     4,
                     12000.0,
                     0.1,
-                    Colors::Red,
+                    Vec4(0.8f, 0.1f, 0.1f, 0.0f),
                     SoundIndex::FireImpact1,
                     true
                 );
@@ -366,7 +366,7 @@ void CGame::UpdatePlayer() {
         *mana_timer = player_mana->Decrement(1);
     }
 
-    if (m_rightClick.pressed) {
+    /*if (m_rightClick.pressed) {
         GenerateRayProjectile(
             *m_RigidBodies.Get(m_Player),
             staff_tip,
@@ -378,7 +378,7 @@ void CGame::UpdatePlayer() {
             false,
             true
         );
-    }
+    }*/
 
     if (flycam_enabled) {
         flycam_pos += movedir * flycam_speed * m_pTimer->GetFrameTime();
@@ -503,13 +503,13 @@ void CGame::UpdatePlayer() {
         // Swap light color based on projectile selection.
         switch (m_WeaponSelection) {
         case ProjectileTypes::ICE:
-            clr = Vec4(0.1f, 0.6f, 1.0f, 0.0f);
+            clr = Vec4(0.1f, 0.5f, 0.8f, 0.0f);
             break;
         case ProjectileTypes::LIGHTNING:
-            clr = Vec4(0.85f, 0.85f, 0.1f, 0.0f);
+            clr = Vec4(0.7f, 0.5, 0.1f, 0.0f);
             break;
         default:
-            clr = Colors::Red;
+            clr = Vec4(0.9f, 0.05f, 0.05f, 0.0f);
             break;
         }
 

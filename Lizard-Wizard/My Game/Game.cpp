@@ -46,7 +46,7 @@ void CGame::Initialize() {
     m_leftClick = CustomBind::New(VK_LBUTTON);
     m_rightClick = CustomBind::New(VK_RBUTTON);
 
-    CreateTestingEnvironment();
+    //CreateTestingEnvironment();
 
     BeginGame();
 }
@@ -229,18 +229,29 @@ void CGame::EcsPreUpdate() {
 void CGame::EcsUpdate() {
     // This handles NPCs and lighting.
     Ecs::ApplyEvery(m_NPCsActive, [=](Entity e) {
-        btTransform trans;
-        btCollisionShape* currentShape = (*m_RigidBodies.Get(e))->getCollisionShape();
+        //btTransform trans;
+        NPC* npc = m_NPCs.Get(e);
+        btRigidBody* body = *m_RigidBodies.Get(e);
+        Vec3 origin = body->getWorldTransform().getOrigin();
+
+        btCollisionShape* currentShape = body->getCollisionShape();
         btBoxShape* boxShape = reinterpret_cast<btBoxShape*>(currentShape);
 
-        (*m_RigidBodies.Get(e))->getMotionState()->getWorldTransform(trans);
-        m_pRenderer->lights.Get(e)->position = *(Vec4*)&trans.getOrigin();
+        m_pRenderer->lights.Get(e)->position = *(Vec4*)&origin;
 
         (*m_ModelInstances.Get(e)).world = MoveRotateScaleMatrix(
-            (*m_RigidBodies.Get(e))->getWorldTransform().getOrigin(),
-            *(Quat*)&(*m_RigidBodies.Get(e))->getWorldTransform().getRotation(),
+            npc->LastPosition,
+            //body->getWorldTransform().getOrigin(),
+            body->getWorldTransform().getRotation(),
             boxShape->getHalfExtentsWithMargin()
         );
+
+        //NPC* npc = m_NPCs.Get(e);
+        if (origin.x < 200.0f) {
+            Animation* a = m_Animations.Get(e);
+            printf("%d\n", a->steps);
+            printf("%d\n", npc->State);
+        }
 
         DirectNPC(e);
     });
