@@ -325,8 +325,12 @@ void CGame::UpdatePlayer() {
                     32000.0,
                     0.01,
                     Colors::DarkCyan,
+                    SoundIndex::IceImpact1,
                     true
                 );
+
+                m_pAudio->play(SoundIndex::IceCast, staff_tip, 7.5f, 0.5);
+
                 break;
             case ProjectileTypes::LIGHTNING :
                 GenerateSimProjectile(
@@ -337,8 +341,11 @@ void CGame::UpdatePlayer() {
                     32000.0,
                     0.01,
                     Vec4(3.0f, 1.0f, 0.5f, 0.0f),
+                    SoundIndex::LightningCast,
                     true
                 );
+                m_pAudio->play(SoundIndex::LightningCast, staff_tip, 7.5f, 0.5);
+
                 break;
             default:
                 GenerateSimProjectile(
@@ -349,29 +356,29 @@ void CGame::UpdatePlayer() {
                     12000.0,
                     0.1,
                     Colors::Red,
+                    SoundIndex::FireImpact1,
                     true
                 );
+                m_pAudio->play(SoundIndex::FireCast, staff_tip, 7.5f, 0.5);
+
                 break;
         }
         *mana_timer = player_mana->Decrement(1);
     }
 
-    // Note (Ethan) : Disabled until model casting is fixed.
-    /*
     if (m_rightClick.pressed) {
         GenerateRayProjectile(
             *m_RigidBodies.Get(m_Player),
-            staff_tip, 
-            m_pRenderer->m_pCamera->GetViewVector(), 
-            3, 
-            2, 
-            0.05, 
-            Colors::IndianRed, 
-            false, 
+            staff_tip,
+            m_pRenderer->m_pCamera->GetViewVector(),
+            3,
+            2,
+            0.05,
+            Colors::IndianRed,
+            false,
             true
         );
     }
-    */
 
     if (flycam_enabled) {
         flycam_pos += movedir * flycam_speed * m_pTimer->GetFrameTime();

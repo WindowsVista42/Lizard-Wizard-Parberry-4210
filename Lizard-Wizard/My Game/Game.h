@@ -42,6 +42,10 @@ struct RayProjectile {
     Vec4 Color;
 };
 
+struct SimProjectile {
+    SoundIndex::e projSound;
+};
+
 struct Transform {
     Vec3 Position;
     Quat Rotation;
@@ -127,6 +131,7 @@ private:
     Table<btRigidBody*> m_RigidBodies;
 
     // Projectile Cache (MAX 64)
+    Table<SimProjectile> m_Projectiles;
     Group m_ProjectilesCache;
     Group m_ProjectilesActive;
     ProjectileTypes::e m_WeaponSelection = ProjectileTypes::FIRE;
@@ -305,6 +310,7 @@ private:
         const f32,
         const f32,
         const Vec4,
+        const SoundIndex::e,
         const b8
     );
     void GenerateRayProjectile(

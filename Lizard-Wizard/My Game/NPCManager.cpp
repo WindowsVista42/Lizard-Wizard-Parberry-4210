@@ -136,6 +136,7 @@ void CGame::Attack(Entity e) {
                 20000.0,
                 0.05,
                 Colors::LavenderBlush,
+                SoundIndex::FireImpact1,
                 true
             );
         }

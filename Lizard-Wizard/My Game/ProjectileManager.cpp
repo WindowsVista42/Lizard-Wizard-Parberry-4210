@@ -46,6 +46,7 @@ void CGame::GenerateSimProjectile(
     const f32 projectileVelocity, 
     const f32 projectileAccuracy, 
     const Vec4 projectileColor, 
+    const SoundIndex::e projectileSound,
     const b8 ignoreCaster
 ) {
     /* Note(Ethan) :
@@ -65,6 +66,7 @@ void CGame::GenerateSimProjectile(
         m_ModelsActive.AddExisting(e);
         m_ProjectilesActive.AddExisting(e);
         m_Timers.AddExisting(e, 2.0f);
+        m_Projectiles.Get(e)->projSound = projectileSound;
 
         btRigidBody* projectile = *m_RigidBodies.Get(e);
 
@@ -237,6 +239,7 @@ void CGame::InitializeProjectiles() {
         // Create Rigidbody and get ECS identifier
         btRigidBody* newBody = CreateSphereObject(50.f, Vec3(FLT_MAX, FLT_MAX, FLT_MAX), 0.0f, 0.0f, 3, 0b00001);
         Entity e = m_RigidBodyMap.at(newBody);
+        SimProjectile newProj;
         RemoveRigidBody(newBody);
 
         // Continuous Convex Collision (NOTE) Ethan : This is expensive, so only use it for projectiles.
@@ -245,11 +248,15 @@ void CGame::InitializeProjectiles() {
         // Prepare light
         Light newLight = { Vec4(FLT_MAX, FLT_MAX, FLT_MAX ,0), Vec4{150.0f, 30.0f, 10.0f, 0} };
 
+        // Prepare sound
+        newProj.projSound = SoundIndex::FireImpact1;
+
         // Prepare model
         m_ModelInstances.AddExisting(e, GetSphereModel(*m_RigidBodies.Get(e)));
 
         // Insert into tables / groups
         m_pRenderer->lights.AddExisting(e, newLight);
+        m_Projectiles.AddExisting(e, newProj);
         m_RigidBodies.AddExisting(e, newBody);
         m_ProjectilesCache.AddExisting(e);
     }

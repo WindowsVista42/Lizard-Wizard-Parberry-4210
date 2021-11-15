@@ -85,6 +85,12 @@ void CGame::LoadSounds(){
   m_pAudio->Load(SoundIndex::Grunt, "grunt");
   m_pAudio->Load(SoundIndex::Clang, "clang");
   m_pAudio->Load(SoundIndex::Impact, "impact");
+  m_pAudio->Load(SoundIndex::FireCast, "FireCast");
+  m_pAudio->Load(SoundIndex::IceCast, "IceCast");
+  m_pAudio->Load(SoundIndex::LightningCast, "LightningCast");
+  m_pAudio->Load(SoundIndex::FireImpact1, "FireImpact1");
+  m_pAudio->Load(SoundIndex::IceImpact1, "IceImpact1");
+
 }
 
 /// Release all of the DirectX12 objects by deleting the renderer.

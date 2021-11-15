@@ -162,7 +162,7 @@ struct Light {
 // SET YOUR DEFINES HERE
 
 namespace SoundIndex { enum e : u32 {
-    Clang, Grunt, Impact,
+    Clang, Grunt, Impact, FireCast, IceCast, LightningCast, FireImpact1, IceImpact1,
     Size  //MUST BE LAST
 };}
 
