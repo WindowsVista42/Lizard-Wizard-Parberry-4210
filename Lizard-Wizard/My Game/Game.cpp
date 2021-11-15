@@ -229,7 +229,6 @@ void CGame::EcsPreUpdate() {
 void CGame::EcsUpdate() {
     // This handles NPCs and lighting.
     Ecs::ApplyEvery(m_NPCsActive, [=](Entity e) {
-        //btTransform trans;
         NPC* npc = m_NPCs.Get(e);
         btRigidBody* body = *m_RigidBodies.Get(e);
         Vec3 origin = body->getWorldTransform().getOrigin();
@@ -241,17 +240,9 @@ void CGame::EcsUpdate() {
 
         (*m_ModelInstances.Get(e)).world = MoveRotateScaleMatrix(
             npc->LastPosition,
-            //body->getWorldTransform().getOrigin(),
             body->getWorldTransform().getRotation(),
             boxShape->getHalfExtentsWithMargin()
         );
-
-        //NPC* npc = m_NPCs.Get(e);
-        if (origin.x < 200.0f) {
-            Animation* a = m_Animations.Get(e);
-            printf("%d\n", a->steps);
-            printf("%d\n", npc->State);
-        }
 
         DirectNPC(e);
     });

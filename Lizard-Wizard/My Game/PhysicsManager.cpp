@@ -197,7 +197,7 @@ void CGame::CustomPhysicsStep() {
         // (Warning) Ethan : This can get fairly expensive if we stack if-statements and switch-statements so try to tie everything together in the ECS to remain efficient.
         if (m_ProjectilesActive.Contains(e)) {
             //printf("Projectile collision detected at : (%f, %f, %f)\n", pos.x, pos.y, pos.z);
-            std::cout << "Volume : " << volume << std::endl;
+            //std::cout << "Volume : " << volume << std::endl;
             m_pAudio->play(m_Projectiles.Get(e)->projSound, pos0, volume, 0.5);
         }
         //m_pAudio->play(SoundIndex::Clang, pos, 0.25, 0.0);

@@ -84,7 +84,7 @@ struct Mana {
     f32 Decrement(i32 count) {
         if (this->value - count < 0) { count = this->value; }
         this->value -= count;
-        printf("%f\n", this->recharge * ((f32)this->max - (f32)(this->value)));
+        //printf("%f\n", this->recharge * ((f32)this->max - (f32)(this->value)));
         return this->recharge * ((f32)this->max - (f32)(this->value));
     }
 
