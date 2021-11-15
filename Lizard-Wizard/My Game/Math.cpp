@@ -77,3 +77,23 @@ Vec3 RotatePointAroundOrigin(Vec3 origin, Vec3 point, Quat quat) {
    Mat4x4 rotation = XMMatrixRotationQuaternion(quat);
    return origin + Vec3(XMVector3Transform(point, rotation));
 }
+
+Quat GetRotationFromTwoVectors(Vec3 vec1, Vec3 vec2) {
+    vec1 = XMVector3Normalize(vec1);
+    vec2 = XMVector3Normalize(vec2);
+
+    if (vec1 == -vec2) {
+        Vec3 returnVec = XMVector3Normalize(XMVector3Orthogonal(vec1));
+        return Quat(0.0f, returnVec.x, returnVec.y, returnVec.z);
+    }
+
+    Vec3 half = XMVector3Normalize(vec1 + vec2);
+    Vec3 cross = XMVector3Cross(vec1, half);
+    f32 dot = vec1.Dot(half);
+
+    return Quat(dot, cross.x, cross.y, cross.z);
+}
+
+f32 DistanceBetweenVectors(Vec3 vec1, Vec3 vec2) {
+    return sqrt(pow(vec2.x - vec1.x, 2) + pow(vec2.y - vec1.y, 2) + pow(vec2.z - vec1.z, 2));
+}

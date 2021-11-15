@@ -106,6 +106,12 @@ private:
     // Projectile Cache (MAX 64)
     Group m_ProjectilesCache;
     Group m_ProjectilesActive;
+    ProjectileTypes::e m_WeaponSelection = ProjectileTypes::FIRE;
+
+    // Ray Cache (Max 24)
+    Table<RayProjectile> m_Rays;
+    Group m_RaysCache;
+    Group m_RaysActive;
 
     // AI Cache (MAX 24)
     Table<NPC> m_NPCs;
@@ -300,6 +306,7 @@ private:
     );
     void InitializeProjectiles();
     void StripProjectile(Entity);
+    void StripRay(Entity);
 
     // NPC MANAGER //
     void Animate(Entity);

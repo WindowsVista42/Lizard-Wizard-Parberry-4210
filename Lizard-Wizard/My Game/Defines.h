@@ -38,6 +38,7 @@ typedef std::pair<u32, u32> Point2;
 #define LIGHTS_CACHE_SIZE 254
 #define PROJECTILE_CACHE_SIZE 64
 #define NPC_CACHE_SIZE 24
+#define RAY_CACHE_SIZE 24
 
 /// Math
 #define PI 3.14159265359f
@@ -183,6 +184,10 @@ namespace NPCBehavior { enum e : u32 {
 
 namespace NPCState { enum e : u32 {
     SLEEPING, WANDER, MOVING, PATHFINDING, ATTACKING, SEARCHING, ANIMATING
+};}
+
+namespace ProjectileTypes { enum e : u32 {
+    FIRE, ICE, LIGHTNING
 };}
 
 namespace RoomTag {

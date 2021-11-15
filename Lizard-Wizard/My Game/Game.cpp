@@ -248,10 +248,34 @@ void CGame::EcsUpdate() {
         (*m_ModelInstances.Get(e)).world = MoveScaleMatrix((*m_RigidBodies.Get(e))->getWorldTransform().getOrigin(), Vector3(25.0f));
     });
 
+    Ecs::ApplyEvery(m_RaysActive, [=](Entity e) {
+        RayProjectile currentRay = *m_Rays.Get(e);
+
+        Vec3 direction = (currentRay.Pos2 - currentRay.Pos1); direction.Normalize();
+        Vec3 origin = currentRay.Pos1;
+        Vec3 cross = XMVector3Cross(currentRay.Pos1, currentRay.Pos2);
+
+        f32 dot = currentRay.Pos1.Dot(currentRay.Pos2);
+        f32 distance = DistanceBetweenVectors(currentRay.Pos1, currentRay.Pos2);
+
+        Quat rotation = Quaternion::CreateFromAxisAngle(cross, dot);
+        Quat turn = direction.y != 1.0f ?
+            Quat::CreateFromAxisAngle(Vec3(0.0f, 1.0f, 0.0f), -M_PI / 2.0f) :
+            Quat::CreateFromAxisAngle(Vec3(1.0f, 0.0f, 0.0f), M_PI);
+        rotation *= turn;
+
+        (*m_ModelInstances.Get(e)).world = MoveRotateScaleMatrix(
+            origin,
+            rotation,
+            Vec3(15.0f, 15.0f, distance)
+        );
+    });
+
     //Sean: we have this disabled because its lashing out and crashing
     CustomPhysicsStep();
 
     Ecs::RemoveConditionally(m_ProjectilesActive, [=](Entity e) { return *m_Timers.Get(e) <= 0.0; }, [=](Entity e) { StripProjectile(e); });
+    Ecs::RemoveConditionally(m_RaysActive, [=](Entity e) { return *m_Timers.Get(e) <= 0.0; }, [=](Entity e) { StripRay(e); });
 
     m_pRenderer->UpdateParticles();
 

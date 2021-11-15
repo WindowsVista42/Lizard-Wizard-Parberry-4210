@@ -27,7 +27,7 @@ ModelInstance GetNPCModel(btRigidBody* body) {
     ModelInstance instance = {};
     instance.model = ModelIndex::Obelisk;
     instance.texture = TextureIndex::White;
-    instance.world = MoveRotateScaleMatrix(origin, rotation, scale);
+    instance.world = MoveRotateScaleMatrix(origin, XMQuaternionNormalize(rotation), scale);
 
     return instance;
 }

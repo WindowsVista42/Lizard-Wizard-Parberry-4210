@@ -108,6 +108,19 @@ void CGame::PlayerInput() {
         flycam_enabled = !flycam_enabled;
     }
 
+    // Swap Weapon
+    if (m_pKeyboard->TriggerDown('1')) {
+        m_WeaponSelection = ProjectileTypes::FIRE;
+    }
+
+    if (m_pKeyboard->TriggerDown('2')) {
+        m_WeaponSelection = ProjectileTypes::ICE;
+    }
+
+    if (m_pKeyboard->TriggerDown('3')) {
+        m_WeaponSelection = ProjectileTypes::LIGHTNING;
+    }
+
     // Print screenshot button thing that will do stuff
     if (m_pKeyboard->TriggerDown('P')) {
         m_pRenderer->m_screenShot = true;
@@ -274,22 +287,52 @@ void CGame::UpdatePlayer() {
     btRigidBody* player_body = *m_RigidBodies.Get(m_Player);
     player_body->activate();
 
-    if (m_leftClick.pressed && player_mana->value > 0) {
-        GenerateSimProjectile(
-            *m_RigidBodies.Get(m_Player),
-            staff_tip,
-            m_pRenderer->m_pCamera->GetViewVector(),
-            3,
-            8000.0,
-            0.5,
-            Colors::PaleVioletRed,
-            true
-        );
 
+    // Projectiles
+    if (m_leftClick.pressed && player_mana->value > 0) {
+        switch (m_WeaponSelection) {
+            case ProjectileTypes::ICE :
+                GenerateSimProjectile(
+                    *m_RigidBodies.Get(m_Player),
+                    staff_tip,
+                    m_pRenderer->m_pCamera->GetViewVector(),
+                    1,
+                    32000.0,
+                    0.01,
+                    Colors::DarkCyan,
+                    true
+                );
+                break;
+            case ProjectileTypes::LIGHTNING :
+                GenerateSimProjectile(
+                    *m_RigidBodies.Get(m_Player),
+                    staff_tip,
+                    m_pRenderer->m_pCamera->GetViewVector(),
+                    3,
+                    32000.0,
+                    0.01,
+                    Vec4(3.0f, 1.0f, 0.5f, 0.0f),
+                    true
+                );
+                break;
+            default:
+                GenerateSimProjectile(
+                    *m_RigidBodies.Get(m_Player),
+                    staff_tip,
+                    m_pRenderer->m_pCamera->GetViewVector(),
+                    4,
+                    12000.0,
+                    0.1,
+                    Colors::Red,
+                    true
+                );
+                break;
+        }
         *mana_timer = player_mana->Decrement(1);
-        printf("%f\n", *mana_timer);
     }
 
+    // Note (Ethan) : Disabled until model casting is fixed.
+    /*
     if (m_rightClick.pressed) {
         GenerateRayProjectile(
             *m_RigidBodies.Get(m_Player),
@@ -303,6 +346,7 @@ void CGame::UpdatePlayer() {
             true
         );
     }
+    */
 
     if (flycam_enabled) {
         flycam_pos += movedir * flycam_speed * m_pTimer->GetFrameTime();
@@ -419,11 +463,27 @@ void CGame::UpdatePlayer() {
         );
 
         Vec3 scl = Vec3(10.0f);
-
+        Vec4 clr;
         staff_tip = particle_pos;
 
-        static Entity light = m_pRenderer->lights.Add({Vec4(0), Vec4(15.0, 8.0, 2.5, 0.0)});
+        f32 lum = 50.0f;
+
+        // Swap light color based on projectile selection.
+        switch (m_WeaponSelection) {
+        case ProjectileTypes::ICE:
+            clr = Vec4(0.1f, 0.6f, 1.0f, 0.0f);
+            break;
+        case ProjectileTypes::LIGHTNING:
+            clr = Vec4(0.85f, 0.85f, 0.1f, 0.0f);
+            break;
+        default:
+            clr = Colors::Red;
+            break;
+        }
+
+        static Entity light = m_pRenderer->lights.Add({Vec4(0), Vec4(70.0, 8.0, 2.5, 0.0)});
         m_pRenderer->lights.Get(light)->position = *(Vec4*)&particle_pos;
+        m_pRenderer->lights.Get(light)->color = clr * lum;
         mi->world = MoveScaleMatrix(particle_pos, scl);
         mi->glow = Vec3((f32)player_mana->value / (f32)player_mana->max); // switch back to this if we find its easier to tell
 

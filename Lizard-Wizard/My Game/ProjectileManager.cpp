@@ -15,10 +15,25 @@ ModelInstance GetSphereModel(btRigidBody* body) {
     btCollisionShape* currentShape = body->getCollisionShape();
     btSphereShape* sphereShape = reinterpret_cast<btSphereShape*>(currentShape);
 
-
     instance.model = ModelIndex::Cube;
     instance.world = MoveScaleMatrix(body->getWorldTransform().getOrigin(), Vector3(25.0f));
     instance.texture = 1;
+
+    return instance;
+}
+
+ModelInstance GetCubeModel(btRigidBody* body) {
+    btCollisionShape* currentShape = body->getCollisionShape();
+    btBoxShape* boxShape = reinterpret_cast<btBoxShape*>(currentShape);
+
+    Vec3 origin = body->getWorldTransform().getOrigin();
+    Quat rotation = body->getWorldTransform().getRotation();
+    Vec3 scale = boxShape->getHalfExtentsWithMargin();
+
+    ModelInstance instance = {};
+    instance.model = ModelIndex::Cube;
+    instance.texture = TextureIndex::White;
+    instance.world = MoveRotateScaleMatrix(origin, rotation, scale);
 
     return instance;
 }
@@ -54,7 +69,7 @@ void CGame::GenerateSimProjectile(
         btRigidBody* projectile = *m_RigidBodies.Get(e);
 
         Vec3 newDirection = JitterVec3(lookDirection, -projectileAccuracy, projectileAccuracy);
-        Vec3 velDirection = JitterVec3(lookDirection, -0.02f, 0.02f);
+        Vec3 velDirection = JitterVec3(lookDirection, -projectileAccuracy, projectileAccuracy);
 
         projectile->clearForces();
 
@@ -93,8 +108,21 @@ void CGame::CalculateRay(
     Vec4 color,
     b8 ignoreCaster
 ) {
-
     newRay.Pos1 = Pos1;
+    if (m_RaysCache.Size() < 1) {
+        return;
+    }
+
+    // Get ECS information
+    Entity e = m_RaysCache.RemoveTail();
+    RayProjectile currentRay = *m_Rays.Get(e);
+    m_ModelsActive.AddExisting(e);
+    m_RaysActive.AddExisting(e);
+    m_Timers.AddExisting(e, 0.25f);
+
+
+    // Set ray information
+    currentRay.Pos1 = Pos1;
 
     btCollisionWorld::ClosestRayResultCallback rayResults(Pos1, Vec3(Pos1 + btLookDirection * 5000.));
     if (ignoreCaster) {
@@ -107,17 +135,28 @@ void CGame::CalculateRay(
     if (rayResults.hasHit()) {
         // Note (Ethan) : this is neccesary to get the object being hit, for some reason this pointer is const; this isn't problematic as long as we DO NOT EDIT at this pointer.
         btCollisionObject* hitObject = const_cast<btCollisionObject*>(rayResults.m_collisionObject);
+
         Vec3 hitPosition = rayResults.m_hitPointWorld;
-        f32 dotProduct = Pos1.Dot(Vec3(rayResults.m_hitNormalWorld));
         Vec3 incomingDirection = (hitPosition - Pos1); incomingDirection.Normalize();
         Vec3 reflectedDirection = btLookDirection - 2. * (btLookDirection * rayResults.m_hitNormalWorld) * rayResults.m_hitNormalWorld;
+
+        f32 dotProduct = Pos1.Dot(Vec3(rayResults.m_hitNormalWorld));
+        f32 distance = DistanceBetweenVectors(Pos1, hitPosition);
+
+        currentRay.Pos2 = Vec3(hitPosition);
         newRay.Pos2 = Vec3(hitPosition);
+
         rayBounces = rayBounces - 1;
+        Vec3 origin = (hitPosition + Pos1) / 2;
+
         if (rayBounces > 0) {
             GenerateRayProjectile(caster, Vec3(hitPosition), Vec3(reflectedDirection), 1, 1, rayBounces, color, true, ignoreCaster);
         }
     } else {
-        newRay.Pos2 = Vec3(Pos1 + btLookDirection * 5000.0);
+        Vec3 origin = Vec3(Pos1 + btLookDirection * 5000.0);
+
+        currentRay.Pos2 = origin;
+        newRay.Pos2 = origin;
     }
 }
 
@@ -146,14 +185,12 @@ void CGame::GenerateRayProjectile(
         for (i32 i = 0; i < rayCount; i++) {
             Vec3 newDirection = JitterVec3(lookDirection, -0.2, 0.2);
             CalculateRay(caster, newRay, startPos, newDirection, rayBounces, Colors::Peru, ignoreCaster);
-
             m_currentRayProjectiles.push_back(newRay);
         }
     }
     else {
         for (i32 i = 0; i < rayCount; i++) {
             CalculateRay(caster, newRay, startPos, lookDirection, rayBounces, Colors::Peru, ignoreCaster);
-
             m_currentRayProjectiles.push_back(newRay);
         }
     }
@@ -182,16 +219,27 @@ void CGame::StripProjectile(Entity e) {
     RBSetMassFriction(projectile, 0.0f, 0.0f);
 }
 
+void CGame::StripRay(Entity e) {
+    m_Timers.Remove(e);
+    m_RaysCache.AddExisting(e);
+
+    // Move lights
+    //m_pRenderer->lights.Get(e)->position = *(Vec4*)&orig;
+
+    // Disable Rendering
+    (*m_ModelInstances.Get(e)).world = MoveScaleMatrix(Vec3(FLT_MAX, FLT_MAX, FLT_MAX), Vector3(25.0f));
+    m_ModelsActive.Remove(e);
+}
+
 
 void CGame::InitializeProjectiles() {
     for every(index, PROJECTILE_CACHE_SIZE) {
         // Create Rigidbody and get ECS identifier
         btRigidBody* newBody = CreateSphereObject(50.f, Vec3(FLT_MAX, FLT_MAX, FLT_MAX), 0.0f, 0.0f, 3, 0b00001);
         Entity e = m_RigidBodyMap.at(newBody);
-        m_pDynamicsWorld->removeRigidBody(newBody);
+        RemoveRigidBody(newBody);
 
         // Continuous Convex Collision (NOTE) Ethan : This is expensive, so only use it for projectiles.
-        // DISABLED UNTIL FIXED IN DEBUG
         RBSetCcd(newBody, 1e-7f, 0.50f);
 
         // Prepare light
@@ -199,11 +247,42 @@ void CGame::InitializeProjectiles() {
 
         // Prepare model
         m_ModelInstances.AddExisting(e, GetSphereModel(*m_RigidBodies.Get(e)));
-        m_ModelsActive.AddExisting(e);
 
         // Insert into tables / groups
         m_pRenderer->lights.AddExisting(e, newLight);
         m_RigidBodies.AddExisting(e, newBody);
         m_ProjectilesCache.AddExisting(e);
+    }
+
+    for every(index, RAY_CACHE_SIZE) {
+        // Create Rigidbody and get ECS identifier
+        Entity e = Entity();
+        RayProjectile newRay;
+
+        // Prepare light
+        Light newLight = { Vec4(FLT_MAX, FLT_MAX, FLT_MAX ,0), Vec4(3.0f, 1.0f, 0.5f, 0.0f) };
+
+        Vec3 origin = Vec3(FLT_MAX, FLT_MAX, FLT_MAX);
+        Vec3 side = Vec3(1.0f, 0.0f, 0.0f);
+
+        Quat rotation = Quat::CreateFromAxisAngle(side, M_PI / 2.0f);
+        Quat turn = side.y != 1.0f ?
+            Quat::CreateFromAxisAngle(Vec3(0.0f, 1.0f, 0.0f), -M_PI / 2.0f) :
+            Quat::CreateFromAxisAngle(Vec3(1.0f, 0.0f, 0.0f), M_PI);
+        rotation *= turn;
+
+        ModelInstance instance;
+        instance.glow = 0.0f;
+        instance.model = ModelIndex::Cube;
+        instance.texture = TextureIndex::White;
+        instance.world = MoveRotateScaleMatrix(origin, rotation, Vec3(15.0f, 2.0f, 15.0f));
+
+        // Prepare model
+        m_ModelInstances.AddExisting(e, instance);
+
+        // Insert into tables / groups
+        m_pRenderer->lights.AddExisting(e, newLight);
+        m_Rays.AddExisting(e, newRay);
+        m_RaysCache.AddExisting(e);
     }
 }
