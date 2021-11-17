@@ -39,6 +39,7 @@ void CGame::Initialize() {
     InitializeProjectiles();
     InitializeNPCs();
     InitializePlayer();
+    InitializeMenu();
 
     GenerateRooms(Vec3(0, 0, 0), 100, 300, 0);
 
@@ -376,6 +377,7 @@ void CGame::Update() {
 
 void CGame::ProcessFrame(){
     InputHandler(); // handle keyboard input
+    InputMenu(); 
 
     m_pAudio->BeginFrame(); // notify audio player that frame has begun
 

@@ -24,6 +24,7 @@
     <ClCompile Include="Interpolation.cpp" />
     <ClCompile Include="PlayerManager.cpp" />
     <ClCompile Include="DrawManager.cpp" />
+    <ClCompile Include="MenuManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CustomBind.h" />

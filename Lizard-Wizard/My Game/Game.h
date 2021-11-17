@@ -112,6 +112,23 @@ struct Health {
     }
 };
 
+struct Panel {
+
+    bool Hovering;
+    bool Pressed;
+    Vec3 Tint;
+    u32 nextState;
+
+};
+
+struct PanelText {
+
+    std::string Text;
+    Vector2 position;
+    Vector4 color;  
+
+};
+
 // Game Class
 class CGame:
     public LComponent, 
@@ -126,6 +143,14 @@ private:
 
     // Animation Table
     Table<Animation> m_Animations;
+
+    // Menu Table
+    Table<LSpriteDesc2D> m_Menu;
+    Table<Panel> m_Panel;
+    Table<PanelText> m_PanelText;
+    Group m_MainMenu;
+    Group m_SettingsMenu;
+    Group m_PauseMenu;
 
     // Bullet3 Map / Tables
     std::unordered_map<btRigidBody*, Entity> m_RigidBodyMap;
@@ -352,6 +377,11 @@ private:
     void StripNPC();
 
     // ANIMATION MANAGER //
+
+    // MENU MANAGER //
+    void InitializeMenu();
+    void InputMenu();
+    void RenderMenu();
 
     // TESTING ROOM //
     void CreateTestingEnvironment();

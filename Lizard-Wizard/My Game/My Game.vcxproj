@@ -185,6 +185,7 @@
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="RenderTexture.cpp" />
+    <ClCompile Include="MenuManager.cpp" />
     <ClCompile Include="StagedBuffer.cpp" />
     <ClCompile Include="Effects\TonemapEffect.cpp" />
     <ClCompile Include="TestingEnvironment.cpp" />
