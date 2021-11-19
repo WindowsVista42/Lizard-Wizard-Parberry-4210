@@ -220,13 +220,11 @@ void CGame::PlayerInput() {
     }
 
     //TODO(sean): Ignore input if user has just refocused on the window
-    static bool mouse_toggle = true;
-    static bool just_mouse_toggle = false;
     if (m_pKeyboard->TriggerDown(VK_ESCAPE)) {
-        mouse_toggle = !mouse_toggle;
-        just_mouse_toggle = true;
+        m_MouseToggled = !m_MouseToggled;
+        m_MouseJustToggled = true;
     } else {
-        just_mouse_toggle = false;
+        m_MouseJustToggled = false;
     }
 
     {
@@ -244,10 +242,10 @@ void CGame::PlayerInput() {
 
         // dont do anything if mouse is not hidden
         POINT cursor_pos;
-        if (mouse_toggle) {
+        if (m_MouseToggled) {
             GetCursorPos(&cursor_pos);
             SetCursorPos(center.x, center.y);
-            if (just_mouse_toggle) {
+            if (m_MouseJustToggled) {
                 ShowCursor(0); // NOTE(sean): win32 hide the cursor
                 cursor_pos.x = center.x;
                 cursor_pos.y = center.y;
@@ -256,7 +254,7 @@ void CGame::PlayerInput() {
             cursor_pos.x = center.x;
             cursor_pos.y = center.y;
 
-            if (just_mouse_toggle) {
+            if (m_MouseJustToggled) {
                 ShowCursor(1); // NOTE(sean): win32 hide the cursor
             }
         }
