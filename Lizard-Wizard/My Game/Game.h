@@ -13,6 +13,7 @@
 #include "Defines.h"
 #include "Ecs.h"
 #include <vector>
+#include <set>
 
 // Bullet3 Inclusions
 #include <btBulletCollisionCommon.h>
@@ -43,7 +44,10 @@ struct RayProjectile {
 };
 
 struct SimProjectile {
-    SoundIndex::e projSound;
+    u32 Bounces;
+    u32 MaxBounces;
+    SoundIndex::e ProjSound;
+    Vec4 Color;
 };
 
 struct Transform {
@@ -158,6 +162,7 @@ private:
 
     // Projectile Cache (MAX 64)
     Table<SimProjectile> m_Projectiles;
+    std::unordered_set<Entity> m_DeadProjectiles;
     Group m_ProjectilesCache;
     Group m_ProjectilesActive;
     ProjectileTypes::e m_WeaponSelection = ProjectileTypes::FIRE;
@@ -223,12 +228,14 @@ private:
     f32 m_frameRate;
     bool m_bDrawHelpMessage = true; ///< Draw the help message.
 
-
     //TODO(sean): move these out of globals
     f32 player_yaw = 0.0f;
     f32 player_pitch = 0.0f;
     f32 player_sens = 0.0333f;
-    
+    u32 player_step_noise = 0; // this is for footstep sounds, lemme know when you change this. (ethan)
+    f32 player_step = 0.0f;
+    Vec3 player_pos_last_frame = Vec3(0);
+
     Vector3 flycam_pos = { -10000.0f, 0.0f, -10000.0f };
     f32 flycam_speed = 6000.0f;
     
@@ -256,6 +263,8 @@ private:
     //////////////////////////////////////
 
     // PHYSICS MANAGER //
+    u32 m_CurrentStep;
+
     btTransform NewTransform(btCollisionShape*, Vec3);
     btRigidBody* NewRigidBody(
         btCollisionShape*, 

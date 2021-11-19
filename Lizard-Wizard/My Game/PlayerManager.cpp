@@ -204,6 +204,7 @@ void CGame::PlayerInput() {
 
         if (Ecs::ActivateAction(m_Timers, m_DashAction, e)) {
             // play sound
+            m_pAudio->play(SoundIndex::Dash3, m_pRenderer->m_pCamera->GetPos(), 0.75f, 0.1);
 
             // update entity to use
             index += 1;
@@ -214,6 +215,7 @@ void CGame::PlayerInput() {
     if (m_pKeyboard->TriggerDown(VK_SPACE)) {
         if (Ecs::ActivateAction(m_Timers, m_JumpAction)) {
             // play sound
+            m_pAudio->play(SoundIndex::Dash2, m_pRenderer->m_pCamera->GetPos(), 0.75f, 0.1);
         }
     }
 
@@ -284,7 +286,7 @@ void CGame::UpdatePlayer() {
     // Check Player Location
     {
         Vec3 Pos = m_pRenderer->m_pCamera->GetPos();
-        Vec3 Direction = Pos + Vec3(0, -1.0f, 0) * 255.0f;
+        Vec3 Direction = Pos + Vec3(0, -1.0f, 0) * 250.0f;
 
         btCollisionWorld::ClosestRayResultCallback rayResults(Pos, Direction);
         m_pDynamicsWorld->rayTest(Pos, Direction, rayResults);
@@ -296,8 +298,9 @@ void CGame::UpdatePlayer() {
         Vec3 hitPosition = rayResults.m_hitPointWorld;
 
         if (rayResults.hasHit() && m_InAir.Contains(m_Player)) {
+            m_pAudio->play(SoundIndex::PlayerLand1, m_pRenderer->m_pCamera->GetPos() - Vec3(0, 200.0f, 0), 0.25f, 0.01);
             m_InAir.Remove(m_Player);
-        } else if(!m_InAir.Contains(m_Player)) {
+        } else if(!rayResults.hasHit() && !m_InAir.Contains(m_Player)) {
             m_InAir.AddExisting(m_Player);
         }
 
@@ -322,14 +325,14 @@ void CGame::UpdatePlayer() {
                     staff_tip,
                     m_pRenderer->m_pCamera->GetViewVector(),
                     1,
-                    32000.0,
+                    16000.0f,
                     0.01,
                     Vec4(0.1f, 0.5f, 0.8f, 0.0f),
                     SoundIndex::IceImpact1,
                     true
                 );
 
-                m_pAudio->play(SoundIndex::IceCast, staff_tip, 7.5f, 0.5);
+                m_pAudio->play(SoundIndex::IceCast, staff_tip, 2.5f, 0.5);
 
                 break;
             case ProjectileTypes::LIGHTNING :
@@ -344,7 +347,7 @@ void CGame::UpdatePlayer() {
                     SoundIndex::LightningCast,
                     true
                 );
-                m_pAudio->play(SoundIndex::LightningCast, staff_tip, 7.5f, 0.5);
+                m_pAudio->play(SoundIndex::LightningCast, staff_tip, 2.5f, 0.5);
 
                 break;
             default:
@@ -359,7 +362,7 @@ void CGame::UpdatePlayer() {
                     SoundIndex::FireImpact1,
                     true
                 );
-                m_pAudio->play(SoundIndex::FireCast, staff_tip, 7.5f, 0.5);
+                m_pAudio->play(SoundIndex::FireCast, staff_tip, 2.5f, 0.5);
 
                 break;
         }
@@ -622,6 +625,25 @@ void CGame::UpdatePlayer() {
     // Check Dash Timer
     Ecs::RemoveConditionally(m_DashAction.active, CheckTimer, RemoveTimer);
     Ecs::RemoveConditionally(m_DashAction.timers, CheckTimerDash, RemoveTimer);
+
+    // Player Walk Sound
+    Vec3 player_change_in_pos = player_pos_last_frame - player_body->getWorldTransform().getOrigin();
+    player_pos_last_frame = player_body->getWorldTransform().getOrigin();
+    if (!m_InAir.Contains(m_Player) && newvel.Length() > 50.0f) {
+        if (player_step > 50.0f) {
+            if (player_step_noise == 0) {
+                m_pAudio->play(SoundIndex::PlayerWalk1, m_pRenderer->m_pCamera->GetPos() - Vec3(0, 200.0f, 0), 0.5f, 0.1);
+                player_step_noise = 1;
+            }
+            else {
+                m_pAudio->play(SoundIndex::PlayerWalk2, m_pRenderer->m_pCamera->GetPos() - Vec3(0, 200.0f, 0), 0.5f, 0.1);
+                player_step_noise = 0;
+            }
+            player_step = 0;
+        } else {
+            player_step = player_step + player_change_in_pos.Length() / 18.0f;
+        }
+    }
 }
 
 void CGame::RenderPlayer() {

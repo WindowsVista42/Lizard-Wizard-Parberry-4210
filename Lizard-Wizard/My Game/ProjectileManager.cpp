@@ -49,12 +49,8 @@ void CGame::GenerateSimProjectile(
     const SoundIndex::e projectileSound,
     const b8 ignoreCaster
 ) {
-    /* Note(Ethan) :
-       will expand to include :
-       model, texture.
-    */
     for (i32 i = 0; i < projectileCount; i++) {
-        // New Projectile System, uses caching to improve stuff.
+        // Check cache for open projectiles.
         if (m_ProjectilesCache.Size() < projectileCount - i) {
             return;
         }
@@ -62,24 +58,24 @@ void CGame::GenerateSimProjectile(
         static u32 count = 0;
         count += 1;
 
+        // Instance Variables
         Entity e = m_ProjectilesCache.RemoveTail();
         m_ModelsActive.AddExisting(e);
         m_ProjectilesActive.AddExisting(e);
-        m_Timers.AddExisting(e, 2.0f);
-        m_Projectiles.Get(e)->projSound = projectileSound;
+        m_Timers.AddExisting(e, 5.0f);
+
+        m_Projectiles.Get(e)->ProjSound = projectileSound;
+        m_Projectiles.Get(e)->Color = projectileColor * 10.0f;
 
         btRigidBody* projectile = *m_RigidBodies.Get(e);
+        btTransform trans;
 
         Vec3 newDirection = JitterVec3(lookDirection, -projectileAccuracy, projectileAccuracy);
         Vec3 velDirection = JitterVec3(lookDirection, -projectileAccuracy, projectileAccuracy);
-
-        projectile->clearForces();
-
-        btTransform trans;
-        // UPDATE(sean): changed 300.0f to 100.0f, if you looked down, projectiles were spawning in the ground which would cause crashes on debug builds.
-        // Because the projectiles are spawning so close to the camera it looks really jarring, so we're shifting them up 100 units.
-        // In the future, we can probably tell the projectiles to spawn from the players wand.
         Vec3 orig = startPos + lookDirection * 200.0f;
+
+        // Clear forces
+        projectile->clearForces();
 
         // Set static attributes.
         RBSetMassFriction(projectile, 0.5f, 0.5f);
@@ -135,7 +131,7 @@ void CGame::CalculateRay(
     m_pDynamicsWorld->rayTest(Pos1, Vec3(Pos1 + btLookDirection * 5000.), rayResults);
 
     if (rayResults.hasHit()) {
-        // Note (Ethan) : this is neccesary to get the object being hit, for some reason this pointer is const; this isn't problematic as long as we DO NOT EDIT at this pointer.
+        // Warning (Ethan) : DO NOT EDIT at this pointer.
         btCollisionObject* hitObject = const_cast<btCollisionObject*>(rayResults.m_collisionObject);
 
         Vec3 hitPosition = rayResults.m_hitPointWorld;
@@ -173,11 +169,6 @@ void CGame::GenerateRayProjectile(
     const b8 recursed, 
     const b8 ignoreCaster
 ) {
-
-    /* Note(Ethan) :
-       will expand to include :
-       texture.
-    */
     RayProjectile newRay;
     newRay.Pos1 = Vec3(startPos.x, startPos.y, startPos.z) + lookDirection * 500.;
     newRay.Pos2 = Vec3(startPos.x, startPos.y, startPos.z) + lookDirection * 5000.;
@@ -200,9 +191,10 @@ void CGame::GenerateRayProjectile(
 
 void CGame::StripProjectile(Entity e) {
     m_Timers.Remove(e);
-    //m_ProjectilesActive.Remove(e); // dont uncomment, youll end up removing things twice which is obviously bad
     m_ProjectilesCache.AddExisting(e);
+
     btRigidBody* projectile = *m_RigidBodies.Get(e);
+    SimProjectile* proj = m_Projectiles.Get(e);
 
     // Change Attributes
     Vec3 orig = Vec3(FLT_MAX, FLT_MAX, FLT_MAX);
@@ -210,6 +202,10 @@ void CGame::StripProjectile(Entity e) {
 
     // Move lights
     m_pRenderer->lights.Get(e)->position = *(Vec4*)&orig;
+
+    // Prepare projectile
+    proj->Bounces = 0;
+    proj->MaxBounces = 3;
 
     // Disable Rendering
     (*m_ModelInstances.Get(e)).world = MoveScaleMatrix(orig, Vector3(25.0f));
@@ -224,9 +220,6 @@ void CGame::StripProjectile(Entity e) {
 void CGame::StripRay(Entity e) {
     m_Timers.Remove(e);
     m_RaysCache.AddExisting(e);
-
-    // Move lights
-    //m_pRenderer->lights.Get(e)->position = *(Vec4*)&orig;
 
     // Disable Rendering
     (*m_ModelInstances.Get(e)).world = MoveScaleMatrix(Vec3(FLT_MAX, FLT_MAX, FLT_MAX), Vector3(25.0f));
@@ -248,8 +241,10 @@ void CGame::InitializeProjectiles() {
         // Prepare light
         Light newLight = { Vec4(FLT_MAX, FLT_MAX, FLT_MAX ,0), Vec4{150.0f, 30.0f, 10.0f, 0} };
 
-        // Prepare sound
-        newProj.projSound = SoundIndex::FireImpact1;
+        // Prepare projectile
+        newProj.ProjSound = SoundIndex::FireImpact1;
+        newProj.Bounces = 0;
+        newProj.MaxBounces = 3;
 
         // Prepare model
         m_ModelInstances.AddExisting(e, GetSphereModel(*m_RigidBodies.Get(e)));

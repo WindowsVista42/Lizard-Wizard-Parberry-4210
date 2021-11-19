@@ -13,12 +13,6 @@
 static CGame* Self;
 
 void CGame::RBSetCcd(btRigidBody* body, f32 threshold, f32 radius) {
-    /*
-    #ifndef _DEBUG
-        body->setCcdMotionThreshold(threshold);
-        body->setCcdSweptSphereRadius(radius);
-    #endif
-    */
     body->setCcdMotionThreshold(threshold);
     body->setCcdSweptSphereRadius(radius);
 }
@@ -99,7 +93,6 @@ btRigidBody* CGame::CreateBoxObject(
     return NewRigidBody(shape, NewTransform(shape, origin), mass, friction, group, mask);
 }
 
-
 btRigidBody* CGame::CreateCapsuleObject(
     btScalar radius,
     btScalar height,
@@ -156,19 +149,32 @@ void CGame::PhysicsCollisionCallBack(btDynamicsWorld* p, btScalar t) {
 
         // Add to the collision table if we don't want to ignore this collision.
         if (ignoreCollision == false) {
-            const int numContacts = pManifold->getNumContacts();
-            if (numContacts > 0 && !Self->m_CurrentCollisions.Contains(pEntity0)) {
-                for every(contact, numContacts) {
-                    btManifoldPoint& pt = pManifold->getContactPoint(contact);
+            const i32 numContacts = pManifold->getNumContacts();
+            b8 duplicate = false;
 
-                    // Add new collisions to the table.
-                    Self->m_CurrentCollisions.AddExisting(pEntity0);
-                    Self->m_CurrentCollisions.AddExisting(pEntity1);
-
-                    // Add collisions to ignore table to prevent spamming of collisions.
-                    Self->m_CollisionPairs.AddExisting(pEntity0, pEntity0);
-                    Self->m_CollisionPairs.AddExisting(pEntity1, pEntity1);
+            // Check for duplicate collisions
+            if (Self->m_CollisionPairs.Contains(pEntity0)) {
+                if (*(Self->m_CollisionPairs.Get(pEntity0)) == pEntity1) {
+                    duplicate = true;
                 }
+            }
+            if (Self->m_CollisionPairs.Contains(pEntity1)) {
+                if (*(Self->m_CollisionPairs.Get(pEntity1)) == pEntity0) {
+                    duplicate = true;
+                }
+            }
+
+            if (numContacts > 0 && !Self->m_CurrentCollisions.Contains(pEntity0) && !duplicate) {
+                // Note (Ethan) : Honestly we only need one contact point, none of our objects are large enough to justify more than that.
+                btManifoldPoint& pt = pManifold->getContactPoint(0);
+
+                // Add new collisions to the table.
+                Self->m_CurrentCollisions.AddExisting(pEntity0);
+                Self->m_CurrentCollisions.AddExisting(pEntity1);
+
+                // Add collisions to ignore table to prevent spamming of collisions.
+                Self->m_CollisionPairs.AddExisting(pEntity0, pEntity0);
+                Self->m_CollisionPairs.AddExisting(pEntity1, pEntity1);
             }
         } else { // Ignore this collision because we don't want to spam collisions multiple times.
             return;
@@ -190,18 +196,67 @@ void CGame::CustomPhysicsStep() {
         Vec3 lVelocity0 = body0->getLinearVelocity();
         Vec3 lVelocity1 = body1->getLinearVelocity();
 
-        f32 volume = lVelocity0.Length() / 2.0f;
-        btClamp(volume, 0.0f, 40.0f);
+        f32 volume = lVelocity0.Length() / 1000.0f;
+        btClamp(volume, 0.0f, 10.0f);
 
-        // Collision event example
-        // (Warning) Ethan : This can get fairly expensive if we stack if-statements and switch-statements so try to tie everything together in the ECS to remain efficient.
-        if (m_ProjectilesActive.Contains(e)) {
-            //printf("Projectile collision detected at : (%f, %f, %f)\n", pos.x, pos.y, pos.z);
-            //std::cout << "Volume : " << volume << std::endl;
-            m_pAudio->play(m_Projectiles.Get(e)->projSound, pos0, volume, 0.5);
+        //////////////////////
+        // COLLISION EVENTS //
+        //////////////////////
+
+        // PROJECTILES //
+        if (m_ProjectilesActive.Contains(e) && volume > 1.0f) {
+            SimProjectile* proj =  m_Projectiles.Get(e);
+
+            // Determine Bounces
+            proj->Bounces++;
+            if (proj->MaxBounces < proj->Bounces) {
+                *m_Timers.Get(e) = 0.0f;
+            }
+
+            // Play Audio
+            m_pAudio->play(m_Projectiles.Get(e)->ProjSound, pos0, volume, 0.5);
         }
-        //m_pAudio->play(SoundIndex::Clang, pos, 0.25, 0.0);
+
+        // OBJECT HIT BY PROJECTILES //
+        if (m_ProjectilesActive.Contains(*m_CollisionPairs.Get(e))) {
+            // Create Particles
+            SimProjectile* proj = m_Projectiles.Get(*m_CollisionPairs.Get(e));
+            Vec4 projColor = proj->Color;
+
+            // Create Particle for Impact (Very ugly, will clean up later.)
+            ParticleInstanceDesc particle;
+            particle.count = 25;
+            particle.initial_pos = pos0;
+            particle.initial_dir = XMVector3Normalize(lVelocity1 - lVelocity0);
+            particle.light_color = Vec3(projColor.x, projColor.y, projColor.z);
+            particle.model = ModelIndex::Cube;
+            particle.texture = TextureIndex::White;
+            particle.glow = Vec3(0.5f, 0.5f, 0.5f);
+            particle.model_scale = Vec3(4.0f);
+            particle.initial_speed = 500.0f;
+            particle.dir_randomness = 0.7f;
+            particle.speed_randomness = 0.5f;
+            particle.initial_acc = Vec3(0.0f, -1000.0f, 0.0f);
+            particle.acc_randomness = 0.2f;
+            particle.min_alive_time = 0.2f;
+            particle.max_alive_time = 1.7f;
+
+            // Spawn Particle
+            SpawnParticles(&particle);
+        }
+
+        // NPC HIT BY PROJECTILES //
+        if (m_NPCsActive.Contains(e)) {
+            // Stub for now, but we can implement damage stuff in here.
+        }
+
+        // PLAYER HIT BY PROJECTILES //
+        if (e == m_Player) {
+            // Stub for now, but we can implement damage stuff in here.
+        }
     }
+
+    // Clear old collisions once were done with the current pass.
     m_CurrentCollisions.Clear();
     m_CollisionPairs.Clear();
 }
@@ -267,4 +322,7 @@ void CGame::InitializePhysics() {
         RBSetCcd(rb, 1e-7, 200.0f);
         m_Player = m_RigidBodyMap.at(rb);
     }
+
+    // Set initial step
+    m_CurrentStep = 0;
 }

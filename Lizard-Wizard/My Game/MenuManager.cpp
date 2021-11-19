@@ -78,7 +78,7 @@ void CGame::InputMenu() {
     cursorPos.x -= temp.x;
     cursorPos.y -= temp.y;
 
-    std::cout << "X: " << cursorPos.x << "   Y: " << cursorPos.y << std::endl;
+    //std::cout << "X: " << cursorPos.x << "   Y: " << cursorPos.y << std::endl;
 
     Ecs::ApplyEvery(m_MainMenu, [=](Entity e) {
 
@@ -91,31 +91,31 @@ void CGame::InputMenu() {
             cursorPos.x   > position.x && cursorPos.y > position.y && 
             cursorPos.x < position.x + sprite->m_fXScale && cursorPos.y < position.y + sprite->m_fYScale   
             ) {
-            panel->Hovering = true; std::cout << "Hovering" << std::endl;
+            panel->Hovering = true; //std::cout << "Hovering" << std::endl;
         }
-        else { panel->Hovering = false; std::cout << "Not Hovering" << std::endl; }
+        else { panel->Hovering = false; } //std::cout << "Not Hovering" << std::endl; }
 
         if (pressed == true)
         {
             panel->Pressed = true; 
-            std::cout << "Panel Pressed" << std::endl;
+            //std::cout << "Panel Pressed" << std::endl;
         }
         else
         {
             panel->Pressed = false;
-            std::cout << "Panel NOT Pressed" << std::endl;
+            //std::cout << "Panel NOT Pressed" << std::endl;
         }
 
 
         if (held == true)
         {
             panel->Pressed = true;
-            std::cout << "Panel Held" << std::endl;
+            //std::cout << "Panel Held" << std::endl;
         }
         else
         {
             panel->Pressed = false;
-            std::cout << "Panel NOT Held" << std::endl;
+            //std::cout << "Panel NOT Held" << std::endl;
         }
 
     });

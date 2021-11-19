@@ -84,14 +84,31 @@ void CGame::LoadImages(){
 
 void CGame::LoadSounds(){
   m_pAudio->Initialize(SoundIndex::Size);
+  // ???
   m_pAudio->Load(SoundIndex::Grunt, "grunt");
   m_pAudio->Load(SoundIndex::Clang, "clang");
   m_pAudio->Load(SoundIndex::Impact, "impact");
+
+  // Casting Noises
   m_pAudio->Load(SoundIndex::FireCast, "FireCast");
   m_pAudio->Load(SoundIndex::IceCast, "IceCast");
   m_pAudio->Load(SoundIndex::LightningCast, "LightningCast");
+
+  // Impact Noises
   m_pAudio->Load(SoundIndex::FireImpact1, "FireImpact1");
   m_pAudio->Load(SoundIndex::IceImpact1, "IceImpact1");
+  m_pAudio->Load(SoundIndex::PlayerImpact1, "PlayerImpact1");
+  m_pAudio->Load(SoundIndex::EnemyImpactMetal1, "EnemyImpactMetal1");
+  m_pAudio->Load(SoundIndex::EnemyImpactMetal2, "EnemyImpactMetal2");
+
+  // Player Noises
+  m_pAudio->Load(SoundIndex::Dash1, "Dash1");
+  m_pAudio->Load(SoundIndex::Dash2, "Dash2");
+  m_pAudio->Load(SoundIndex::Dash3, "Dash3");
+  m_pAudio->Load(SoundIndex::Dash4, "Dash4");
+  m_pAudio->Load(SoundIndex::PlayerWalk1, "PlayerWalk1");
+  m_pAudio->Load(SoundIndex::PlayerWalk2, "PlayerWalk2");
+  m_pAudio->Load(SoundIndex::PlayerLand1, "PlayerLand1");
 
 }
 
@@ -242,6 +259,8 @@ void CGame::EcsPreUpdate() {
 
 
 void CGame::EcsUpdate() {
+    CustomPhysicsStep();
+
     // This handles NPCs and lighting.
     Ecs::ApplyEvery(m_NPCsActive, [=](Entity e) {
         NPC* npc = m_NPCs.Get(e);
@@ -290,11 +309,9 @@ void CGame::EcsUpdate() {
         );
     });
 
-    CustomPhysicsStep();
-
     auto TimerLEZero = [&](Entity e) { return *m_Timers.Get(e) <= 0.0f; };
 
-    Ecs::RemoveConditionally(m_ProjectilesActive, TimerLEZero, [=](Entity e) { StripProjectile(e); });
+    Ecs::RemoveConditionally(m_ProjectilesActive, TimerLEZero, [=](Entity e) { StripProjectile(e);});
     Ecs::RemoveConditionally(m_RaysActive, TimerLEZero, [=](Entity e) { StripRay(e); });
     Ecs::RemoveConditionally(m_Particles, TimerLEZero, [&](Entity e) { StripParticle(e); });
     Ecs::RemoveConditionally(m_ParticleInstancesActive, [&](Entity e) { return m_ParticleInstances.Get(e)->count <= 0; }, [&](Entity e) { StripParticleInstance(e); });
@@ -321,6 +338,7 @@ void CGame::EcsUpdate() {
         btClamp<f32>(mana->timer, 0.0, FLT_MAX);
         mana->value = (i32)(((mana->recharge * (f32)mana->max) - mana->timer) / mana->recharge);
     }
+
 }
 
 /// Ask the object manager to draw the game objects. The renderer is notified

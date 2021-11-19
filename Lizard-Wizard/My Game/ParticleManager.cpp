@@ -10,6 +10,10 @@ void CGame::InitializeParticles() {
 }
 
 void CGame::SpawnParticles(ParticleInstanceDesc* desc) {
+    if(m_ParticleInstancesCache.Size() < 1) {
+        return;
+    }
+
     Entity instance_e = m_ParticleInstancesCache.RemoveTail();
     m_ParticleInstancesActive.AddExisting(instance_e);
 
