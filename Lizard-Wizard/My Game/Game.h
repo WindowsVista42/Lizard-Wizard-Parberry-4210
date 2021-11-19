@@ -177,7 +177,7 @@ private:
     Group m_ModelsActive;
 
     // Parenting system
-    Table<Group> m_Parents;
+    Table<Entity> m_EntityMapping;
 
     // Health Table
     Table<Health> m_Healths;
@@ -203,7 +203,11 @@ private:
     //std::vector<RayProjectile> m_currentRayProjectiles;
 
     Table<Transform> m_Transforms;
+
+    Table<Particle> m_Particles;
     Table<ParticleInstance> m_ParticleInstances;
+    Group m_ParticleInstancesActive;
+    Group m_ParticleInstancesCache;
 
     Group m_TestingLights;
     Group m_TestingWallsFloors;
@@ -399,6 +403,12 @@ private:
 
     // HEALTH //
     Health NewHealth(i32 starting, i32 max);
+
+    // PARTICLES //
+    void InitializeParticles();
+    void SpawnParticles(ParticleInstanceDesc* desc);
+    void StripParticle(Entity e);
+    void StripParticleInstance(Entity e);
 
 public:
     Renderer* m_pRenderer; ///< Pointer to renderer.

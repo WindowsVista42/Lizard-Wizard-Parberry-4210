@@ -40,6 +40,7 @@ void CGame::Initialize() {
     InitializeNPCs();
     InitializePlayer();
     InitializeMenu();
+    InitializeParticles();
 
     GenerateRooms(Vec3(0, 0, 0), 100, 300, 0);
 
@@ -198,22 +199,17 @@ void CGame::InputHandler() {
 
     if (m_pKeyboard->TriggerDown('O')) {
         ParticleInstanceDesc desc = {};
-        desc.count_lower_bound = 10;
-        desc.count_upper_bound = 10;
+        desc.count = 10;
 
         desc.light_color = Vec3(50.0f, 20.0f, 40.0f);
 
         desc.model = ModelIndex::Cube;
         desc.texture = TextureIndex::White;
 
-        desc.size = Vec3(10.0f);
-        desc.size_randomness = 0.0f;
-
         desc.glow = Vec3(1.2f, 1.0f, 0.8f);
-        desc.glow_randomness = 0.0f;
+        desc.model_scale = Vec3(10.0f);
 
         desc.initial_pos = m_pRenderer->m_pCamera->GetPos() + m_pRenderer->m_pCamera->GetViewVector() * 500.0f;
-        desc.pos_randomness_range = 0.0f;
 
         desc.initial_speed = 400.0f;
         desc.initial_dir = Vec3(0.0f, 1.0f, 0.0f);
@@ -222,7 +218,10 @@ void CGame::InputHandler() {
         desc.initial_acc = Vec3(0.0f, -1000.0f, 0.0f);
         desc.acc_randomness = 0.0f;
 
-        m_ParticleInstances.Add(m_pRenderer->CreateParticleInstance(&desc));
+        desc.min_alive_time = 0.5f;
+        desc.max_alive_time = 1.5f;
+
+        SpawnParticles(&desc);
     }
 }
 
@@ -292,20 +291,32 @@ void CGame::EcsUpdate() {
 
     CustomPhysicsStep();
 
-    Ecs::RemoveConditionally(m_ProjectilesActive, [=](Entity e) { return *m_Timers.Get(e) <= 0.0; }, [=](Entity e) { StripProjectile(e); });
-    Ecs::RemoveConditionally(m_RaysActive, [=](Entity e) { return *m_Timers.Get(e) <= 0.0; }, [=](Entity e) { StripRay(e); });
+    auto TimerLEZero = [&](Entity e) { return *m_Timers.Get(e) <= 0.0f; };
 
-    m_pRenderer->UpdateParticles();
+    Ecs::RemoveConditionally(m_ProjectilesActive, TimerLEZero, [=](Entity e) { StripProjectile(e); });
+    Ecs::RemoveConditionally(m_RaysActive, TimerLEZero, [=](Entity e) { StripRay(e); });
+    Ecs::RemoveConditionally(m_Particles, TimerLEZero, [&](Entity e) { StripParticle(e); });
+    Ecs::RemoveConditionally(m_ParticleInstancesActive, [&](Entity e) { return m_ParticleInstances.Get(e)->count <= 0; }, [&](Entity e) { StripParticleInstance(e); });
+
+    f32 dt = m_pTimer->GetFrameTime();
+    for every(index, m_Particles.Size()) {
+        Particle* p = &m_Particles.Components()[index];
+
+        p->vel += p->acc * dt;
+        p->pos += p->vel * dt;
+    }
+
+    //m_pRenderer->Update();
 
     // This handles the timers tables.
     for every(index, m_Timers.Size()) {
-        m_Timers.Components()[index] -= m_pTimer->GetFrameTime();
+        m_Timers.Components()[index] -= dt;
     }
 
     for every(index, m_Mana.Size()) {
         Mana* mana = &m_Mana.Components()[index];
 
-        mana->timer -= m_pTimer->GetFrameTime();
+        mana->timer -= dt;
         btClamp<f32>(mana->timer, 0.0, FLT_MAX);
         mana->value = (i32)(((mana->recharge * (f32)mana->max) - mana->timer) / mana->recharge);
     }
@@ -327,9 +338,15 @@ void CGame::RenderFrame() {
             m_pRenderer->DrawModelInstance(m_ModelInstances.Get(e));
         });
 
-        for every(index, m_ParticleInstances.Size()) {
-            ParticleInstance* p = &m_ParticleInstances.Components()[index];
-            m_pRenderer->DrawParticleInstance(p);
+        for every(index, m_Particles.Size()) {
+            Particle* particle = &m_Particles.Components()[index];
+            Entity e = m_Particles.Entities()[index];
+            Entity instance_e = *m_EntityMapping.Get(e);
+            ParticleInstance* pi = m_ParticleInstances.Get(instance_e);
+            ModelInstance* mi = &pi->model_instance;
+
+            mi->world = MoveScaleMatrix(particle->pos, pi->model_scale);
+            m_pRenderer->DrawModelInstance(mi);
         }
 
         m_pRenderer->EndDrawing();

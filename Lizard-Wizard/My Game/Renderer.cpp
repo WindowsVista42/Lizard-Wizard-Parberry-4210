@@ -1119,12 +1119,13 @@ void Renderer::DrawModelInstance(ModelInstance* instance) {
     m_pCommandList->DrawIndexedInstanced(pmodel->index_count, 1, 0, 0, 0);
 }
 
+/*
 void Renderer::DrawParticleInstance(ParticleInstance* instance) {
     //TODO(sean): check if this can be moved out when we finalize the debug and game drawing APIs
     ModelInstance* pmi = &instance->particle_instance;
 
     Ecs::ApplyEvery(instance->particles, [=](Entity e) {
-        Particle* particle = particles.Get(e);
+        Particle* particle = m_Particles.Get(e);
 
         pmi->world = MoveScaleMatrix(particle->pos, instance->model_scale);
         m_deferred->SetWorld(pmi->world);
@@ -1145,47 +1146,57 @@ void Renderer::DrawParticleInstance(ParticleInstance* instance) {
         m_pCommandList->DrawIndexedInstanced(pmodel->index_count, 1, 0, 0, 0);
     });
 }
+*/
 
-ParticleInstance Renderer::CreateParticleInstance(ParticleInstanceDesc* desc) {
-    ParticleInstance instance;
-    instance.light = lights.Add({ *(Vec4*)&desc->initial_pos, *(Vec4*)&desc->light_color });
-    instance.model_scale = desc->size;
+//ParticleInstance Renderer::CreateParticleInstance(ParticleInstanceDesc* desc) {
+//    ParticleInstance instance;
+//    instance.light = lights.Add({ *(Vec4*)&desc->initial_pos, *(Vec4*)&desc->light_color });
+//    instance.model_scale = desc->size;
+//
+//    instance.particle_instance.model = desc->model;
+//    instance.particle_instance.texture = desc->texture;
+//
+//    instance.glow = desc->glow;
+//
+//    u32 count = GameRandom::Randu32(desc->min_count, desc->max_count);
+//
+//    for every(index, count) {
+//        Entity e = Entity();
+//
+//        Particle particle;
+//        particle.pos = desc->initial_pos;
+//
+//        Vec3 dir = JitterVec3(desc->initial_dir, -2.0f * desc->dir_randomness, 2.0f * desc->dir_randomness);
+//        particle.vel = desc->initial_speed * dir;
+//
+//        Vec3 acc = JitterVec3(desc->initial_acc, -2.0f * desc->acc_randomness, 2.0f * desc->acc_randomness);
+//        particle.acc = acc;
+//
+//        instance.particles.AddExisting(e);
+//    }
+//
+//    return instance;
+//}
 
-    instance.particle_instance.model = desc->model;
-    instance.particle_instance.texture = desc->texture;
+void Renderer::Update() {
+    //f32 dt = m_pTimer->GetFrameTime();
 
-    instance.glow = desc->glow;
+    //for every(index, m_ParticleTimers.Size()) {
+    //    m_ParticleTimers.Components()[index] -= dt;
+    //}
 
-    u32 count = GameRandom::Randu32(desc->count_lower_bound, desc->count_upper_bound);
+    //Ecs::ApplyEvery(m_ParticlesActive, [&](Entity e) {
+    //    Particle* p = m_Particles.Get(e);
 
-    for every(index, count) {
-        Entity e = Entity();
+    //    p->vel += p->acc * dt;
+    //    p->pos += p->vel * dt;
+    //});
 
-        Particle particle;
-        particle.pos = desc->initial_pos;
-
-        Vec3 dir = JitterVec3(desc->initial_dir, -2.0f * desc->dir_randomness, 2.0f * desc->dir_randomness);
-        particle.vel = desc->initial_speed * dir;
-
-        Vec3 acc = JitterVec3(desc->initial_acc, -2.0f * desc->acc_randomness, 2.0f * desc->acc_randomness);
-        particle.acc = acc;
-
-        instance.particles.AddExisting(e);
-        particles.AddExisting(e, particle);
-    }
-
-    return instance;
-}
-
-void Renderer::UpdateParticles() {
-    f32 dt = m_pTimer->GetFrameTime();
-
-    for every(index, particles.Size()) {
-        Particle* p = &particles.Components()[index];
-
-        p->vel += p->acc * dt;
-        p->pos += p->vel * dt;
-    }
+    //Ecs::RemoveConditionally(
+    //    m_ParticlesActive,
+    //    [&](Entity e) { return *m_ParticleTimers.Get(e) <= 0.0f; },
+    //    [&](Entity e) {}
+    //);
 }
 
 // Sean: this is an adaptation of LSpriteRenderer::Draw(LSpriteDesc2D*)'s Batched2D mode

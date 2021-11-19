@@ -48,23 +48,16 @@ struct Particle {
 };
 
 struct ParticleInstanceDesc {
-    u32 count_lower_bound;
-    u32 count_upper_bound;
+    u32 count;
 
     Vec3 light_color;
 
+    Vec3 model_scale;
     u32 model;
     u32 texture;
-    Vec3 size;
-
-    f32 size_randomness;
-    f32 size_randomness_range;
-
     Vec3 glow;
-    f32 glow_randomness;
 
     Vec3 initial_pos;
-    f32 pos_randomness_range;
 
     f32 initial_speed;
     Vec3 initial_dir;
@@ -72,14 +65,16 @@ struct ParticleInstanceDesc {
 
     Vec3 initial_acc;
     f32 acc_randomness;
+
+    f32 min_alive_time;
+    f32 max_alive_time;
 };
 
 struct ParticleInstance {
-    Group particles;
-    Vec3 model_scale;
-    Vec3 glow;
+    i32 count;
     Entity light;
-    ModelInstance particle_instance;
+    Vec3 model_scale;
+    ModelInstance model_instance;
 };
 
 struct SpriteInstance {
@@ -132,6 +127,11 @@ private:
     template <typename T>
     void CreateBufferAndView(T* data, usize count, GraphicsResource& resource, std::shared_ptr<D3D12_INDEX_BUFFER_VIEW>& view);
 
+    //Table<f32> m_ParticleTimers;
+    //Table<Particle> m_Particles;
+    //Group m_ParticlesActive;
+    //Group m_ParticlesCache;
+
 public:
     bool m_screenShot = false; // TODO(sean): implement
 
@@ -143,9 +143,8 @@ public:
     LBaseCamera* m_pCamera = 0;
 
     Table<Light> lights;
-    Table<Particle> particles;
 
-    void UpdateParticles();
+    void Update();
 
     Renderer();
     virtual ~Renderer();

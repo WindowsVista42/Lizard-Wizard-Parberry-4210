@@ -86,9 +86,6 @@ void CGame::InputMenu() {
         Panel* panel = m_Panel.Get(e);
 
         Vector2 position = sprite->m_vPos;
-        
-
-        //std::cout << "X: " << position.x <<"   Y: " << position.y << std::endl;
 
         if (
             cursorPos.x   > position.x && cursorPos.y > position.y && 
@@ -122,9 +119,6 @@ void CGame::InputMenu() {
         }
 
     });
-
-
-
 }
 
 void CGame::RenderMenu() {

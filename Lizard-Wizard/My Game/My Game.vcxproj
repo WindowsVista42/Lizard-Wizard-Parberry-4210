@@ -178,6 +178,7 @@
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="Effects\LightingEffect.cpp" />
     <ClCompile Include="NPCManager.cpp" />
+    <ClCompile Include="ParticleManager.cpp" />
     <ClCompile Include="PhysicsManager.cpp" />
     <ClCompile Include="PlayerManager.cpp" />
     <ClCompile Include="ProjectileManager.cpp" />

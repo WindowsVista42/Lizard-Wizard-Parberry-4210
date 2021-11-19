@@ -25,6 +25,7 @@
     <ClCompile Include="PlayerManager.cpp" />
     <ClCompile Include="DrawManager.cpp" />
     <ClCompile Include="MenuManager.cpp" />
+    <ClCompile Include="ParticleManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CustomBind.h" />

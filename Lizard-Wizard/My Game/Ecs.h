@@ -190,7 +190,7 @@ public:
 #ifdef _DEBUG
         // Sean: YOU TRIED TO GET SOMETHING THAT WASN'T THERE
         // Look at the call stack and figure out where and why.
-        if (mapping.find(e) == mapping.end()) { char* ptr = 0; *ptr = 0; }
+       if (mapping.find(e) == mapping.end()) { char* ptr = 0; *ptr = 0; }
 #endif
 
         usize index = mapping.at(e);
@@ -237,6 +237,7 @@ public:
     Entity RemoveTail() {
         if (entities.size() == 0) { char* ptr = 0; *ptr = 0; };
 
+
         Entity e = entities.back();
         entities.pop_back();
         mapping.erase(e);
@@ -280,6 +281,24 @@ public:
 
         for (Entity e : to_remove) {
             group.Remove(e);
+            remove(e);
+        }
+    }
+
+    template <typename T, typename F, typename R>
+    static void RemoveConditionally(Table<T>& table, const F& filter, const R& remove) {
+        static std::vector<Entity> to_remove;
+        to_remove.clear();
+
+        for every(index, table.Size()) {
+            Entity e = table.Entities()[index];
+            if (filter(e)) {
+                to_remove.push_back(e);
+            }
+        }
+
+        for (Entity e : to_remove) {
+            table.Remove(e);
             remove(e);
         }
     }
