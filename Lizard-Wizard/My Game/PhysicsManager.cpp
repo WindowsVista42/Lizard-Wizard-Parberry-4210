@@ -304,7 +304,7 @@ void CGame::InitializePhysics() {
 
     // Assign Config and Array
     m_pDynamicsWorld = new btDiscreteDynamicsWorld(CurrentDispatcher, CurrentBroadphaseCache, CurrentSolver, CurrentConfiguration);
-    m_pCollisionShapes = btAlignedObjectArray<btCollisionShape*>();
+    //m_pCollisionShapes = btAlignedObjectArray<btCollisionShape*>();
 
     // Set other attributes
     m_pDynamicsWorld->setGravity(btVector3(0.0, -5000.0, 0.0));

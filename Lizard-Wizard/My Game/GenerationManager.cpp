@@ -33,6 +33,12 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
     roomCenter.y -= room_scale.y;
     m_roomCenter = roomCenter;
 
+    for every(z, Z_ROOMS - 1) {
+        for every(x, X_ROOMS - 1) {
+            m_GameMap[x][z] = false;
+        }
+    }
+
     // GENERATION CODE
 
     auto Place3x3 = [&](i32 x, i32 z) {
@@ -112,6 +118,7 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
         i32 x = start.first;
         i32 z = start.second;
 
+        u32 count = 0;
         do {
             i32 xdiff = abs(end.first - x);
             i32 zdiff = abs(end.second - z);
@@ -134,8 +141,8 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
             }
 
             m_GameMap[cx][cz] = true;
-
-        } while (!m_GameMap[x][z] && (x != end.first || z != end.second));
+            count += 1;
+        } while ((count < 10 || !m_GameMap[x][z]) && (x != end.first || z != end.second));
     };
 
     // Sean: Fix gaps by repeatedly adding hallways
@@ -326,6 +333,7 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
     // randomly choose tiles to place lights into
     // but dont choose the same tile twice
     std::unordered_set<u64> light_placements;
+    u32 sanity = 0;
     #define LIGHT_COUNT_ROOMS 40
     for every(i, LIGHT_COUNT_ROOMS) {
         u32 idx = GameRandom::Randu32(0, connected_walls.size() - 1);
@@ -338,7 +346,10 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
         };
 
         if (Check(x, z) && Check(x - 1, z) && Check(x + 1, z) && Check(x, z - 1) && Check(x, z + 1)) {
-            i -= 1; continue;
+            i -= 1;
+            sanity += 1;
+            if (sanity > 100) { break; }
+            continue;
         }
 
         light_placements.insert(make_key(x, z));
@@ -381,7 +392,6 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
         m_ModelInstances.AddExisting(e, model);
         m_ModelsActive.AddExisting(e);
     }
-
 }
 
 void CGame::DestroyRooms() {
@@ -399,8 +409,8 @@ f32 heuristic(Point2 a, Point2 b) {
 // Sean: returns end if end reached, otherwise it returns the closest point it could find to end
 // Performance: flood-fills until all locations are filled, kinda slow
 Point2 CGame::FindClosestPoint(Point2 start, Point2 end) {
-    static std::unordered_set<u64> traversed = std::unordered_set<u64>();
-    static std::vector<Point2> frontier =  std::vector<Point2>();
+    std::unordered_set<u64> traversed = std::unordered_set<u64>();
+    std::vector<Point2> frontier =  std::vector<Point2>();
 
     if (start == end) { return start; } // same point
     if (m_GameMap[start.first][start.second] == false) { return start; } // start is invalid
@@ -448,14 +458,14 @@ Point2 CGame::FindClosestPoint(Point2 start, Point2 end) {
         AddConditionally(cx, cz);
     }
 
-    traversed.clear();
-    frontier.clear();
+    //traversed.clear();
+    //frontier.clear();
 
     return best_point;
 }
 
 std::unordered_set<u64> CGame::FindConnected(Point2 start) {
-    static std::vector<Point2> frontier = std::vector<Point2>();
+    std::vector<Point2> frontier = std::vector<Point2>();
     std::unordered_set<u64> traversed = std::unordered_set<u64>();
 
     if (m_GameMap[start.first][start.second] == false) { return traversed; } // start is invalid
@@ -492,7 +502,7 @@ std::unordered_set<u64> CGame::FindConnected(Point2 start) {
         AddConditionally(cx, cz);
     }
 
-    frontier.clear();
+    //frontier.clear();
 
     return traversed;
 }
@@ -540,10 +550,10 @@ std::vector<Point2> CGame::Pathfind(Point2 start, Point2 end) {
     };
 
     // Sean: We declare these as static so their memory can be reused.
-    static std::array<std::array<Point2, Z_ROOMS>, X_ROOMS> trail;
-    static std::array<std::array<f32, Z_ROOMS>, X_ROOMS> f_score;
-    static std::array<std::array<f32, Z_ROOMS>, X_ROOMS> g_score;
-    static BinaryHeap<MinCostNode> open;
+    std::array<std::array<Point2, Z_ROOMS>, X_ROOMS> trail;
+    std::array<std::array<f32, Z_ROOMS>, X_ROOMS> f_score;
+    std::array<std::array<f32, Z_ROOMS>, X_ROOMS> g_score;
+    BinaryHeap<MinCostNode> open;
 
     // Sean: this is more relevant for subsequent calls
     Clear2dArray(trail, std::make_pair(UINT_MAX, UINT_MAX));
