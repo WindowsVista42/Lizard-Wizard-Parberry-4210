@@ -198,15 +198,29 @@ void CGame::InputHandler() {
 
     if (m_pKeyboard->TriggerDown('O')) {
         ParticleInstanceDesc desc = {};
-        desc.count = 10;
-        desc.initial_speed = 100.0f;
+        desc.count_lower_bound = 10;
+        desc.count_upper_bound = 10;
+
         desc.light_color = Vec3(50.0f, 20.0f, 40.0f);
+
         desc.model = ModelIndex::Cube;
         desc.texture = TextureIndex::White;
-        desc.model_scale = Vec3(10.0f);
-        desc.origin = m_pRenderer->m_pCamera->GetPos() + m_pRenderer->m_pCamera->GetViewVector() * 500.0f;
-        desc.randomness = 1.0f;
+
+        desc.size = Vec3(10.0f);
+        desc.size_randomness = 0.0f;
+
         desc.glow = Vec3(1.2f, 1.0f, 0.8f);
+        desc.glow_randomness = 0.0f;
+
+        desc.initial_pos = m_pRenderer->m_pCamera->GetPos() + m_pRenderer->m_pCamera->GetViewVector() * 500.0f;
+        desc.pos_randomness_range = 0.0f;
+
+        desc.initial_speed = 400.0f;
+        desc.initial_dir = Vec3(0.0f, 1.0f, 0.0f);
+        desc.dir_randomness = 0.3f;
+
+        desc.initial_acc = Vec3(0.0f, -1000.0f, 0.0f);
+        desc.acc_randomness = 0.0f;
 
         m_ParticleInstances.Add(m_pRenderer->CreateParticleInstance(&desc));
     }
@@ -348,6 +362,21 @@ void CGame::RenderFrame() {
             sprintf(buffer, "%.2f", m_frameRate);
             m_pRenderer->DrawScreenText(buffer, Vector2(m_nWinWidth - 200.0, 50.0), Colors::White);
         }
+
+        SpriteInstance sprite_instance;
+        sprite_instance.position = Vec2(100.0f, 100.0f);
+        sprite_instance.roll = 0.0f;
+        sprite_instance.scale = Vec2(100.0f, 100.0f);
+        sprite_instance.rgba = Vec4(1.0f, 1.0f, 1.0f, 1.0f);
+        sprite_instance.texture_index = TextureIndex::White;
+
+        m_pRenderer->DrawSpriteInstance(&sprite_instance);
+
+        sprite_instance.scale = Vec2(10.0f, 10.0f);
+        sprite_instance.rgba = Vec4(1.0f, 0.0f, 0.0f, 1.0f);
+
+        m_pRenderer->DrawSpriteInstance(&sprite_instance);
+
         m_pRenderer->EndUIDrawing();
     }
 

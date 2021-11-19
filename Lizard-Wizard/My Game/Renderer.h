@@ -13,6 +13,7 @@
 #include "RenderTexture.h"
 #include "Ecs.h"
 #include <Renderer3D.h>
+#include <Sprite.h>
 #include <array>
 
 #include <PostProcess.h>
@@ -47,15 +48,30 @@ struct Particle {
 };
 
 struct ParticleInstanceDesc {
-    Vec3 origin;
-    f32 initial_speed;
+    u32 count_lower_bound;
+    u32 count_upper_bound;
+
     Vec3 light_color;
-    Vec3 model_scale;
+
     u32 model;
     u32 texture;
+    Vec3 size;
+
+    f32 size_randomness;
+    f32 size_randomness_range;
+
     Vec3 glow;
-    u32 count;
-    f32 randomness;
+    f32 glow_randomness;
+
+    Vec3 initial_pos;
+    f32 pos_randomness_range;
+
+    f32 initial_speed;
+    Vec3 initial_dir;
+    f32 dir_randomness;
+
+    Vec3 initial_acc;
+    f32 acc_randomness;
 };
 
 struct ParticleInstance {
@@ -64,6 +80,14 @@ struct ParticleInstance {
     Vec3 glow;
     Entity light;
     ModelInstance particle_instance;
+};
+
+struct SpriteInstance {
+    u32 texture_index;
+    Vec2 position;
+    Vec2 scale;
+    Vec4 rgba;
+    f32 roll;
 };
 
 //NOTE(sean): A lot of this implementation is reverse-engineered based on what LSpriteRenderer does
@@ -89,12 +113,24 @@ private:
     std::unique_ptr<BasicEffect> m_pDebugLineEffect;
     std::unique_ptr<BasicEffect> m_pDebugTriangleEffect;
 
-    // Text Rendering
+    // UI Rendering
+    std::unique_ptr<BasicEffect> m_spriteEffect;
+    f32 m_uiRenderDepth;
+    GraphicsResource m_spriteVertexBuffer;
+    GraphicsResource m_spriteIndexBuffer;
+    std::shared_ptr<D3D12_VERTEX_BUFFER_VIEW> m_spriteVertexBufferView;
+    std::shared_ptr<D3D12_INDEX_BUFFER_VIEW> m_spriteIndexBufferView;
 
     void BetterScreenShot();
 
     std::vector<DebugModel> m_debugModels;
     std::array<GameModel, ModelIndex::Count> m_models;
+
+    template <typename T>
+    void CreateBufferAndView(T* data, usize count, GraphicsResource& resource, std::shared_ptr<D3D12_VERTEX_BUFFER_VIEW>& view);
+
+    template <typename T>
+    void CreateBufferAndView(T* data, usize count, GraphicsResource& resource, std::shared_ptr<D3D12_INDEX_BUFFER_VIEW>& view);
 
 public:
     bool m_screenShot = false; // TODO(sean): implement
@@ -104,7 +140,7 @@ public:
     f32 saturation_amount = 1.0f;
 
     // I dont like putting this behind walls because it doesnt stop people from fucking with it
-    LBaseCamera* m_pCamera = nullptr;
+    LBaseCamera* m_pCamera = 0;
 
     Table<Light> lights;
     Table<Particle> particles;
@@ -135,8 +171,6 @@ public:
     void BeginDebugTriangleBatch();
     void EndDebugBatch();
 
-    //TODO(sean): look into converting these into XMMVECTOR for simd performance?
-    //NOTE(sean): Put these in between BeginDebugLineBatch() and EndDebugBatch()
     void DrawDebugLine(const Vec3 A, const Vec3 B, const Vec4 color);
     void DrawDebugTriangle(const Vec3 A, const Vec3 B, const Vec3 C, const Vec4 color);
     void DrawDebugQuad(const Vec3 A, const Vec3 B, const Vec3 C, const Vec3 D, const Vec4 color);
@@ -167,8 +201,11 @@ public:
     u32 GetResolutionHeight();
 
     ParticleInstance CreateParticleInstance(ParticleInstanceDesc* desc);
+
     void DrawModelInstance(ModelInstance* instance);
     void DrawParticleInstance(ParticleInstance* instance);
+    void DrawSpriteInstance(SpriteInstance* instance);
+
     void LoadModel(const char* name, u32 model_index);
     void LoadTextureI(const char* name, u32 texture_index);
 

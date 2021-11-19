@@ -3,9 +3,8 @@
 #include "BinaryHeap.h"
 
 // Sean todo:
-// - Add visual scatter (ground)
-// - Add functional scatter (cover, blocks on walls)
-// - Add obstacles
+// - Add visual scatter (walls)
+// - Add functional scatter (cover, blocks on walls, obstacles)
 // - Add particles
 // - Performance: batch geometry (by material)
 

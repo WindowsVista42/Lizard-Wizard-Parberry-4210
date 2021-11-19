@@ -74,6 +74,20 @@ struct Mat4x4 : XMMATRIX {
     operator XMMATRIX() const { return *(XMMATRIX*)this; }
 };
 
+struct Vec2 : Vector2 {
+    Vec2() {}
+    Vec2(const f32 splat) { this->x = splat; this->y = splat; }
+    Vec2(const f32 x, const f32 y) { this->x = x; this->y = y; }
+
+    Vec2(const Vector2& other) { *this = *(Vec2*)&other; }
+
+    operator Vector2() const { return *(Vector3*)this; }
+
+    void Print() {
+        printf("(%f, %f)\n", x, y);
+    }
+};
+
 struct Vec3 : Vector3 {
     Vec3() {}
     Vec3(const f32 splat) { this->x = splat; this->y = splat; this->z = splat; }

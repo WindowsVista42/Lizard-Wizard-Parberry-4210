@@ -7,7 +7,7 @@
 #include <BufferHelpers.h>
 #include <ComponentIncludes.h>
 
-Renderer::Renderer():
+Renderer::Renderer() :
     LRenderer3D(),
     m_pCamera(new LBaseCamera),
     m_debugScratch(16 * 1024), // 16k
@@ -30,7 +30,7 @@ Renderer::Renderer():
     const f32 far_clip = 1000000.0f;
     
     m_pCamera->SetPerspective(aspect, fov_radians, near_clip, far_clip);
-    m_pCamera->MoveTo(Vector3(0.0f, 0.0f, 0.0f));
+    m_pCamera->MoveTo(Vec3(0.0f));
 }
 
 Renderer::~Renderer() {
@@ -261,6 +261,33 @@ void Renderer::Initialize() {
         m_pTonemapEffect = std::make_unique<TonemapEffect>(m_pD3DDevice, pipeline_state_desc);
         m_pTonemapEffect->SetTextures(m_pResourcesHeap->GetGpuHandle(Descriptors::BloomOutput));
     }
+
+    {
+        EffectPipelineStateDescription pipeline_state_desc(
+            &VertexPositionTexture::InputLayout,
+            CommonStates::NonPremultiplied,
+            CommonStates::DepthDefault,
+            CommonStates::CullNone,
+            m_RenderTargetState
+        );
+        m_spriteEffect = std::make_unique<BasicEffect>(m_pD3DDevice, EffectFlags::Texture, pipeline_state_desc);
+        m_spriteEffect->SetProjection(XMLoadFloat4x4(&m_projection));
+    }
+
+    {
+        // Sean: adaptation of LSpriteRenderer::CreateVertexBuffer()
+
+        VertexPositionTexture vertex[4] = {
+            { Vec3( 0.5f,  0.5f, 0.0f), Vec2(1.0f, 0.0f) },
+            { Vec3( 0.5f, -0.5f, 0.0f), Vec2(1.0f, 1.0f) },
+            { Vec3(-0.5f,  0.5f, 0.0f), Vec2(0.0f, 0.0f) },
+            { Vec3(-0.5f, -0.5f, 0.0f), Vec2(0.0f, 1.0f) },
+        };
+        CreateBufferAndView(vertex, _countof(vertex), m_spriteVertexBuffer, m_spriteVertexBufferView);
+
+        u32 index[4] = { 0, 1, 2, 3 };
+        CreateBufferAndView(index, _countof(index), m_spriteIndexBuffer, m_spriteIndexBufferView);
+    }
 }
 
 void Renderer::BetterScreenShot() {
@@ -337,7 +364,7 @@ void Renderer::EndDebugDrawing() {
 }
 
 void Renderer::BeginUIDrawing() {
-    ID3D12DescriptorHeap* pHeap[] = { m_pDescriptorHeap->Heap() };
+    ID3D12DescriptorHeap* pHeap[] = { m_pDescriptorHeap->Heap(), m_pStates->Heap() };
     m_pCommandList->SetDescriptorHeaps(_countof(pHeap), pHeap);
 
     auto viewport = m_pDeviceResources->GetScreenViewport();
@@ -347,6 +374,18 @@ void Renderer::BeginUIDrawing() {
     m_pCommandList->RSSetScissorRects(1, &scissorRect);
 
     m_pSpriteBatch->Begin(m_pCommandList);
+
+    auto dsvDescBackBuffer = m_pDeviceResources->GetDepthStencilView();
+    auto rtvDescBackBuffer = m_pDeviceResources->GetRenderTargetView();
+
+    D3D12_CPU_DESCRIPTOR_HANDLE rtvDescs[1] = {
+        rtvDescBackBuffer
+    };
+
+    m_pCommandList->OMSetRenderTargets(_countof(rtvDescs), rtvDescs, FALSE, &dsvDescBackBuffer);
+    m_pCommandList->ClearDepthStencilView(dsvDescBackBuffer, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, 0);
+
+    m_uiRenderDepth = 1000.0f;
 }
 
 void Renderer::EndUIDrawing() {
@@ -970,7 +1009,7 @@ void LoadVBO(const char* fpath, VBOData* model) {
 }
 
 template <typename T>
-inline void CreateBufferAndView(T* data, usize count, GraphicsResource& resource, std::shared_ptr<D3D12_VERTEX_BUFFER_VIEW>& view) {
+inline void Renderer::CreateBufferAndView(T* data, usize count, GraphicsResource& resource, std::shared_ptr<D3D12_VERTEX_BUFFER_VIEW>& view) {
     isize size = sizeof(T) * count;
 
     resource = GraphicsMemory::Get().Allocate(size);
@@ -983,7 +1022,7 @@ inline void CreateBufferAndView(T* data, usize count, GraphicsResource& resource
 }
 
 template <typename T>
-inline void CreateBufferAndView(T* data, usize count, GraphicsResource& resource, std::shared_ptr<D3D12_INDEX_BUFFER_VIEW>& view) {
+inline void Renderer::CreateBufferAndView(T* data, usize count, GraphicsResource& resource, std::shared_ptr<D3D12_INDEX_BUFFER_VIEW>& view) {
     isize size = sizeof(T) * count;
 
     resource = GraphicsMemory::Get().Allocate(size);
@@ -1109,24 +1148,27 @@ void Renderer::DrawParticleInstance(ParticleInstance* instance) {
 
 ParticleInstance Renderer::CreateParticleInstance(ParticleInstanceDesc* desc) {
     ParticleInstance instance;
-    instance.light = lights.Add({ *(Vec4*)&desc->origin, *(Vec4*)&desc->light_color });
-    instance.model_scale = desc->model_scale;
+    instance.light = lights.Add({ *(Vec4*)&desc->initial_pos, *(Vec4*)&desc->light_color });
+    instance.model_scale = desc->size;
 
     instance.particle_instance.model = desc->model;
     instance.particle_instance.texture = desc->texture;
 
     instance.glow = desc->glow;
 
-    for every(index, desc->count) {
+    u32 count = GameRandom::Randu32(desc->count_lower_bound, desc->count_upper_bound);
+
+    for every(index, count) {
         Entity e = Entity();
 
         Particle particle;
-        particle.pos = desc->origin;
-        Vec3 vel = Vec3(GameRandom::Randf32(), GameRandom::Randf32(), GameRandom::Randf32());
-        vel.x -= 0.5; vel.y -= 0.5; vel.z -= 0.5;
-        vel.Normalize();
-        particle.vel = desc->initial_speed * vel;
-        particle.acc = Vec3(0);
+        particle.pos = desc->initial_pos;
+
+        Vec3 dir = JitterVec3(desc->initial_dir, -2.0f * desc->dir_randomness, 2.0f * desc->dir_randomness);
+        particle.vel = desc->initial_speed * dir;
+
+        Vec3 acc = JitterVec3(desc->initial_acc, -2.0f * desc->acc_randomness, 2.0f * desc->acc_randomness);
+        particle.acc = acc;
 
         instance.particles.AddExisting(e);
         particles.AddExisting(e, particle);
@@ -1144,4 +1186,47 @@ void Renderer::UpdateParticles() {
         p->vel += p->acc * dt;
         p->pos += p->vel * dt;
     }
+}
+
+// Sean: this is an adaptation of LSpriteRenderer::Draw(LSpriteDesc2D*)'s Batched2D mode
+void Renderer::DrawSpriteInstance(SpriteInstance* instance) {
+    LBaseCamera* cam = m_pCamera;
+
+    // Sean: the scalings are very random feeling
+
+    Vec3 scale = Vec3(instance->scale.x, instance->scale.y, 1.0f);
+    scale *= 1.7f;
+
+    // Sean: I'm really going to do some 3d rotation stuff because I can't be bothered to do the code
+    // to properly set up a UI camera and a NORMAL camera.
+    const Vec2 pos = Vec2(instance->position.x, -instance->position.y) * 1.75f;
+    const Vec2 win_scl = Vec2(-888.0f, 668.0f);
+    const Vec2 real_pos = pos + win_scl + Vec2(scale.x / 2.0f, -scale.y / 2.0f);
+    const Vec3 translation = RotatePointAroundOrigin(
+        cam->GetPos(),
+        Vec3(real_pos.x, real_pos.y, m_uiRenderDepth),
+        Quat::CreateFromYawPitchRoll(cam->GetYaw(), cam->GetPitch(), cam->GetRoll())
+    );
+    m_uiRenderDepth -= 0.1f;
+
+    const Quat orientation = Quaternion::CreateFromYawPitchRoll(cam->GetYaw(), cam->GetPitch(), instance->roll);
+
+    const Mat4x4 world = MoveRotateScaleMatrix(translation, orientation, scale);
+
+    m_spriteEffect->SetTexture(
+        m_pDescriptorHeap->GetGpuHandle(instance->texture_index),
+        m_pStates->AnisotropicClamp()
+    );
+
+    m_spriteEffect->SetColorAndAlpha(instance->rgba);
+
+    m_spriteEffect->SetWorld(world);
+    m_spriteEffect->SetView(XMLoadFloat4x4(&m_view));
+
+    m_spriteEffect->Apply(m_pCommandList);
+
+    m_pCommandList->IASetVertexBuffers(0, 1, m_spriteVertexBufferView.get());
+    m_pCommandList->IASetIndexBuffer(m_spriteIndexBufferView.get());
+    m_pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    m_pCommandList->DrawIndexedInstanced(4, 1, 0, 0, 0);
 }
