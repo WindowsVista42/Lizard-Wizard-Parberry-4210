@@ -237,6 +237,9 @@ private:
 
     Action m_DashAction;
     Action m_JumpAction;
+
+    bool m_MouseToggled = true;
+    bool m_MouseJustToggled = false;
     
     ////////////////////////
     // Internal Functions //

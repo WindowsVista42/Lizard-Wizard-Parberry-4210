@@ -1235,17 +1235,14 @@ void Renderer::Update() {
 }
 
 // Sean: this is an adaptation of LSpriteRenderer::Draw(LSpriteDesc2D*)'s Batched2D mode
+// Sean: this is BAD code.
 void Renderer::DrawSpriteInstance(SpriteInstance* instance) {
     LBaseCamera* cam = m_pCamera;
-
-    // Sean: the scalings are very random feeling
 
     Vec3 scale = Vec3(instance->scale.x, instance->scale.y, 1.0f);
     scale *= 1.7f;
     scale *= (m_uiRenderDepth / 1000.0f);
 
-    // Sean: I'm really going to do some 3d rotation stuff because I can't be bothered to do the code
-    // to properly set up a UI camera and a NORMAL camera.
     const Vec2 pos = Vec2(instance->position.x, -instance->position.y) * 1.75f;
     const Vec2 win_scl = Vec2(-888.0f, 668.0f);
     Vec2 real_pos = pos + win_scl + Vec2(scale.x / 2.0f, -scale.y / 2.0f);
