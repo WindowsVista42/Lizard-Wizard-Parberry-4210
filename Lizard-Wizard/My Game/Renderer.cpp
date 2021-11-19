@@ -363,6 +363,8 @@ void Renderer::EndDebugDrawing() {
     //NOTE(sean): Stub for now
 }
 
+static Vec3 camera_saved_orient;
+static Vec3 camera_saved_pos;
 void Renderer::BeginUIDrawing() {
     ID3D12DescriptorHeap* pHeap[] = { m_pDescriptorHeap->Heap(), m_pStates->Heap() };
     m_pCommandList->SetDescriptorHeaps(_countof(pHeap), pHeap);
@@ -386,10 +388,43 @@ void Renderer::BeginUIDrawing() {
     m_pCommandList->ClearDepthStencilView(dsvDescBackBuffer, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, 0);
 
     m_uiRenderDepth = 1000.0f;
+
+    //NOTE(sean): camera stuff
+    const f32 width = (f32)m_nWinWidth;
+    const f32 height = (f32)m_nWinHeight;
+
+    const f32 near_clip = 0.1f;
+    const f32 far_clip = 1000000.0f;
+    
+    camera_saved_orient = Vec3(m_pCamera->GetYaw(), m_pCamera->GetPitch(), m_pCamera->GetRoll());
+    camera_saved_pos = m_pCamera->GetPos();
+    m_pCamera->SetYaw(0.0f);
+    m_pCamera->SetPitch(0.0f);
+    m_pCamera->SetRoll(0.0f);
+    m_pCamera->SetOrthographic(width, height, near_clip, far_clip);
+    m_pCamera->MoveTo(Vec3(0.0f));
 }
 
 void Renderer::EndUIDrawing() {
     m_pSpriteBatch->End();
+
+    //NOTE(sean): camera stuff
+    const f32 width = (f32)m_nWinWidth;
+    const f32 height = (f32)m_nWinHeight;
+    const f32 aspect = width / height;
+
+    //TODO(sean): Load this from settings
+    const f32 fov = 90.0;
+    const f32 fov_radians = (fov / 180.0) * XM_PI;
+
+    const f32 near_clip = 0.1f;
+    const f32 far_clip = 1000000.0f;
+    
+    m_pCamera->SetYaw(camera_saved_orient.x);
+    m_pCamera->SetPitch(camera_saved_orient.y);
+    m_pCamera->SetRoll(camera_saved_orient.z);
+    m_pCamera->SetPerspective(aspect, fov_radians, near_clip, far_clip);
+    m_pCamera->MoveTo(camera_saved_pos);
 }
 
 template <const u32 Start, const u32 End>
@@ -1207,22 +1242,20 @@ void Renderer::DrawSpriteInstance(SpriteInstance* instance) {
 
     Vec3 scale = Vec3(instance->scale.x, instance->scale.y, 1.0f);
     scale *= 1.7f;
+    scale *= (m_uiRenderDepth / 1000.0f);
 
     // Sean: I'm really going to do some 3d rotation stuff because I can't be bothered to do the code
     // to properly set up a UI camera and a NORMAL camera.
     const Vec2 pos = Vec2(instance->position.x, -instance->position.y) * 1.75f;
     const Vec2 win_scl = Vec2(-888.0f, 668.0f);
-    const Vec2 real_pos = pos + win_scl + Vec2(scale.x / 2.0f, -scale.y / 2.0f);
-    const Vec3 translation = RotatePointAroundOrigin(
-        cam->GetPos(),
-        Vec3(real_pos.x, real_pos.y, m_uiRenderDepth),
-        Quat::CreateFromYawPitchRoll(cam->GetYaw(), cam->GetPitch(), cam->GetRoll())
-    );
-    m_uiRenderDepth -= 0.1f;
+    Vec2 real_pos = pos + win_scl + Vec2(scale.x / 2.0f, -scale.y / 2.0f);
+    real_pos *= (m_uiRenderDepth / 1000.0f);
 
-    const Quat orientation = Quaternion::CreateFromYawPitchRoll(cam->GetYaw(), cam->GetPitch(), instance->roll);
+    const Quat orientation = Quaternion::CreateFromYawPitchRoll(0.0f, 0.0f, instance->roll);
 
-    const Mat4x4 world = MoveRotateScaleMatrix(translation, orientation, scale);
+    const Mat4x4 world = MoveRotateScaleMatrix(Vec3(real_pos.x, real_pos.y, m_uiRenderDepth), orientation, scale);
+
+    m_uiRenderDepth -= 0.2f;
 
     m_spriteEffect->SetTexture(
         m_pDescriptorHeap->GetGpuHandle(instance->texture_index),

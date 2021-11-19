@@ -199,21 +199,22 @@ void CGame::InputHandler() {
 
     if (m_pKeyboard->TriggerDown('O')) {
         ParticleInstanceDesc desc = {};
-        desc.count = 10;
+        desc.count = 500;
 
-        desc.light_color = Vec3(50.0f, 20.0f, 40.0f);
+        desc.light_color = Vec3(100.0f, 20.0f, 20.0f);
 
         desc.model = ModelIndex::Cube;
         desc.texture = TextureIndex::White;
 
         desc.glow = Vec3(1.2f, 1.0f, 0.8f);
-        desc.model_scale = Vec3(10.0f);
+        desc.model_scale = Vec3(5.0f);
 
         desc.initial_pos = m_pRenderer->m_pCamera->GetPos() + m_pRenderer->m_pCamera->GetViewVector() * 500.0f;
 
-        desc.initial_speed = 400.0f;
+        desc.initial_speed = 800.0f;
         desc.initial_dir = Vec3(0.0f, 1.0f, 0.0f);
-        desc.dir_randomness = 0.3f;
+        desc.dir_randomness = 0.1f;
+        desc.speed_randomness = 0.5f;
 
         desc.initial_acc = Vec3(0.0f, -1000.0f, 0.0f);
         desc.acc_randomness = 0.0f;

@@ -60,6 +60,8 @@ struct ParticleInstanceDesc {
     Vec3 initial_pos;
 
     f32 initial_speed;
+    f32 speed_randomness;
+
     Vec3 initial_dir;
     f32 dir_randomness;
 

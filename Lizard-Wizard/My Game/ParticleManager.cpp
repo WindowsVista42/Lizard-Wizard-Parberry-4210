@@ -27,8 +27,10 @@ void CGame::SpawnParticles(ParticleInstanceDesc* desc) {
         Particle particle;
         particle.pos = desc->initial_pos;
 
+        f32 speed = desc->initial_speed * (1.0f - (GameRandom::Randf32() * desc->speed_randomness));
+
         Vec3 dir = JitterVec3(desc->initial_dir, -2.0f * desc->dir_randomness, 2.0f * desc->dir_randomness);
-        particle.vel = desc->initial_speed * dir;
+        particle.vel = speed * dir;
 
         Vec3 acc = JitterVec3(desc->initial_acc, -2.0f * desc->acc_randomness, 2.0f * desc->acc_randomness);
         particle.acc = acc;
