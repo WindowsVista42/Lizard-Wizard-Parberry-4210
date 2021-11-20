@@ -14,13 +14,13 @@ static Entity Staffe;
 static Entity Cubee;
 static Entity Hande;
 
-static Group mana_orbs;
-static Group health_orbs;
-
 const static f32 move_timer = 0.05f;
 
 static Entity player_health_timer;
 static Entity player_recast_timer;
+
+static Entity light;
+static u32 mana_index = 0;
 
 f32 WindupWinddown(const f32 time, const f32 windup, const f32 winddown, const f32 duration) {
     if (time < 0.0f) {
@@ -75,7 +75,7 @@ void CGame::InitializePlayer() {
     m_ModelsActive.AddExisting(Cubee);
 
     for every(index, m_DashAction.max_cooldown) {
-        Entity e = mana_orbs.Add();
+        Entity e = m_PlayerManaOrbs.Add();
 
         ModelInstance mi;
         mi.model = ModelIndex::Cube;
@@ -85,6 +85,9 @@ void CGame::InitializePlayer() {
         m_ModelInstances.AddExisting(e, mi);
         m_ModelsActive.AddExisting(e);
     }
+
+    light = m_pRenderer->lights.Add({Vec4(0), Vec4(70.0, 8.0, 2.5, 0.0)});
+    mana_index = 0;
 
     //Hande = Entity();
     //ModelInstance hand_mi;
@@ -98,7 +101,7 @@ void CGame::InitializePlayer() {
     Health player_health = Health::New(4, 4);
 
     for every(index, player_health.max) {
-        Entity e = health_orbs.Add();
+        Entity e = m_PlayerHealthOrbs.Add();
 
         ModelInstance mi;
         mi.model = ModelIndex::Cube;
@@ -197,16 +200,15 @@ void CGame::PlayerInput() {
     }
 
     if (m_pKeyboard->TriggerDown(VK_LSHIFT)) {
-        static u32 index = 0;
-        Entity e = mana_orbs.Entities()[index];
+        Entity e = m_PlayerManaOrbs.Entities()[mana_index];
 
         if (Ecs::ActivateAction(m_Timers, m_DashAction, e)) {
             // play sound
             m_pAudio->play(SoundIndex::Dash3, m_pRenderer->m_pCamera->GetPos(), 0.15f, 0.7);
 
             // update entity to use
-            index += 1;
-            index %= mana_orbs.Size();
+            mana_index += 1;
+            mana_index %= m_PlayerManaOrbs.Size();
         };
     }
 
@@ -510,7 +512,6 @@ void CGame::UpdatePlayer() {
             break;
         }
 
-        static Entity light = m_pRenderer->lights.Add({Vec4(0), Vec4(70.0, 8.0, 2.5, 0.0)});
         m_pRenderer->lights.Get(light)->position = *(Vec4*)&particle_pos;
         m_pRenderer->lights.Get(light)->color = clr * lum;
         mi->world = MoveScaleMatrix(particle_pos, scl);
@@ -521,7 +522,7 @@ void CGame::UpdatePlayer() {
 
     // cubes that spin around staff
     f32 index = 1.0f;
-    Ecs::ApplyEvery(mana_orbs, [&](Entity e) {
+    Ecs::ApplyEvery(m_PlayerManaOrbs, [&](Entity e) {
         ModelInstance* mi = m_ModelInstances.Get(e);
 
         auto RotationTranslation = [](Vec3 origin, Vec3 offset, Quat quat) {
@@ -529,7 +530,7 @@ void CGame::UpdatePlayer() {
             return origin + Vec3(XMVector3Transform(offset, rot));
         };
 
-        f32 t = m_pTimer->GetTime() + (M_PI * 2.0f * (index / (f32)mana_orbs.Size()));
+        f32 t = m_pTimer->GetTime() + (M_PI * 2.0f * (index / (f32)m_PlayerManaOrbs.Size()));
 
         f32 radius = 20.0f;
         f32 height = 40.0f;

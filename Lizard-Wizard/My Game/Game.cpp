@@ -12,15 +12,8 @@
 #include <vector>
 #include <iostream>
 
-// HEY LOL ITS ME IM DOING A TEST AHAHAH *BITES LIP*
-
-/// Delete the object manager. The renderer needs to be deleted before this
-/// destructor runs so it will be done elsewhere.
-
-
 CGame::~CGame() {}
-/// Create the renderer and the object manager, load images and sounds, and
-/// begin the game.
+
 void CGame::Initialize() {
     m_pRenderer = new Renderer();
     m_pRenderer->Initialize();
@@ -29,36 +22,14 @@ void CGame::Initialize() {
     LoadModels(); //load models from xml file list
     LoadSounds(); //load the sounds for this game
 
-    // Create Raycast Vector. Note(Ethan) : Remove this and prepare a raycast-texture pipeline.
-    m_currentRayProjectiles = std::vector<RayProjectile>();
-
-    // Initialize Managers
-    m_Player = Entity();
-    InitializePhysics();
-    InitializeGeneration();
-    InitializeProjectiles();
-    InitializeNPCs();
-    InitializePlayer();
-    InitializeMenu();
-    InitializeParticles();
-
-    GenerateRooms(Vec3(0, 0, 0), 100, 300, 0);
-
-    // Lets bind this action to to the user's mouse. For key values : https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
+    // Lets bind this action to to the user's mouse.
+    // For key values : https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
     m_leftClick = CustomBind::New(VK_LBUTTON);
     m_rightClick = CustomBind::New(VK_RBUTTON);
 
-    //CreateTestingEnvironment();
-
-    BeginGame();
+    ResetGame();
+    //BeginGame();
 }
-
-/// Load the specific images needed for this game. This is where `eSprite`
-/// values from `GameDefines.h` get tied to the names of sprite tags in
-/// `gamesettings.xml`. Those sprite tags contain the name of the corresponding
-/// image file. If the image tag or the image file are missing, then the game
-/// should abort from deeper in the Engine code leaving you with an error
-/// message in a dialog box.
 
 void CGame::LoadModels() {
     //m_pRenderer->LoadDebugModel("cube", Colors::Peru, DebugModelIndex::);
@@ -71,7 +42,7 @@ void CGame::LoadModels() {
     m_pRenderer->LoadModel("quad", ModelIndex::Quad);
 }
 
-void CGame::LoadImages(){
+void CGame::LoadImages() {
     m_pRenderer->BeginResourceUpload();
 
     m_pRenderer->LoadTextureI("sample", TextureIndex::Other);
@@ -80,61 +51,137 @@ void CGame::LoadImages(){
     m_pRenderer->EndResourceUpload();
 }
 
-/// Initialize the audio player and load game sounds.
-
 void CGame::LoadSounds(){
-  m_pAudio->Initialize(SoundIndex::Size);
-  // ???
-  m_pAudio->Load(SoundIndex::Grunt, "grunt");
-  m_pAudio->Load(SoundIndex::Clang, "clang");
-  m_pAudio->Load(SoundIndex::Impact, "impact");
+    m_pAudio->Initialize(SoundIndex::Size);
+    // ???
+    m_pAudio->Load(SoundIndex::Grunt, "grunt");
+    m_pAudio->Load(SoundIndex::Clang, "clang");
+    m_pAudio->Load(SoundIndex::Impact, "impact");
 
-  // Casting Noises
-  m_pAudio->Load(SoundIndex::FireCast, "FireCast");
-  m_pAudio->Load(SoundIndex::IceCast, "IceCast");
-  m_pAudio->Load(SoundIndex::LightningCast, "LightningCast");
+    // Casting Noises
+    m_pAudio->Load(SoundIndex::FireCast, "FireCast");
+    m_pAudio->Load(SoundIndex::IceCast, "IceCast");
+    m_pAudio->Load(SoundIndex::LightningCast, "LightningCast");
 
-  // Impact Noises
-  m_pAudio->Load(SoundIndex::FireImpact1, "FireImpact1");
-  m_pAudio->Load(SoundIndex::IceImpact1, "IceImpact1");
-  m_pAudio->Load(SoundIndex::PlayerImpact1, "PlayerImpact1");
-  m_pAudio->Load(SoundIndex::EnemyImpactMetal1, "EnemyImpactMetal1");
-  m_pAudio->Load(SoundIndex::EnemyImpactMetal2, "EnemyImpactMetal2");
+    // Impact Noises
+    m_pAudio->Load(SoundIndex::FireImpact1, "FireImpact1");
+    m_pAudio->Load(SoundIndex::IceImpact1, "IceImpact1");
+    m_pAudio->Load(SoundIndex::PlayerImpact1, "PlayerImpact1");
+    m_pAudio->Load(SoundIndex::EnemyImpactMetal1, "EnemyImpactMetal1");
+    m_pAudio->Load(SoundIndex::EnemyImpactMetal2, "EnemyImpactMetal2");
 
-  // Player Noises
-  m_pAudio->Load(SoundIndex::Dash1, "Dash1");
-  m_pAudio->Load(SoundIndex::Dash2, "Dash2");
-  m_pAudio->Load(SoundIndex::Dash3, "Dash3");
-  m_pAudio->Load(SoundIndex::Dash4, "Dash4");
-  m_pAudio->Load(SoundIndex::PlayerWalk1, "PlayerWalk1");
-  m_pAudio->Load(SoundIndex::PlayerWalk2, "PlayerWalk2");
-  m_pAudio->Load(SoundIndex::PlayerLand1, "PlayerLand1");
-
+    // Player Noises
+    m_pAudio->Load(SoundIndex::Dash1, "Dash1");
+    m_pAudio->Load(SoundIndex::Dash2, "Dash2");
+    m_pAudio->Load(SoundIndex::Dash3, "Dash3");
+    m_pAudio->Load(SoundIndex::Dash4, "Dash4");
+    m_pAudio->Load(SoundIndex::PlayerWalk1, "PlayerWalk1");
+    m_pAudio->Load(SoundIndex::PlayerWalk2, "PlayerWalk2");
+    m_pAudio->Load(SoundIndex::PlayerLand1, "PlayerLand1");
 }
 
-/// Release all of the DirectX12 objects by deleting the renderer.
-
 void CGame::Release() {
+    // Release all of the DirectX12 objects by deleting the renderer.
     delete m_pRenderer;
 }
 
-/// Ask the object manager to create the game objects. There's only one in this
-/// game, the rotating wheel o' text centered at the center of the window.
+void CGame::ResetGame() {
+    m_Timers.Clear();
+    m_Animations.Clear();
+    m_Menu.Clear();
+    m_Panel.Clear();
+    m_PanelText.Clear();
+    m_MainMenu.Clear();
+    m_SettingsMenu.Clear();
+    m_PauseMenu.Clear();
+    m_RigidBodyMap.clear();
 
-void CGame::CreateObjects(){}
+    for every(index, m_RigidBodies.Size()) {
+        m_pDynamicsWorld->removeRigidBody(m_RigidBodies.Components()[index]);
 
-/// Call this function to start a new game. This should be re-entrant so that
-/// you can restart a new game without having to shut down and restart the
-/// program. All we need to do is delete any old objects out of the object
-/// manager and create some new ones.
+        // Sean: This code crashes so I'm not sure how to properly free this.
+        // For now we have a memory leak.
+        //delete m_RigidBodies.Components()[index];
+    }
+    m_RigidBodies.Clear();
 
-void CGame::BeginGame(){  
-  CreateObjects(); //create new objects 
+    m_Projectiles.Clear();
+    m_ProjectilesCache.Clear();
+    m_ProjectilesActive.Clear();
+    m_WeaponSelection = ProjectileTypes::FIRE;
+    m_Rays.Clear();
+    m_RaysCache.Clear();
+    m_RaysActive.Clear();
+    m_NPCs.Clear();
+    m_NPCsCache.Clear();
+    m_NPCsActive.Clear();
+    m_ModelInstances.Clear();
+    m_ModelsActive.Clear();
+    m_EntityMapping.Clear();
+    m_Healths.Clear();
+    m_Mana.Clear();
+    m_InAir.Clear();
+
+    m_CollisionPairs.Clear();
+    m_CurrentCollisions.Clear();
+    m_Transforms.Clear();
+    m_Particles.Clear();
+    m_ParticleInstances.Clear();
+    m_ParticleInstancesCache.Clear();
+    m_ParticleInstancesActive.Clear();
+    m_TestingLights.Clear();
+    m_TestingWallsFloors.Clear();
+    m_TestingModels.Clear();
+    m_TestingModels.Clear();
+    m_RoomLights.Clear();
+    m_RoomWallsFloors.Clear();
+    m_RoomModels.Clear();
+
+    m_pRenderer->lights.Clear();
+
+    m_DashAction.active.Clear();
+    m_DashAction.timers.Clear();
+
+    m_JumpAction.active.Clear();
+    m_JumpAction.timers.Clear();
+
+    m_PlayerManaOrbs.Clear();
+    m_PlayerHealthOrbs.Clear();
+
+    for every(index, m_pCollisionShapes.size()) {
+        delete m_pCollisionShapes[index];
+    }
+    m_pCollisionShapes.clear();
+
+    delete m_pDynamicsWorld;
+    m_currentRayProjectiles.clear();
+
+    m_reset = false;
+
+    BeginGame();
 }
 
+void CGame::BeginGame() {
+    // Initialize Managers
+    m_Player = Entity();
+    InitializePhysics();
+    InitializeGeneration();
+    InitializeProjectiles();
+    InitializeNPCs();
+    InitializePlayer();
+    InitializeMenu();
+    InitializeParticles();
 
-/// Poll the keyboard state and respond to the key presses that happened since
-/// the last frame
+    GenerateRooms(Vec3(0, 0, 0), 100, 300, 100);
+
+    RBTeleportLaunch(*m_RigidBodies.Get(m_Player), Vec3(0.0f, -500.0f, 0.0f), Vec3(0));
+    if (!flycam_enabled) {
+        player_yaw = 0.0f;
+        player_pitch = 0.0f;
+    }
+}
+
+/// Poll for player input
 void CGame::InputHandler() {
     if (!(m_pRenderer->GetHwnd() == GetFocus())) { return; }
 
@@ -150,7 +197,7 @@ void CGame::InputHandler() {
         m_bDrawHelpMessage = !m_bDrawHelpMessage;
 
     if (m_pKeyboard->TriggerDown(VK_BACK)) {//restart game
-        BeginGame(); //restart game
+        m_reset = true;
     }
 
     if (m_pKeyboard->TriggerDown('M')) {
@@ -243,20 +290,9 @@ void CGame::InputHandler() {
     }
 }
 
-/// Draw the current frame rate to a hard-coded position in the window.
-/// The frame rate will be drawn in a hard-coded position using the font
-/// specified in gamesettings.xml.
-
-void CGame::DrawFrameRateText(){
-  const std::string s = std::to_string(m_pTimer->GetFPS()) + " fps"; //frame rate
-  const Vector2 pos(m_nWinWidth - 128.0f, 30.0f); //hard-coded position
-  //m_pRenderer->DrawScreenText(s.c_str(), pos); //draw to screen
-}
-
 void CGame::EcsPreUpdate() {
     m_pAudio->SetListener(m_pRenderer->m_pCamera); // Update Audio
 }
-
 
 void CGame::EcsUpdate() {
     CustomPhysicsStep();
@@ -336,8 +372,6 @@ void CGame::EcsUpdate() {
         p->vel += p->acc * dt;
         p->pos += p->vel * dt;
     }
-
-    //m_pRenderer->Update();
 
     // This handles the timers tables.
     for every(index, m_Timers.Size()) {
@@ -453,7 +487,7 @@ void CGame::Update() {
     });
 }
 
-void CGame::ProcessFrame(){
+void CGame::ProcessFrame() {
     InputHandler(); // handle keyboard input
     InputMenu(); 
 
@@ -462,4 +496,7 @@ void CGame::ProcessFrame(){
     Update(); // update internal data
 
     RenderFrame(); // render a frame of animation
+
+    // reset game on reset
+    if (m_reset) { ResetGame(); }
 }

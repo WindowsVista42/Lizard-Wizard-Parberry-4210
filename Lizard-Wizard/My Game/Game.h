@@ -1,6 +1,3 @@
-/// \file Game.h
-/// \brief Interface for the game class CGame.
-
 #ifndef GAME_H
 #define GAME_H
 
@@ -12,6 +9,7 @@
 #include "Interpolation.h"
 #include "Defines.h"
 #include "Ecs.h"
+
 #include <vector>
 #include <set>
 
@@ -19,24 +17,11 @@
 #include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>
 
-
-/// \brief The game class.
-///
-/// The game class is the object-oriented implementation of the game. This class
-/// must contain the following public member functions. `Initialize()` does
-/// initialization and will be run exactly once at the start of the game.
-/// `ProcessFrame()` will be called once per frame to create and render the
-/// next animation frame. `Release()` will be called at game exit but before
-/// any destructors are run.
-
 // Configuration Defines
 #define X_ROOMS 40
 #define Z_ROOMS 40
 
 // Structs
-struct Room {
-};
-
 struct RayProjectile {
     Vec3 Pos1;
     Vec3 Pos2;
@@ -199,9 +184,6 @@ private:
     // Collision Table (Simply put, we store all currently colliding objects here.)
     Table<Entity> m_CollisionPairs;
     Group m_CurrentCollisions;
-
-    // UserInput Vector
-    //CustomBind m_currentBinds;
     
     // Projectile Vector
     //std::vector<Projectile> m_currentProjectiles;
@@ -211,8 +193,8 @@ private:
 
     Table<Particle> m_Particles;
     Table<ParticleInstance> m_ParticleInstances;
-    Group m_ParticleInstancesActive;
     Group m_ParticleInstancesCache;
+    Group m_ParticleInstancesActive;
 
     Group m_TestingLights;
     Group m_TestingWallsFloors;
@@ -248,6 +230,10 @@ private:
 
     bool m_MouseToggled = true;
     bool m_MouseJustToggled = false;
+
+    // some player shit i dont care where this gets put
+    Group m_PlayerManaOrbs;
+    Group m_PlayerHealthOrbs;
     
     ////////////////////////
     // Internal Functions //
@@ -257,10 +243,8 @@ private:
     void LoadModels(); ///< Load models.
     void LoadSounds(); ///< Load sounds.
     void BeginGame(); ///< Begin playing the game.
-    void CreateObjects(); ///< Create game objects.
     void InputHandler(); ///< The keyboard handler.
     void RenderFrame(); ///< Render an animation frame.
-    void DrawFrameRateText(); ///< Draw frame rate text to screen.
 
     //////////////////////////////////////
     // Exterior Functions in load order //
@@ -320,7 +304,6 @@ private:
     void DestroyPhysicsObject(btCollisionShape*);
     void InitializePhysics();
 
-
     // PLAYER MANAGER //
     void InitializePlayer();
     void PlayerInput();
@@ -328,10 +311,6 @@ private:
     void RenderPlayer();
 
     // UI MANAGER //
-
-
-
-    
 
     // GENERATION MANAGER //
     Vec3 m_roomCenter;
@@ -356,6 +335,7 @@ private:
         const SoundIndex::e,
         const b8
     );
+
     void GenerateRayProjectile(
         btCollisionObject*,
         const Vec3,
@@ -367,6 +347,7 @@ private:
         const b8,
         const b8
     );
+
     void CalculateRay(
         btCollisionObject*, 
         RayProjectile&, 
@@ -376,6 +357,7 @@ private:
         Vec4, 
         b8
     );
+
     void InitializeProjectiles();
     void StripProjectile(Entity);
     void StripRay(Entity);
@@ -409,13 +391,8 @@ private:
     void EcsUpdate();
 
     // DRAW //
+
     void DrawDebugModelsOnRB();
-
-    // MANA //
-    Mana NewMana(i32 max, f32 recharge);
-
-    // HEALTH //
-    Health NewHealth(i32 starting, i32 max);
 
     // PARTICLES //
     void InitializeParticles();
@@ -423,8 +400,11 @@ private:
     void StripParticle(Entity e);
     void StripParticleInstance(Entity e);
 
+    void ResetGame();
+    bool m_reset = false;
+
 public:
-    Renderer* m_pRenderer; ///< Pointer to renderer.
+    Renderer* m_pRenderer;
     Entity m_Player;
 
     // Bullet3 Declarations
@@ -433,10 +413,10 @@ public:
     std::vector<RayProjectile> m_currentRayProjectiles;
 
 
-    ~CGame(); ///< Destructor.
-    void Initialize(); ///< Initialize the game.
-    void ProcessFrame(); ///< Process an animation frame.
-    void Release(); ///< Release the renderer.
-}; //CGame
+    ~CGame();
+    void Initialize();
+    void ProcessFrame();
+    void Release();
+};
 
-#endif //__L4RC_GAME_GAME_H__
+#endif

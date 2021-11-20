@@ -146,8 +146,6 @@ public:
 
     Table<Light> lights;
 
-    void Update();
-
     Renderer();
     virtual ~Renderer();
 
@@ -201,10 +199,7 @@ public:
     u32 GetResolutionWidth();
     u32 GetResolutionHeight();
 
-    ParticleInstance CreateParticleInstance(ParticleInstanceDesc* desc);
-
     void DrawModelInstance(ModelInstance* instance);
-    void DrawParticleInstance(ParticleInstance* instance);
     void DrawSpriteInstance(SpriteInstance* instance);
 
     void LoadModel(const char* name, u32 model_index);

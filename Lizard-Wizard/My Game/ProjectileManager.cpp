@@ -56,9 +56,6 @@ void CGame::GenerateSimProjectile(
             return;
         }
 
-        static u32 count = 0;
-        count += 1;
-
         // Instance Variables
         Entity e = m_ProjectilesCache.RemoveTail();
         m_ModelsActive.AddExisting(e);
