@@ -196,15 +196,15 @@ void CGame::CustomPhysicsStep() {
         Vec3 lVelocity0 = body0->getLinearVelocity();
         Vec3 lVelocity1 = body1->getLinearVelocity();
 
-        f32 volume = lVelocity0.Length() / 1000.0f;
-        btClamp(volume, 0.0f, 10.0f);
+        f32 volume = lVelocity0.Length() / 5000.0f;
+        btClamp(volume, 0.0f, 1.0f);
 
         //////////////////////
         // COLLISION EVENTS //
         //////////////////////
 
         // PROJECTILES //
-        if (m_ProjectilesActive.Contains(e) && volume > 1.0f) {
+        if (m_ProjectilesActive.Contains(e)) {
             SimProjectile* proj =  m_Projectiles.Get(e);
 
             // Determine Bounces

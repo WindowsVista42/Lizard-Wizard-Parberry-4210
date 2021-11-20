@@ -15,5 +15,7 @@ Vec3 BiasedPointIn2DPlane(f32 bounding, Vec3 origin, Vec3 bias);
 Vec3 RotatePointAroundOrigin(Vec3 origin, Vec3 point, Quat quat);
 
 Quat GetRotationFromTwoVectors(Vec3 vec1, Vec3 vec2);
+Quat QuatLookAt(Vec3 origin, Vec3 point);
+Quat AngleAxisf(Vec3 axis, f32 angle);
 
 f32 DistanceBetweenVectors(Vec3 vec1, Vec3 vec2);

@@ -1,5 +1,6 @@
 // Inclusions
 #include "Game.h"
+#include <ComponentIncludes.h>
 
 /* Note(Ethan) : This is a prototype test for the projectile system, I will reduce comments once we get to making the release version.
 * 
@@ -113,27 +114,26 @@ void CGame::CalculateRay(
 
     // Get ECS information
     Entity e = m_RaysCache.RemoveTail();
-    RayProjectile currentRay = *m_Rays.Get(e);
+    RayProjectile* currentRay = m_Rays.Get(e);
     m_ModelsActive.AddExisting(e);
-    m_RaysActive.AddExisting(e);
-    m_Timers.AddExisting(e, 0.25f);
+    m_RaysActive.AddExisting(e); 
+    m_Timers.AddExisting(e, 0.1f);
 
 
     // Set ray information
-    currentRay.Pos1 = Pos1;
+    currentRay->Pos1 = Pos1;
 
-    btCollisionWorld::ClosestRayResultCallback rayResults(Pos1, Vec3(Pos1 + btLookDirection * 5000.));
+    btCollisionWorld::ClosestRayResultCallback rayResults(Pos1, Vec3(Pos1 + btLookDirection * 15000.0));
     if (ignoreCaster) {
         rayResults.m_collisionFilterGroup = 0b00100;
 		rayResults.m_collisionFilterMask = 0b00001;
 
     }
-    m_pDynamicsWorld->rayTest(Pos1, Vec3(Pos1 + btLookDirection * 5000.), rayResults);
+    m_pDynamicsWorld->rayTest(Pos1, Vec3(Pos1 + btLookDirection * 15000.0), rayResults);
 
     if (rayResults.hasHit()) {
         // Warning (Ethan) : DO NOT EDIT at this pointer.
         btCollisionObject* hitObject = const_cast<btCollisionObject*>(rayResults.m_collisionObject);
-
         Vec3 hitPosition = rayResults.m_hitPointWorld;
         Vec3 incomingDirection = (hitPosition - Pos1); incomingDirection.Normalize();
         Vec3 reflectedDirection = btLookDirection - 2. * (btLookDirection * rayResults.m_hitNormalWorld) * rayResults.m_hitNormalWorld;
@@ -141,19 +141,43 @@ void CGame::CalculateRay(
         f32 dotProduct = Pos1.Dot(Vec3(rayResults.m_hitNormalWorld));
         f32 distance = DistanceBetweenVectors(Pos1, hitPosition);
 
-        currentRay.Pos2 = Vec3(hitPosition);
+        currentRay->Pos2 = Vec3(hitPosition);
         newRay.Pos2 = Vec3(hitPosition);
 
         rayBounces = rayBounces - 1;
         Vec3 origin = (hitPosition + Pos1) / 2;
 
+        m_pAudio->play(SoundIndex::LightningCast, hitPosition, 0.75f, 0.5);
+
+        // Create Particle for Impact (Very ugly, will clean up later.)
+        ParticleInstanceDesc particle;
+        particle.count = 30;
+        particle.initial_pos = hitPosition;
+        particle.initial_dir = reflectedDirection;
+        particle.light_color = Vec3(0.7f, 0.5, 0.1f) * 30.0f;
+        particle.model = ModelIndex::Cube;
+        particle.texture = TextureIndex::White;
+        particle.glow = Vec3(0.5f, 0.5f, 0.5f);
+        particle.model_scale = Vec3(8.0f);
+        particle.initial_speed = 300.0f;
+        particle.dir_randomness = 0.7f;
+        particle.speed_randomness = 0.5f;
+        particle.initial_acc = Vec3(0.0f, -1000.0f, 0.0f);
+        particle.acc_randomness = 0.2f;
+        particle.min_alive_time = 0.2f;
+        particle.max_alive_time = 1.7f;
+
+        // Spawn Particle
+        SpawnParticles(&particle);
+
         if (rayBounces > 0) {
             GenerateRayProjectile(caster, Vec3(hitPosition), Vec3(reflectedDirection), 1, 1, rayBounces, color, true, ignoreCaster);
         }
-    } else {
-        Vec3 origin = Vec3(Pos1 + btLookDirection * 5000.0);
 
-        currentRay.Pos2 = origin;
+    } else {
+        Vec3 origin = Vec3(Pos1 + btLookDirection * 15000.0);
+
+        currentRay->Pos2 = origin;
         newRay.Pos2 = origin;
     }
 }
@@ -171,12 +195,12 @@ void CGame::GenerateRayProjectile(
 ) {
     RayProjectile newRay;
     newRay.Pos1 = Vec3(startPos.x, startPos.y, startPos.z) + lookDirection * 500.;
-    newRay.Pos2 = Vec3(startPos.x, startPos.y, startPos.z) + lookDirection * 5000.;
+    newRay.Pos2 = Vec3(startPos.x, startPos.y, startPos.z) + lookDirection * 15000.0;
     newRay.Color = rayColor;
 
     if (!recursed) {
         for (i32 i = 0; i < rayCount; i++) {
-            Vec3 newDirection = JitterVec3(lookDirection, -0.2, 0.2);
+            Vec3 newDirection = JitterVec3(lookDirection, -rayAccuracy, rayAccuracy);
             CalculateRay(caster, newRay, startPos, newDirection, rayBounces, Colors::Peru, ignoreCaster);
             m_currentRayProjectiles.push_back(newRay);
         }
@@ -262,10 +286,10 @@ void CGame::InitializeProjectiles() {
         RayProjectile newRay;
 
         // Prepare light
-        Light newLight = { Vec4(FLT_MAX, FLT_MAX, FLT_MAX ,0), Vec4(3.0f, 1.0f, 0.5f, 0.0f) };
+        Light newLight = { Vec4(FLT_MAX, FLT_MAX, FLT_MAX ,0), Vec4(0.7f, 0.5, 0.1f, 0.0f) * 35.0f };
 
         Vec3 origin = Vec3(FLT_MAX, FLT_MAX, FLT_MAX);
-        Vec3 side = Vec3(1.0f, 0.0f, 0.0f);
+        Vec3 side = Vec3(0.0f, 1.0f, 0.0f);
 
         Quat rotation = Quat::CreateFromAxisAngle(side, M_PI / 2.0f);
         Quat turn = side.y != 1.0f ?
@@ -273,8 +297,11 @@ void CGame::InitializeProjectiles() {
             Quat::CreateFromAxisAngle(Vec3(1.0f, 0.0f, 0.0f), M_PI);
         rotation *= turn;
 
+        newRay.Pos1 = origin;
+        newRay.Pos2 = origin - Vec3(0.0f, -1.0f, 0.0f);
+
         ModelInstance instance;
-        instance.glow = 0.0f;
+        instance.glow = 10.0f;
         instance.model = ModelIndex::Cube;
         instance.texture = TextureIndex::White;
         instance.world = MoveRotateScaleMatrix(origin, rotation, Vec3(15.0f, 2.0f, 15.0f));

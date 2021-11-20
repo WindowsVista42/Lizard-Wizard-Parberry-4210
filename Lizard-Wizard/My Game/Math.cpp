@@ -97,3 +97,26 @@ Quat GetRotationFromTwoVectors(Vec3 vec1, Vec3 vec2) {
 f32 DistanceBetweenVectors(Vec3 vec1, Vec3 vec2) {
     return sqrt(pow(vec2.x - vec1.x, 2) + pow(vec2.y - vec1.y, 2) + pow(vec2.z - vec1.z, 2));
 }
+
+Quat QuatLookAt(Vec3 origin, Vec3 point) {
+    Vec3 toVector = XMVector3Normalize(point - origin);
+
+    //compute rotation axis
+    Vec3 rotAxis = XMVector3Normalize(XMVector3Cross(Vec3(1.0f, 0.0f, 0.0f), toVector));
+    Vec3 normalizedAxis = XMVector3Normalize(rotAxis);
+    if (normalizedAxis * normalizedAxis == Vec3::Zero)
+        rotAxis = Vec3(0.0f, 1.0f, 0.0f);
+
+    //find the angle around rotation axis
+    f32 dot = Vec3(1.0f, 0.0f, 0.0f).Dot(toVector);
+    f32 ang = acosf(dot);
+
+    //convert axis angle to quaternion
+    return AngleAxisf(rotAxis, ang);
+}
+
+Quat AngleAxisf(Vec3 axis, f32 angle) {
+    f32 s = sinf(angle / 2.0f);
+    Vec3 u = XMVector3Normalize(axis);
+    return Quat(cosf(angle / 2.0f), u.x * s, u.y * s, u.z * s);
+}

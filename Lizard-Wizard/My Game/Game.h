@@ -235,6 +235,7 @@ private:
     u32 player_step_noise = 0; // this is for footstep sounds, lemme know when you change this. (ethan)
     f32 player_step = 0.0f;
     Vec3 player_pos_last_frame = Vec3(0);
+    Vec3 staff_tip;
 
     Vector3 flycam_pos = { -10000.0f, 0.0f, -10000.0f };
     f32 flycam_speed = 6000.0f;

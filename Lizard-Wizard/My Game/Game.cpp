@@ -293,19 +293,32 @@ void CGame::EcsUpdate() {
     Ecs::ApplyEvery(m_RaysActive, [=](Entity e) {
         RayProjectile currentRay = *m_Rays.Get(e);
 
-        Vec3 direction = (currentRay.Pos2 - currentRay.Pos1); direction.Normalize();
-        Vec3 origin = currentRay.Pos2; // dont worry about this it works okay
+        f32 distance, t;
 
-        f32 distance = DistanceBetweenVectors(currentRay.Pos1, currentRay.Pos2);
+        Vec3 pos1 = currentRay.Pos1;
+        Vec3 pos2 = currentRay.Pos2;
+        Vec3 origin = (pos1 + pos2) / 2.0f;
+        Vec3 direction = pos2 - pos1; direction.Normalize();
+        distance = DistanceBetweenVectors(currentRay.Pos1, currentRay.Pos2);
+        Vec3 bounds = Vec3(5.0f, 5.0f, distance / 2.0f);
+        Quat rotation;
 
-        Vec3 axis = direction.Cross(Vec3(1.0f, 0.0f, 0.0f));
-        f32 angle = acos(direction.Dot(Vec3(1.0f, 0.0f, 0.0f)));
-        Quat rotation = Quat::CreateFromAxisAngle(axis, angle);
+        // we need a small light for each ray
+        m_pRenderer->lights.Get(e)->position = *(Vec4*)& origin;
+
+        // get rotation matrix
+        XMMATRIX lookAt = XMMatrixLookAtRH(pos1, pos2, Vector3::Up);
+
+        // note (ethan) : i dont know why, but this apparently took me 6 hours to achieve... i need to get some geometric algebra in my brain ASAP.
+        rotation = XMQuaternionRotationMatrix(lookAt);
+        rotation.x = -(rotation.x);
+        rotation.y = -(rotation.y);
+        rotation.z = -(rotation.z);
 
         (*m_ModelInstances.Get(e)).world = MoveRotateScaleMatrix(
-            origin,
+            origin + (Vec3)((*m_RigidBodies.Get(m_Player))->getLinearVelocity() / 9.5f),
             rotation,
-            Vec3(distance, 15.0f, 15.0f)
+            bounds
         );
     });
 
