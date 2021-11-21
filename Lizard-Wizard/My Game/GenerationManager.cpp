@@ -33,8 +33,8 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
     roomCenter.y -= room_scale.y;
     m_roomCenter = roomCenter;
 
-    for every(z, Z_ROOMS - 1) {
-        for every(x, X_ROOMS - 1) {
+    for every(z, Z_ROOMS) {
+        for every(x, X_ROOMS) {
             m_GameMap[x][z] = false;
         }
     }
@@ -315,19 +315,19 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
     ScatterHorizontal(600, -room_scale.y, 100, 700, 5, 30, 5);
     ScatterHorizontal(600, room_scale.y, 100, 700, 5, 30, 5);
 
-    auto ScatterWalls = [&](
-        const usize scatter_count
-    ) {
-        for every(i, scatter_count) {
-            u32 idx = GameRandom::Randu32(0, connected_walls.size() - 1);
+    //auto ScatterWalls = [&](
+    //    const usize scatter_count
+    //) {
+    //    for every(i, scatter_count) {
+    //        u32 idx = GameRandom::Randu32(0, connected_walls.size() - 1);
 
-            u32 x = connected_walls[idx].first;
-            u32 z = connected_walls[idx].second;
+    //        u32 x = connected_walls[idx].first;
+    //        u32 z = connected_walls[idx].second;
 
-        }
-    };
+    //    }
+    //};
 
-    ScatterWalls(1000);
+    //ScatterWalls(1000);
 
     // Sean:
     // randomly choose tiles to place lights into

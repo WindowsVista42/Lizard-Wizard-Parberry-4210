@@ -10,9 +10,11 @@
 Renderer::Renderer() :
     LRenderer3D(),
     m_pCamera(new LBaseCamera),
-    m_debugScratch(16 * 1024), // 16k
     m_models()
 {
+    u8* debug_scratch_ptr = new u8[16 * 1024];
+    m_debugScratch.Init(debug_scratch_ptr, 16 * 1024);
+
     //NOTE(sean): Windows window stuff
     m_f32BgColor = Colors::Black; // NOTE(sean): set the clear color
     ShowCursor(0);
@@ -779,7 +781,7 @@ void Renderer::DrawDebugRing2(
 
     m_pPrimitiveBatch->Draw(D3D_PRIMITIVE_TOPOLOGY_LINESTRIP, verts, (usize)segments + 1);
 
-    m_debugScratch.Reset(0);
+    m_debugScratch.Reset();
 }
 
 /// Draw a colored "Debug Sphere".

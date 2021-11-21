@@ -12,7 +12,6 @@
     <ClCompile Include="PhysicsManager.cpp" />
     <ClCompile Include="GenerationManager.cpp" />
     <ClCompile Include="RenderTexture.cpp" />
-    <ClCompile Include="StagedBuffer.cpp" />
     <ClCompile Include="NPCManager.cpp" />
     <ClCompile Include="Effects\BloomEffect.cpp" />
     <ClCompile Include="Effects\EffectsCommon.cpp" />
@@ -36,7 +35,6 @@
     <ClInclude Include="Game.h" />
     <ClInclude Include="Helpers.h" />
     <ClInclude Include="RenderTexture.h" />
-    <ClInclude Include="StagedBuffer.h" />
     <ClInclude Include="Ecs.h" />
     <ClInclude Include="Effects\BloomEffect.h" />
     <ClInclude Include="Effects\EffectsCommon.h" />
@@ -45,6 +43,7 @@
     <ClInclude Include="Effects\LightingEffect.h" />
     <ClInclude Include="Interpolation.h" />
     <ClInclude Include="BinaryHeap.h" />
+    <ClInclude Include="FixedBufferAllocator.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="My Game.rc" />

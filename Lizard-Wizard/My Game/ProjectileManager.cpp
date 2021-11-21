@@ -1,6 +1,7 @@
 // Inclusions
 #include "Game.h"
 #include <ComponentIncludes.h>
+#include "FixedBufferAllocator.h"
 
 /* Note(Ethan) : This is a prototype test for the projectile system, I will reduce comments once we get to making the release version.
 * 

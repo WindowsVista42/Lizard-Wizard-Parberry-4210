@@ -187,7 +187,6 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="RenderTexture.cpp" />
     <ClCompile Include="MenuManager.cpp" />
-    <ClCompile Include="StagedBuffer.cpp" />
     <ClCompile Include="Effects\TonemapEffect.cpp" />
     <ClCompile Include="TestingEnvironment.cpp" />
   </ItemGroup>
@@ -206,7 +205,7 @@
     <ClInclude Include="Defines.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="RenderTexture.h" />
-    <ClInclude Include="StagedBuffer.h" />
+    <ClInclude Include="FixedBufferAllocator.h" />
     <ClInclude Include="Ecs.h" />
     <ClInclude Include="Effects\TonemapEffect.h" />
   </ItemGroup>
