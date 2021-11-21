@@ -21,7 +21,7 @@ void CGame::Initialize() {
     m_pRenderer->Initialize();
 
     {
-        constexpr usize alloc_size = 20 * 1024 * 1024; // 20 MB
+        constexpr usize alloc_size = 4 * 1024 * 1024; // 4 MB
         u8* ptr = new u8[alloc_size];
         m_PhysicsAllocator.Init(ptr, alloc_size);
     }
@@ -47,6 +47,7 @@ void CGame::LoadModels() {
     m_pRenderer->LoadModel("staff", ModelIndex::Staff);
     m_pRenderer->LoadModel("hand", ModelIndex::Hand);
     m_pRenderer->LoadModel("quad", ModelIndex::Quad);
+    m_pRenderer->LoadModel("cool_cube", ModelIndex::CoolCube);
 }
 
 void CGame::LoadImages() {
@@ -200,8 +201,16 @@ void CGame::InputHandler() {
     if (m_pKeyboard->TriggerDown(VK_F3))
         m_bDrawHelpMessage = !m_bDrawHelpMessage;
 
-    if (m_pKeyboard->TriggerDown(VK_BACK)) {//restart game
+    if (m_pKeyboard->TriggerDown(VK_BACK)) { // restart game
         m_reset = true;
+    }
+
+    if (m_pKeyboard->Down(VK_DELETE)) { // stop game
+        exit(EXIT_SUCCESS);
+    }
+
+    if (m_pKeyboard->TriggerDown('U')) {
+        m_Healths.Get(m_Player)->current -= 1;
     }
 
     if (m_pKeyboard->TriggerDown('M')) {
@@ -397,7 +406,6 @@ void CGame::EcsUpdate() {
         btClamp<f32>(mana->timer, 0.0, FLT_MAX);
         mana->value = (i32)(((mana->recharge * (f32)mana->max) - mana->timer) / mana->recharge);
     }
-
 }
 
 /// Ask the object manager to draw the game objects. The renderer is notified
@@ -475,10 +483,6 @@ void CGame::RenderFrame() {
 
         m_pRenderer->EndUIDrawing();
     }
-
-    m_pRenderer->tint_color = Vec3(1.0f, 1.0f, 1.0f);
-    m_pRenderer->blur_amount = 0.0f;
-    m_pRenderer->saturation_amount = 1.0f;
 
     m_pRenderer->EndFrame();
 }

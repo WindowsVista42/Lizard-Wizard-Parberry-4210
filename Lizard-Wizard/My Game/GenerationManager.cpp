@@ -304,6 +304,7 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
             ModelInstance mi;
             mi.model = ModelIndex::Cube;
             mi.texture = TextureIndex::White;
+            //mi.glow = Vec3(GameRandom::Randf32() * 0.2f);
             mi.glow = Vec3(0.0f);
             mi.world = MoveScaleMatrix(position, Vec3(s, sy, s));
     
@@ -362,7 +363,7 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
         light.color = Vec4(100.0f, 100.0f, 100.0f, 0.0f);
         light.position = Vec4(pos.x, pos.y, pos.z, 0.0f);
         m_pRenderer->lights.AddExisting(e, light);
-        m_TestingLights.AddExisting(e);
+        //m_TestingLights.AddExisting(e);
 
         ModelInstance model;
         model.glow = 2.0f;
@@ -382,7 +383,7 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
         light.color = Vec4(100.0f, 100.0f, 100.0f, 0.0f);
         light.position = Vec4(pos.x, pos.y, pos.z, 0.0f);
         m_pRenderer->lights.AddExisting(e, light);
-        m_TestingLights.AddExisting(e);
+        //m_TestingLights.AddExisting(e);
 
         ModelInstance model;
         model.glow = 2.0f;
