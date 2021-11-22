@@ -65,6 +65,15 @@ void CGame::InitializePlayer() {
     m_ModelInstances.AddExisting(Staffe, staff_mi);
     m_ModelsActive.AddExisting(Staffe);
 
+    Hande = Entity();
+    ModelInstance hand_mi;
+    hand_mi.model = ModelIndex::Hand;
+    hand_mi.texture = TextureIndex::White;
+    hand_mi.world = XMMatrixIdentity();
+    hand_mi.glow = Vec3(0.0f);
+    m_ModelInstances.AddExisting(Hande, hand_mi);
+    m_ModelsActive.AddExisting(Hande);
+
     Cubee = Entity();
     ModelInstance cube_mi;
     cube_mi.model = ModelIndex::Cube;
@@ -78,7 +87,7 @@ void CGame::InitializePlayer() {
         Entity e = m_PlayerManaOrbs.Add();
 
         ModelInstance mi;
-        mi.model = ModelIndex::Cube;
+        mi.model = ModelIndex::CoolCube;
         mi.texture = TextureIndex::White;
         mi.world = XMMatrixIdentity();
         mi.glow = Vec3(0.4f, 0.4f, 0.4f);
@@ -89,22 +98,13 @@ void CGame::InitializePlayer() {
     light = m_pRenderer->lights.Add({Vec4(0), Vec4(70.0, 8.0, 2.5, 0.0)});
     mana_index = 0;
 
-    //Hande = Entity();
-    //ModelInstance hand_mi;
-    //hand_mi.model = ModelIndex::Hand;
-    //hand_mi.texture = TextureIndex::White;
-    //hand_mi.world = XMMatrixIdentity();
-    //hand_mi.glow = Vec3(0.0f);
-    //m_ModelInstances.AddExisting(Hande, hand_mi);
-    //m_ModelsActive.AddExisting(Hande);
-
     Health player_health = Health::New(4, 4);
 
     for every(index, player_health.max) {
         Entity e = m_PlayerHealthOrbs.Add();
 
         ModelInstance mi;
-        mi.model = ModelIndex::Cube;
+        mi.model = ModelIndex::CoolCube;
         mi.texture = TextureIndex::White;
         mi.world = XMMatrixIdentity();
         mi.glow = Vec3(1.0f, 0.4f, 0.4f);
@@ -313,7 +313,6 @@ void CGame::UpdatePlayer() {
     btRigidBody* player_body = *m_RigidBodies.Get(m_Player);
     player_body->activate();
 
-
     // Projectiles
     if (m_leftClick.pressed && player_mana->value > 0) {
         switch (m_WeaponSelection) {
@@ -520,34 +519,32 @@ void CGame::UpdatePlayer() {
         //printf("%d\n", player_mana->value);
     }
 
+    auto RotationTranslation = [](Vec3 origin, Vec3 offset, Quat quat) {
+        Mat4x4 rot = XMMatrixRotationQuaternion(quat);
+        return origin + Vec3(XMVector3Transform(offset, rot));
+    };
+
     // cubes that spin around staff
-    f32 index = 1.0f;
-    Ecs::ApplyEvery(m_PlayerManaOrbs, [&](Entity e) {
-        ModelInstance* mi = m_ModelInstances.Get(e);
+    {
+        f32 index = 1.0f;
+        Ecs::ApplyEvery(m_PlayerManaOrbs, [&](Entity e) {
+            ModelInstance* mi = m_ModelInstances.Get(e);
 
-        auto RotationTranslation = [](Vec3 origin, Vec3 offset, Quat quat) {
-            Mat4x4 rot = XMMatrixRotationQuaternion(quat);
-            return origin + Vec3(XMVector3Transform(offset, rot));
-        };
+            f32 t = m_pTimer->GetTime() + (M_PI * 2.0f * (index / (f32)m_PlayerManaOrbs.Size()));
 
-        f32 t = m_pTimer->GetTime() + (M_PI * 2.0f * (index / (f32)m_PlayerManaOrbs.Size()));
+            f32 radius = 20.0f;
+            f32 height = 40.0f;
+            Vec3 particle_offset = Vec3(radius * sinf(t), height, radius * cosf(t));
 
-        f32 radius = 20.0f;
-        f32 height = 40.0f;
-        Vec3 particle_offset = Vec3(radius * sinf(t), height, radius * cosf(t));
+            Vec3 particle_pos = RotationTranslation(staff_pos, particle_offset, staff_rot);
+            Vec3 scl = Vec3(4.0f);
 
-        Vec3 particle_pos = RotationTranslation(staff_pos, particle_offset, staff_rot);
-        Vec3 scl = Vec3(4.0f);
+            mi->world = MoveScaleMatrix(particle_pos, scl);
+            mi->glow = Vec3(1.0f);
 
-        mi->world = MoveScaleMatrix(particle_pos, scl);
-        mi->glow = Vec3(1.0f);
-
-        index += 1.0f;
-    });
-
-    // Hand
-    Vec3 hand_pos;
-    Quat hand_rot;
+            index += 1.0f;
+        });
+    }
 
     //auto SetModelFancy = [&](ModelInstance* mi, Vec3 origin, Vec3 offset, Vec3 orientation, Vec3 orientation_offset, Vec3 scale) {
     //    Vec3 pos = RotatePointAroundOrigin(
@@ -567,33 +564,77 @@ void CGame::UpdatePlayer() {
     //    mi->world = MoveRotateScaleMatrix(pos, rot, scl);
     //};
 
-    //{
-    //    ModelInstance* mi = m_ModelInstances.Get(Hande);
-    //    LBaseCamera* cam = m_pRenderer->m_pCamera;
+    //SetModelFancy(
+    //     mi,
+    //     cam->GetPos(),
+    //     Vec3(-80.0f, -60.0f, 100.0f),
+    //     Vec3(cam->GetYaw(), cam->GetPitch(), cam->GetRoll()),
+    //     Vec3(0.0f, M_PI / 2.0f, 0.0f), Vec3(100.0f)
+    //);
 
-    //    //SetModelFancy(
-    //    //     mi,
-    //    //     cam->GetPos(),
-    //    //     Vec3(-80.0f, -60.0f, 100.0f),
-    //    //     Vec3(cam->GetYaw(), cam->GetPitch(), cam->GetRoll()),
-    //    //     Vec3(0.0f, M_PI / 2.0f, 0.0f), Vec3(100.0f)
-    //    //);
+    // Hand
+    {
+        Vec3 hand_pos;
+        Quat hand_rot;
 
-    //    hand_pos = RotatePointAroundOrigin(
-    //        cam->GetPos(), 
-    //        Vec3(-40.0f, -60.0f, 100.0f), 
-    //        Quat::CreateFromYawPitchRoll(cam->GetYaw(), cam->GetPitch(), cam->GetRoll())
-    //    );
+        ModelInstance* mi = m_ModelInstances.Get(Hande);
+        LBaseCamera* cam = m_pRenderer->m_pCamera;
 
-    //    hand_rot = Quat::CreateFromYawPitchRoll(cam->GetYaw(), cam->GetPitch(), 0.0f);
-    //    Vec3 scl = Vec3(100.0f);
+        hand_pos = RotatePointAroundOrigin(
+            cam->GetPos(), 
+            Vec3(-70.0f, -130.0f, 120.0f), 
+            Quat::CreateFromYawPitchRoll(cam->GetYaw(), cam->GetPitch(), cam->GetRoll())
+        );
 
-    //    mi->world = MoveRotateScaleMatrix(hand_pos, hand_rot, scl);
-    //}
+        hand_rot = Quat::CreateFromYawPitchRoll(cam->GetYaw(), cam->GetPitch(), 0.0f);
 
-    // Cubes that spin around hand
+        Vec3 scl = Vec3(100.0f);
+
+        mi->world = MoveRotateScaleMatrix(hand_pos, hand_rot, scl);
+
+        Health* player_health = m_Healths.Get(m_Player);
+
+        // Cubes that spin around hand
+        f32 index = 0.0f;
+        i32 health_counter = m_Healths.Get(m_Player)->current;
+        Ecs::ApplyEvery(m_PlayerHealthOrbs, [&](Entity e) {
+            ModelInstance* mi = m_ModelInstances.Get(e);
+
+            f32 t = m_pTimer->GetTime() + (M_PI * 2.0f * (index / (f32)m_PlayerHealthOrbs.Size()));
+
+            f32 radius = 15.0f;
+            f32 height = 95.0f;
+            Vec3 particle_offset = Vec3(radius * sinf(t), radius * cosf(t) + height, 0.0f);
+
+            Vec3 particle_pos = RotationTranslation(hand_pos, particle_offset, hand_rot);
+            Vec3 scl = Vec3(4.0f);
+
+            mi->world = MoveScaleMatrix(particle_pos, scl);
+
+            if (health_counter > 0) { mi->glow = Vec3(4.0f, 0.2f, 0.2f); }
+            else { mi->glow = Vec3(0.0f); }
+
+            health_counter -= 1;
+            index += 1.0f;
+        });
+    }
+
+    // Health visual effect stuff
     {
         Health* player_health = m_Healths.Get(m_Player);
+        f32 factor = ((f32)player_health->current / (f32)player_health->max);
+        btClamp<f32>(factor, 0.0f, 1.0f);
+        factor = 1.0f - factor;
+
+        // this is using the bottom curvy part of sin, i don't want the S shape here.
+        auto CustomLerp = [](f32 from, f32 to, f32 t) {
+            t = sinf((M_PI * (t - 1.0f)) / 2.0f) + 1.0f;
+            return LinearLerp<f32>(from, to, t);
+        };
+
+        m_pRenderer->tint_color = Vec3Lerp(Vec3(1.0f, 1.0f, 1.0f), Vec3(1.0f, 0.7f, 0.7f), factor);
+        m_pRenderer->blur_amount = CustomLerp(0.0f, 0.005f, factor);
+        m_pRenderer->saturation_amount = CustomLerp(1.0f, 0.5f, factor);
     }
 
     // dash action timers connection to cubes that spin

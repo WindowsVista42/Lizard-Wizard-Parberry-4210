@@ -2,7 +2,7 @@
 #include "Renderer.h"
 
 void CGame::InitializeParticles() {
-    for every(index, 20) {
+    for every(index, 40) {
         ParticleInstance instance;
         Entity e = m_ParticleInstances.Add(instance);
         m_ParticleInstancesCache.AddExisting(e);
@@ -18,12 +18,15 @@ void CGame::SpawnParticles(ParticleInstanceDesc* desc) {
     m_ParticleInstancesActive.AddExisting(instance_e);
 
     ParticleInstance* instance = m_ParticleInstances.Get(instance_e);
+    instance->initial_light_color = *(Vec4*)&desc->light_color;
     instance->light = m_pRenderer->lights.Add({ *(Vec4*)&desc->initial_pos, *(Vec4*)&desc->light_color });
     instance->model_instance.model = desc->model;
     instance->model_instance.texture = desc->texture;
     instance->model_instance.glow = desc->glow;
     instance->count = desc->count;
     instance->model_scale = desc->model_scale;
+
+    f32 highest_timer = 0.0f;
 
     for every(index, instance->count) {
         Entity e = Entity();
@@ -44,12 +47,18 @@ void CGame::SpawnParticles(ParticleInstanceDesc* desc) {
         m_Particles.AddExisting(e, particle);
         m_EntityMapping.AddExisting(e, instance_e);
         m_Timers.AddExisting(e, alive_time);
+
+        if (alive_time > highest_timer) { highest_timer = alive_time; }
     }
+
+    m_Timers.AddExisting(instance_e, highest_timer);
+    instance->highest_timer = highest_timer;
 }
 
 void CGame::StripParticleInstance(Entity e) {
     ParticleInstance* instance = m_ParticleInstances.Get(e);
     m_pRenderer->lights.Remove(instance->light);
+    m_Timers.Remove(e);
 
     m_ParticleInstancesCache.AddExisting(e);
 }

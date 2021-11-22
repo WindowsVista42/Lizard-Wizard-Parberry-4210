@@ -3,7 +3,7 @@
 
 #include "Defines.h"
 #include "Model.h"
-#include "StagedBuffer.h"
+#include "FixedBufferAllocator.h"
 
 #include "Effects/DeferredEffect.h"
 #include "Effects/LightingEffect.h"
@@ -74,6 +74,8 @@ struct ParticleInstanceDesc {
 
 struct ParticleInstance {
     i32 count;
+    f32 highest_timer;
+    Vec4 initial_light_color;
     Entity light;
     Vec3 model_scale;
     ModelInstance model_instance;
@@ -106,7 +108,7 @@ private:
     std::array<RenderTexture, Descriptors::Count> m_renderTextures;
 
     // Debug Rendering
-    StagedBuffer m_debugScratch;
+    FixedBufferAllocator m_debugScratch;
     std::unique_ptr<BasicEffect> m_pDebugLineEffect;
     std::unique_ptr<BasicEffect> m_pDebugTriangleEffect;
 

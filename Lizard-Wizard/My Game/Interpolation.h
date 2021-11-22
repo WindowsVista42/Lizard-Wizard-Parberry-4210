@@ -17,7 +17,7 @@ T LinearLerp(T from, T to, f32 percentage) {
 }
 
 template <typename T>
-T SineLerp() {
+T SineLerp(T from, T to, f32 percentage) {
     // Note (Ethan) : Will be added in the future.
 }
 

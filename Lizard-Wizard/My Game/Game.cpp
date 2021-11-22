@@ -12,23 +12,30 @@
 #include <vector>
 #include <iostream>
 
-CGame::~CGame() {}
+CGame::~CGame() {
+    // The OS will clean up allocations much faster than I could ever imagine.
+}
 
 void CGame::Initialize() {
     m_pRenderer = new Renderer();
     m_pRenderer->Initialize();
 
-    LoadImages(); //load images from xml file list
-    LoadModels(); //load models from xml file list
-    LoadSounds(); //load the sounds for this game
+    {
+        constexpr usize alloc_size = 4 * 1024 * 1024; // 4 MB
+        u8* ptr = new u8[alloc_size];
+        m_PhysicsAllocator.Init(ptr, alloc_size);
+    }
+
+    LoadImages(); // load images from xml file list
+    LoadModels(); // load models from xml file list
+    LoadSounds(); // load the sounds for this game
 
     // Lets bind this action to to the user's mouse.
     // For key values : https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
     m_leftClick = CustomBind::New(VK_LBUTTON);
     m_rightClick = CustomBind::New(VK_RBUTTON);
 
-    ResetGame();
-    //BeginGame();
+    BeginGame();
 }
 
 void CGame::LoadModels() {
@@ -40,6 +47,7 @@ void CGame::LoadModels() {
     m_pRenderer->LoadModel("staff", ModelIndex::Staff);
     m_pRenderer->LoadModel("hand", ModelIndex::Hand);
     m_pRenderer->LoadModel("quad", ModelIndex::Quad);
+    m_pRenderer->LoadModel("cool_cube", ModelIndex::CoolCube);
 }
 
 void CGame::LoadImages() {
@@ -98,11 +106,8 @@ void CGame::ResetGame() {
 
     for every(index, m_RigidBodies.Size()) {
         m_pDynamicsWorld->removeRigidBody(m_RigidBodies.Components()[index]);
-
-        // Sean: This code crashes so I'm not sure how to properly free this.
-        // For now we have a memory leak.
-        //delete m_RigidBodies.Components()[index];
     }
+    m_PhysicsAllocator.Reset();
     m_RigidBodies.Clear();
 
     m_Projectiles.Clear();
@@ -148,12 +153,12 @@ void CGame::ResetGame() {
     m_PlayerManaOrbs.Clear();
     m_PlayerHealthOrbs.Clear();
 
-    for every(index, m_pCollisionShapes.size()) {
-        delete m_pCollisionShapes[index];
-    }
+    //for every(index, m_pCollisionShapes.size()) {
+    //    delete m_pCollisionShapes[index];
+    //}
     m_pCollisionShapes.clear();
 
-    delete m_pDynamicsWorld;
+    //delete m_pDynamicsWorld;
     m_currentRayProjectiles.clear();
 
     m_reset = false;
@@ -196,8 +201,16 @@ void CGame::InputHandler() {
     if (m_pKeyboard->TriggerDown(VK_F3))
         m_bDrawHelpMessage = !m_bDrawHelpMessage;
 
-    if (m_pKeyboard->TriggerDown(VK_BACK)) {//restart game
+    if (m_pKeyboard->TriggerDown(VK_BACK)) { // restart game
         m_reset = true;
+    }
+
+    if (m_pKeyboard->Down(VK_DELETE)) { // stop game
+        exit(EXIT_SUCCESS);
+    }
+
+    if (m_pKeyboard->TriggerDown('U')) {
+        m_Healths.Get(m_Player)->current -= 1;
     }
 
     // Toggles Main Menu
@@ -379,6 +392,14 @@ void CGame::EcsUpdate() {
         p->pos += p->vel * dt;
     }
 
+    Ecs::ApplyEvery(m_ParticleInstancesActive, [&](Entity e) {
+        ParticleInstance* instance = m_ParticleInstances.Get(e);
+        Light* light = m_pRenderer->lights.Get(instance->light);
+        f32* timer = m_Timers.Get(e);
+
+        light->color = (*timer /instance->highest_timer) * instance->initial_light_color;
+    });
+
     // This handles the timers tables.
     for every(index, m_Timers.Size()) {
         m_Timers.Components()[index] -= dt;
@@ -391,7 +412,6 @@ void CGame::EcsUpdate() {
         btClamp<f32>(mana->timer, 0.0, FLT_MAX);
         mana->value = (i32)(((mana->recharge * (f32)mana->max) - mana->timer) / mana->recharge);
     }
-
 }
 
 /// Ask the object manager to draw the game objects. The renderer is notified
@@ -437,6 +457,7 @@ void CGame::RenderFrame() {
 
     {
         m_pRenderer->BeginUIDrawing();
+
         if (m_bDrawHelpMessage) {
             m_pRenderer->DrawCenteredText(
                 L"Press 'Escape' to toggle mouse cursor.\n"
@@ -537,10 +558,6 @@ void CGame::RenderFrame() {
 
         m_pRenderer->EndUIDrawing();
     }
-
-    m_pRenderer->tint_color = Vec3(1.0f, 1.0f, 1.0f);
-    m_pRenderer->blur_amount = 0.0f;
-    m_pRenderer->saturation_amount = 1.0f;
 
     m_pRenderer->EndFrame();
 }

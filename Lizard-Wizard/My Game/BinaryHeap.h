@@ -30,7 +30,7 @@ class BinaryHeap {
         while (true) {
             parent = Parent(index);
 
-            if (parent >= 0 && heap[parent] < heap[index] && index != 0) {
+            if (index != 0 && parent >= 0 && heap[parent] < heap[index]) {
                 std::swap(heap[parent], heap[index]);
                 index = parent;
             } else {

@@ -37,15 +37,20 @@ btRigidBody* CGame::NewRigidBody(
     f32 mass,
     f32 friction,
     i32 group,
-    i32 mask) {
+    i32 mask
+) {
 
     // Configure and add to Bullet3
-    btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
+    btDefaultMotionState* myMotionState = m_PhysicsAllocator.Create(btDefaultMotionState(startTransform));
+
     Vec3 localInertia(Vec3(0, 0, 0));
     f32 restitution = 0.1f;
     btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, shape, localInertia);
     rbInfo.m_friction = friction;
-    btRigidBody* body = new btRigidBody(rbInfo);
+
+    btRigidBody* body = m_PhysicsAllocator.Create(btRigidBody(rbInfo));
+    //btRigidBody* body = new(ptr_rb) btRigidBody(rbInfo);
+
     body->setAngularFactor(Vec3(0., 0., 0.));
     body->setRestitution(restitution);
     m_pDynamicsWorld->addRigidBody(body, group, mask);
@@ -69,7 +74,8 @@ btRigidBody* CGame::CreateSphereObject(
 ) {
 
     // Push to the collision array.
-    btCollisionShape* shape = new btSphereShape(radius);
+    btCollisionShape* shape = m_PhysicsAllocator.Create(btSphereShape(radius));
+
     m_pCollisionShapes.push_back(shape);
 
     // Create object and return the pointer so further adjustments can be made.
@@ -86,7 +92,8 @@ btRigidBody* CGame::CreateBoxObject(
 ) {
 
     // Push to the collision array.
-    btCollisionShape* shape = new btBoxShape(size);
+    btCollisionShape* shape = m_PhysicsAllocator.Create(btBoxShape(size));
+
     m_pCollisionShapes.push_back(shape);
 
     // Create object and return the pointer so further adjustments can be made.
@@ -104,7 +111,7 @@ btRigidBody* CGame::CreateCapsuleObject(
 ) {
 
     // Push to the collision array.
-    btCollisionShape* shape = new btCapsuleShape(radius, height);
+    btCollisionShape* shape = m_PhysicsAllocator.Create(btCapsuleShape(radius, height));
     m_pCollisionShapes.push_back(shape);
 
     // Create object and return the pointer so further adjustments can be made.
@@ -295,16 +302,22 @@ void CGame::DestroyPhysicsObject(btCollisionShape* shape) {
 
 
 void CGame::InitializePhysics() {
-
     // Create Config
-    btDefaultCollisionConfiguration* CurrentConfiguration = new btDefaultCollisionConfiguration();
-    btCollisionDispatcher* CurrentDispatcher = new btCollisionDispatcher(CurrentConfiguration);
-    btDbvtBroadphase* CurrentBroadphaseCache = new btDbvtBroadphase();
-    btSequentialImpulseConstraintSolver* CurrentSolver = new btSequentialImpulseConstraintSolver;
 
-    // Assign Config and Array
-    m_pDynamicsWorld = new btDiscreteDynamicsWorld(CurrentDispatcher, CurrentBroadphaseCache, CurrentSolver, CurrentConfiguration);
-    //m_pCollisionShapes = btAlignedObjectArray<btCollisionShape*>();
+    static bool alloced = false;
+    static btDefaultCollisionConfiguration* CurrentConfiguration = 0;
+    static btCollisionDispatcher* CurrentDispatcher = 0;
+    static btDbvtBroadphase* CurrentBroadphaseCache = 0;
+    static btSequentialImpulseConstraintSolver* CurrentSolver = 0;
+
+    if (!alloced) {
+        alloced = true;
+        CurrentConfiguration = new btDefaultCollisionConfiguration();
+        CurrentDispatcher = new btCollisionDispatcher(CurrentConfiguration);
+        CurrentBroadphaseCache = new btDbvtBroadphase();
+        CurrentSolver = new btSequentialImpulseConstraintSolver;
+        m_pDynamicsWorld = new btDiscreteDynamicsWorld(CurrentDispatcher, CurrentBroadphaseCache, CurrentSolver, CurrentConfiguration);
+    }
 
     // Set other attributes
     m_pDynamicsWorld->setGravity(btVector3(0.0, -5000.0, 0.0));

@@ -33,8 +33,8 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
     roomCenter.y -= room_scale.y;
     m_roomCenter = roomCenter;
 
-    for every(z, Z_ROOMS - 1) {
-        for every(x, X_ROOMS - 1) {
+    for every(z, Z_ROOMS) {
+        for every(x, X_ROOMS) {
             m_GameMap[x][z] = false;
         }
     }
@@ -304,6 +304,7 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
             ModelInstance mi;
             mi.model = ModelIndex::Cube;
             mi.texture = TextureIndex::White;
+            //mi.glow = Vec3(GameRandom::Randf32() * 0.2f);
             mi.glow = Vec3(0.0f);
             mi.world = MoveScaleMatrix(position, Vec3(s, sy, s));
     
@@ -315,19 +316,19 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
     ScatterHorizontal(600, -room_scale.y, 100, 700, 5, 30, 5);
     ScatterHorizontal(600, room_scale.y, 100, 700, 5, 30, 5);
 
-    auto ScatterWalls = [&](
-        const usize scatter_count
-    ) {
-        for every(i, scatter_count) {
-            u32 idx = GameRandom::Randu32(0, connected_walls.size() - 1);
+    //auto ScatterWalls = [&](
+    //    const usize scatter_count
+    //) {
+    //    for every(i, scatter_count) {
+    //        u32 idx = GameRandom::Randu32(0, connected_walls.size() - 1);
 
-            u32 x = connected_walls[idx].first;
-            u32 z = connected_walls[idx].second;
+    //        u32 x = connected_walls[idx].first;
+    //        u32 z = connected_walls[idx].second;
 
-        }
-    };
+    //    }
+    //};
 
-    ScatterWalls(1000);
+    //ScatterWalls(1000);
 
     // Sean:
     // randomly choose tiles to place lights into
@@ -362,7 +363,7 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
         light.color = Vec4(100.0f, 100.0f, 100.0f, 0.0f);
         light.position = Vec4(pos.x, pos.y, pos.z, 0.0f);
         m_pRenderer->lights.AddExisting(e, light);
-        m_TestingLights.AddExisting(e);
+        //m_TestingLights.AddExisting(e);
 
         ModelInstance model;
         model.glow = 2.0f;
@@ -382,7 +383,7 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
         light.color = Vec4(100.0f, 100.0f, 100.0f, 0.0f);
         light.position = Vec4(pos.x, pos.y, pos.z, 0.0f);
         m_pRenderer->lights.AddExisting(e, light);
-        m_TestingLights.AddExisting(e);
+        //m_TestingLights.AddExisting(e);
 
         ModelInstance model;
         model.glow = 2.0f;

@@ -9,6 +9,7 @@
 #include "Interpolation.h"
 #include "Defines.h"
 #include "Ecs.h"
+#include "FixedBufferAllocator.h"
 
 #include <vector>
 #include <set>
@@ -126,6 +127,8 @@ class CGame:
     public LSettings
 { 
 private:
+    FixedBufferAllocator m_PhysicsAllocator;
+
     // Mouse Binds
     CustomBind m_leftClick;
     CustomBind m_rightClick;
@@ -412,7 +415,7 @@ public:
 
     // Bullet3 Declarations
     btAlignedObjectArray<btCollisionShape*> m_pCollisionShapes;
-    btDiscreteDynamicsWorld* m_pDynamicsWorld;
+    btDiscreteDynamicsWorld* m_pDynamicsWorld = 0;
     std::vector<RayProjectile> m_currentRayProjectiles;
 
 
