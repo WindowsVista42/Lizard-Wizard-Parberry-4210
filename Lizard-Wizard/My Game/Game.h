@@ -101,15 +101,17 @@ struct Health {
     }
 };
 
+// MENU MANAGER
 struct Panel {
 
     bool Hovering;
-    bool Pressed;
+    bool Pressed = false;
     Vec3 Tint;
     u32 nextState;
 
 };
 
+// MENU MANAGER
 struct PanelText {
 
     std::string Text;
@@ -134,12 +136,13 @@ private:
     Table<Animation> m_Animations;
 
     // Menu Table
-    Table<LSpriteDesc2D> m_Menu;
+    Table<SpriteInstance> m_Menu;
     Table<Panel> m_Panel;
     Table<PanelText> m_PanelText;
     Group m_MainMenu;
     Group m_SettingsMenu;
     Group m_PauseMenu;
+    bool m_DrawMainMenu = false;
 
     // Bullet3 Map / Tables
     std::unordered_map<btRigidBody*, Entity> m_RigidBodyMap;

@@ -200,6 +200,12 @@ void CGame::InputHandler() {
         m_reset = true;
     }
 
+    // Toggles Main Menu
+    if (m_pKeyboard->TriggerDown('P')) {
+        m_DrawMainMenu = !m_DrawMainMenu;
+        std::cout << "Menu Status: " << m_DrawMainMenu << std::endl;
+    }
+
     if (m_pKeyboard->TriggerDown('M')) {
         m_pAudio->mute();
     }
@@ -435,6 +441,7 @@ void CGame::RenderFrame() {
             m_pRenderer->DrawCenteredText(
                 L"Press 'Escape' to toggle mouse cursor.\n"
                 L"Press 'M' to toggle audio.\n"
+                L"Press 'P' to toggle Main Menu.\n"
                 L"Toggle this message with 'F3'."
                 , Colors::White
             );
@@ -445,7 +452,7 @@ void CGame::RenderFrame() {
             sprintf(buffer, "%.2f", m_frameRate);
             m_pRenderer->DrawScreenText(buffer, Vector2(m_nWinWidth - 200.0, 50.0), Colors::White);
         }
-
+        /*
         SpriteInstance sprite_instance;
         sprite_instance.position = Vec2(100.0f, 100.0f);
         sprite_instance.roll = 0.0f;
@@ -456,9 +463,77 @@ void CGame::RenderFrame() {
         m_pRenderer->DrawSpriteInstance(&sprite_instance);
 
         sprite_instance.scale = Vec2(10.0f, 10.0f);
-        sprite_instance.rgba = Vec4(1.0f, 0.0f, 0.0f, 1.0f);
+        sprite_instance.rgba = Vec4(1.0f, 1.0f, 0.0f, 1.0f);
 
         m_pRenderer->DrawSpriteInstance(&sprite_instance);
+        */
+        m_pRenderer->EndUIDrawing();
+    }
+
+    // MAIN MENU
+    {
+        m_pRenderer->BeginUIDrawing();
+
+        if (m_DrawMainMenu == true) {
+
+            Panel panel;
+            PanelText panel_text;
+
+
+            //m_pRenderer->DrawCenteredText(L"Main Menu.\n", Colors::White);
+
+            SpriteInstance sprite_instance;
+/*
+            // Background
+            sprite_instance.position = Vec2(100.0f, 100.0f);
+            sprite_instance.roll = 0.0f;
+            sprite_instance.scale = Vec2(800.0f, 800.0f);
+            sprite_instance.rgba = Vec4(1.0f, 1.0f, 1.0f, 1.0f);
+            sprite_instance.texture_index = TextureIndex::White;
+            m_pRenderer->DrawSpriteInstance(&sprite_instance);
+*/
+            // Resume Button -- Yellow
+            sprite_instance.position = Vec2(100.0f, 100.0f);
+            sprite_instance.roll = 0.0f;
+            sprite_instance.scale = Vec2(100.0f, 100.0f);
+            sprite_instance.rgba = Vec4(1.0f, 1.0f, 0.0f, 1.0f);
+            sprite_instance.texture_index = TextureIndex::White;
+            m_pRenderer->DrawSpriteInstance(&sprite_instance);
+
+            if (panel.Pressed == true) {
+                m_pRenderer->DrawCenteredText(
+
+                    L"Press 'P' to toggle Main Menu.\n"
+
+                    , Colors::White
+                );
+            }
+
+            // Settings Button -- Red
+            sprite_instance.position = Vec2(450.0f, 100.0f);
+            sprite_instance.roll = 0.0f;
+            sprite_instance.scale = Vec2(100.0f, 100.0f);
+            sprite_instance.rgba = Vec4(1.0f, 0.0f, 0.0f, 1.0f);
+            sprite_instance.texture_index = TextureIndex::White;
+            m_pRenderer->DrawSpriteInstance(&sprite_instance);
+            
+            panel_text.position = Vector2(100.0f, 100.0f);
+
+
+            // Exit Button -- Pink
+            sprite_instance.position = Vec2(800.0f, 100.0f);
+            sprite_instance.roll = 0.0f;
+            sprite_instance.scale = Vec2(100.0f, 100.0f);
+            sprite_instance.rgba = Vec4(1.0f, 0.0f, 1.0f, 1.0f);
+            sprite_instance.texture_index = TextureIndex::White;
+            m_pRenderer->DrawSpriteInstance(&sprite_instance);
+
+
+        }
+
+
+
+
 
         m_pRenderer->EndUIDrawing();
     }
