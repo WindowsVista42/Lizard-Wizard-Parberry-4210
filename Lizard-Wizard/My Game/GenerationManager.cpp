@@ -20,6 +20,10 @@ Vec3 CGame::IndexToWorld(u32 x, u32 z) {
     return m_roomCenter + 2.0f * Vec3((f32)x * room_scale.x, 0.0f, (f32)z * room_scale.z);
 }
 
+Point2 CGame::WorldToIndex(Vec3 w) {
+    return std::make_pair(((w.x + room_scale.x) / (2.0f * room_scale.x)), ((w.z + room_scale.z) / (2.0f * room_scale.z)));
+}
+
 bool CGame::CheckBounds(i32 x, i32 z) {
     return x >= 0 && x < X_ROOMS && z >= 0 && z < Z_ROOMS;
 }
@@ -402,7 +406,7 @@ void CGame::InitializeGeneration() {
 }
 
 f32 heuristic(Point2 a, Point2 b) {
-    #define MAGIC_NUMBER 1.0f
+    #define MAGIC_NUMBER 111.0f
     f32 out = fabs((f32)a.first - (f32)b.first) + fabs((f32)a.second - (f32)b.second);
     return out * MAGIC_NUMBER;
 };
@@ -523,6 +527,9 @@ void Clear2dArray(std::array<std::array<T, Z_ROOMS>, X_ROOMS>& array2d, const T 
 // Sean: returns a list of points for going from start to end, vector length is ZERO if a path is not found.
 // Performance: A* pathfinding, not slow relatively, but pathfinding is still slow in general
 std::vector<Point2> CGame::Pathfind(Point2 start, Point2 end) {
+    if (!CheckBounds(start.first, start.second) || !CheckBounds(end.first, end.second)) { return std::vector<Point2>(); }
+    printf("Pathfinding!\n");
+
     struct MinCostNode {
         f32 cost;
         f32 estimated;
@@ -533,7 +540,7 @@ std::vector<Point2> CGame::Pathfind(Point2 start, Point2 end) {
         }
 
         bool operator < (const MinCostNode& other) {
-            return this->estimated < other.estimated;
+            return this->estimated <= other.estimated;
         }
 
         bool operator == (const MinCostNode& other) {
@@ -568,59 +575,97 @@ std::vector<Point2> CGame::Pathfind(Point2 start, Point2 end) {
 
     open.Push({FLT_MAX, FLT_MAX, start});
 
-    Point2 last = start;
-
     // Trail building
     while (open.Size() != 0) {
         MinCostNode current = open.Pop();
 
         // Exit condition
         if (current.position == end) {
-            trail[current.position.first][current.position.second] = last;
             found_path = true;
             break;
         }
 
-        auto AddConditionally = [&](i32 x, i32 z) {
-            if (!CheckBounds(x, z)) { return; }
+        u32 neighbor_count = 0;
+        Point2 neighbors[4];
+
+        if (CheckBounds(current.position.first, current.position.second) && m_GameMap[current.position.first][current.position.second]) {
+            i32 nx, nz;
+
+            nx = (i32)current.position.first - 1; nz = (i32)current.position.second;
+            if (CheckBounds(nx, nz)) { neighbors[neighbor_count] = std::make_pair(nx, nz); neighbor_count += 1; }
+
+            nx = (i32)current.position.first + 1; nz = (i32)current.position.second;
+            if (CheckBounds(nx, nz)) { neighbors[neighbor_count] = std::make_pair(nx, nz); neighbor_count += 1; }
+
+            nx = (i32)current.position.first; nz = (i32)current.position.second - 1;
+            if (CheckBounds(nx, nz)) { neighbors[neighbor_count] = std::make_pair(nx, nz); neighbor_count += 1; }
+
+            nx = (i32)current.position.first; nz = (i32)current.position.second + 1;
+            if (CheckBounds(nx, nz)) { neighbors[neighbor_count] = std::make_pair(nx, nz); neighbor_count += 1; }
+        }
+
+        for every(index, neighbor_count) {
+            i32 nx = neighbors[index].first;
+            i32 nz = neighbors[index].second;
 
             const f32 cost = 1.0f;
             f32 g = g_score[current.position.first][current.position.second] + cost;
 
-            if (m_GameMap[x][z] && g < g_score[x][z]) {
-                f32 f = g + heuristic(std::make_pair(x, z), end);
+            if (g < g_score[nx][nz]) {
+                f32 f = g + heuristic(std::make_pair(nx, nz), end);
 
-                if (trail[x][z] == std::make_pair(UINT_MAX, UINT_MAX)) {
+                if (trail[nx][nz] == std::make_pair(UINT_MAX, UINT_MAX)) {
                     MinCostNode node;
                     node.estimated = f;
                     node.cost = f;
-                    node.position = std::make_pair(x, z);
+                    node.position = std::make_pair(nx, nz);
 
                     open.Push(node);
-
                 }
 
-                trail[x][z] = current.position;
-                g_score[x][z] = g;
-                f_score[x][z] = f;
+                trail[nx][nz] = current.position;
+                g_score[nx][nz] = g;
+                f_score[nx][nz] = f;
             }
-        };
+        }
 
-        i32 cx, cz;
+        //auto AddConditionally = [&](i32 x, i32 z) {
+        //    if (!CheckBounds(x, z)) { return; }
 
-        cx = (i32)current.position.first - 1; cz = (i32)current.position.second;
-        AddConditionally(cx, cz);
+        //    const f32 cost = 1.0f;
+        //    f32 g = g_score[current.position.first][current.position.second] + cost;
 
-        cx = (i32)current.position.first + 1; cz = (i32)current.position.second;
-        AddConditionally(cx, cz);
+        //    if (m_GameMap[x][z] && g < g_score[x][z]) {
+        //        f32 f = g + heuristic(std::make_pair(x, z), end);
 
-        cx = (i32)current.position.first; cz = (i32)current.position.second - 1;
-        AddConditionally(cx, cz);
+        //        if (trail[x][z] == std::make_pair(UINT_MAX, UINT_MAX)) {
+        //            MinCostNode node;
+        //            node.estimated = f;
+        //            node.cost = f;
+        //            node.position = std::make_pair(x, z);
 
-        cx = (i32)current.position.first; cz = (i32)current.position.second + 1;
-        AddConditionally(cx, cz);
+        //            open.Push(node);
+        //        }
 
-        last = current.position;
+        //        trail[x][z] = current.position;
+        //        g_score[x][z] = g;
+        //        f_score[x][z] = f;
+        //    }
+        //};
+
+        //i32 cx, cz;
+
+        //cx = (i32)current.position.first - 1; cz = (i32)current.position.second;
+        //AddConditionally(cx, cz);
+
+        //cx = (i32)current.position.first + 1; cz = (i32)current.position.second;
+        //AddConditionally(cx, cz);
+
+        //cx = (i32)current.position.first; cz = (i32)current.position.second - 1;
+        //AddConditionally(cx, cz);
+
+        //cx = (i32)current.position.first; cz = (i32)current.position.second + 1;
+        //AddConditionally(cx, cz);
     }
 
     // Path reconstruction
@@ -630,15 +675,19 @@ std::vector<Point2> CGame::Pathfind(Point2 start, Point2 end) {
         Point2 current = end;
         Point2 previous = trail[current.first][current.second];
 
-        while (previous != start) {
+        while(previous != start) {
             path.push_back(current);
             current = previous;
             previous = trail[previous.first][previous.second];
         }
+
+        path.push_back(current);
+        current = previous;
+        previous = trail[previous.first][previous.second];
     }
 
     // Sean todo: make it so we dont have to reverse
-    std::reverse(path.begin(), path.end());
+    //std::reverse(path.begin(), path.end());
 
     return path;
 }

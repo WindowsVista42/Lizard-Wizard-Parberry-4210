@@ -324,6 +324,7 @@ private:
     void DestroyRooms();
     void InitializeGeneration();
     Vec3 IndexToWorld(u32 x, u32 z);
+    Point2 WorldToIndex(Vec3 w);
     bool CheckBounds(i32 x, i32 z);
     Point2 FindClosestPoint(Point2, Point2);
     std::vector<Point2> Pathfind(Point2, Point2);

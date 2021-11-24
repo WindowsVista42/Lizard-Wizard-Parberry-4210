@@ -41,8 +41,7 @@ void CGame::Animate(Entity e) {
         SetNPCRender(npcBody, npcBody->getWorldTransform().getOrigin(), npcBody->getWorldTransform().getBasis());
 
         currentNPC->State = NPCState::SEARCHING;
-    }
-    else {
+    } else {
         currentAnimation->percent = currentAnimation->steps / currentAnimation->maxSteps;
         currentAnimation->steps = currentAnimation->steps + 1.0f;
 
@@ -71,15 +70,20 @@ void CGame::Wander(Entity e) {
     btRigidBody* playerBody = *(m_RigidBodies.Get(m_Player));
     btRigidBody* npcBody = *m_RigidBodies.Get(e);
 
+    std::vector<Point2> path = Pathfind(WorldToIndex(npcBody->getWorldTransform().getOrigin()), WorldToIndex(playerBody->getWorldTransform().getOrigin()));
+    Vec3 goal = playerBody->getWorldTransform().getOrigin();
+    if (path.size() > 0) {
+        goal = IndexToWorld(path[path.size() - 1].first, path[path.size() - 1].second);
+    }
 
-    //std::vector<Point2> path = Pathfind(WorldToIndex(npcBody->getWorldTransform().getOrigin()), WorldToIndex(playerBody->getWorldTransform().getOrigin()));
-    //if (path.size() > 1) {
-    //    currentNPC->QueuedMovement = IndexToWorld(path[1].first, path[1].second);
-    //} else {
-        currentNPC->QueuedMovement = npcBody->getWorldTransform().getOrigin() + Vec3(BiasedPointIn2DPlane(0.8f, npcBody->getWorldTransform().getOrigin(), playerBody->getWorldTransform().getOrigin()) * 1000.0f);
-    //}
-    //currentNPC->QueuedMovement = playerBody->getWorldTransform().getOrigin();
-
+    u32 max_tries = 5;
+    while (max_tries > 0) {
+        currentNPC->QueuedMovement = npcBody->getWorldTransform().getOrigin() + Vec3((GameRandom::Randf32() * 1000.0f) * Vec3(BiasedPointIn2DPlane(0.5f, npcBody->getWorldTransform().getOrigin(), goal)));
+        Point2 p = WorldToIndex(currentNPC->QueuedMovement);
+        currentNPC->QueuedMovement.Print();
+        if (CheckBounds(p.first, p.second) && m_GameMap[p.first][p.second]) { break; }
+        max_tries -= 1;
+    }
     SetNPCRender(npcBody, npcBody->getWorldTransform().getOrigin(), npcBody->getWorldTransform().getBasis());
     currentNPC->State = NPCState::MOVING;
 }
@@ -95,10 +99,10 @@ void CGame::Move(Entity e, Vec3 moveTo) {
     Animation newAnimation;
 
     newAnimation.beginPos = npcBody->getWorldTransform().getOrigin();
-    newAnimation.beginRot = Vec3(0);//npcBody->getWorldTransform().getOrigin().normalize();
+    newAnimation.beginRot = Vec3(0);
 
     newAnimation.endPos = moveTo;
-    newAnimation.endRot = Vec3(0);// npcBody->getWorldTransform().getOrigin().normalize();
+    newAnimation.endRot = Vec3(0);
 
     newAnimation.maxSteps = 20.0f;
     newAnimation.steps = 0.0f;
@@ -111,6 +115,21 @@ void CGame::Move(Entity e, Vec3 moveTo) {
 }
 
 void CGame::Pathfind(Entity e) {
+    NPC* currentNPC = m_NPCs.Get(e);
+
+    btRigidBody* playerBody = *(m_RigidBodies.Get(m_Player));
+    btRigidBody* npcBody = *m_RigidBodies.Get(e);
+
+    std::vector<Point2> path = Pathfind(WorldToIndex(npcBody->getWorldTransform().getOrigin()), WorldToIndex(playerBody->getWorldTransform().getOrigin()));
+
+    if (path.size() > 1) {
+        currentNPC->QueuedMovement = IndexToWorld(path[path.size() - 1].first, path[path.size() - 1].second) + 500.0f * Vec3(GameRandom::Randf32() - 0.5f, 0.0f, GameRandom::Randf32() - 0.5f);
+    } else {
+        currentNPC->QueuedMovement = npcBody->getWorldTransform().getOrigin();
+    }
+
+    SetNPCRender(npcBody, npcBody->getWorldTransform().getOrigin(), npcBody->getWorldTransform().getBasis());
+    currentNPC->State = NPCState::MOVING;
 }
 
 void CGame::Attack(Entity e) {
@@ -158,15 +177,18 @@ void CGame::Search(Entity e) {
     btRigidBody* npcBody = *m_RigidBodies.Get(e);
 
     if (currentNPC->SearchAttempts >= 5) {
-        // cant do much till pathfinding lolololooololololol
-        currentNPC->State = NPCState::SLEEPING;
-        currentNPC->SearchAttempts = 0;
+        if (currentNPC->SearchAttempts >= 10) {
+            currentNPC->State = NPCState::SLEEPING;
+            currentNPC->SearchAttempts = 0;
+        }
+        currentNPC->State = NPCState::PATHFINDING;
+        currentNPC->SearchAttempts++;
     } else {
         f32 distance = npcBody->getWorldTransform().getOrigin().distance(playerBody->getWorldTransform().getOrigin());
-        if (distance < 2500.0f) {
+        if (distance < 4000.0f) {
             currentNPC->State = NPCState::ATTACKING;
             currentNPC->SearchAttempts = 0;
-        } else {
+        } else if (distance < 15000.0f) {
             currentNPC->State = NPCState::WANDER;
             currentNPC->SearchAttempts++;
         }
@@ -197,7 +219,6 @@ void CGame::DirectNPC(Entity e) {
     btRigidBody* body = *m_RigidBodies.Get(e);
 
     // Sean: this made me very sad
-    //if (body->getWorldTransform().getOrigin().x() > 5.0f) { m_NPCs.Get(e)->LastPosition = body->getWorldTransform().getOrigin(); }
     m_NPCs.Get(e)->LastPosition = body->getWorldTransform().getOrigin();
     m_pRenderer->lights.Get(e)->position = *(Vec4*)&m_NPCs.Get(e)->LastPosition;
 
