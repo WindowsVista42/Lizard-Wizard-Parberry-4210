@@ -3,10 +3,9 @@
 #include "BinaryHeap.h"
 
 // Sean todo:
-// - Add visual scatter (walls)
-// - Add functional scatter (cover, blocks on walls, obstacles)
-// - Add particles
-// - Performance: batch geometry (by material)
+// - Add visual scatter (walls) // add some small rocks
+// - Spawn NPCS // spawn in groups
+// - Performance: batch geometry (by material) // not sure if needed for parberrys computer
 
 static const Vec3 room_scale = Vec3(1000.0f, 1000.0f, 1000.0f);
 static const u32 room_group = 0b00001;
@@ -397,9 +396,80 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
         m_ModelInstances.AddExisting(e, model);
         m_ModelsActive.AddExisting(e);
     }
-}
 
-void CGame::DestroyRooms() {
+    {
+#define KERNEL_X 3
+#define KERNEL_Z 3
+
+    	struct NpcPlacementKernel {
+    	    u8 raw[KERNEL_Z][KERNEL_X];
+    	};
+	
+    	static const NpcPlacementKernel NPC_PLACEMENT_KERNELS[] = {
+    	    { { {0, 1, 0},
+    	        {0, 1, 0},
+    	        {0, 1, 0},
+    	    },},
+    	    { { {0, 0, 0},
+    	        {1, 1, 1},
+    	        {0, 0, 0},
+    	    },},
+    	    { { {1, 0, 0},
+    	        {0, 1, 1},
+    	        {0, 0, 0},
+    	    },},
+    	    { { {0, 0, 1},
+    	        {0, 1, 0},
+    	        {1, 0, 0},
+    	    },},
+    	    { { {1, 0, 0},
+    	        {0, 1, 0},
+    	        {0, 1, 0},
+    	    },},
+    	    { { {1, 0, 1},
+    	        {0, 0, 0},
+    	        {0, 0, 1},
+    	    },},
+    	    { { {0, 1, 0},
+    	        {0, 0, 1},
+    	        {0, 1, 0},
+    	    },},
+    	};
+
+        static const f32 min_dist_2 = 20000.0f * 20000.0f;
+        const Vec3 endpos = IndexToWorld(X_ROOMS - 1, Z_ROOMS - 1);
+        std::unordered_set<u64> placed_npcs;
+        i32 rem_npc_placement = 20;
+        while (rem_npc_placement > 0) {
+            u32 kernel_index = GameRandom::Randu32(0, _countof(NPC_PLACEMENT_KERNELS));
+
+            // Sean: 0 to 4 because the kernel goes from 0 to 3
+            u32 cx = GameRandom::Randu32(0, X_ROOMS - 4);
+            u32 cz = GameRandom::Randu32(0, Z_ROOMS - 4);
+
+            for every(z, KERNEL_Z) {
+                for every(x, KERNEL_X) {
+                    u64 keypos = make_key(cx + x, cz + z);
+                    Vec3 realpos = IndexToWorld(cx + x, cz + z);
+
+                    if (NPC_PLACEMENT_KERNELS[kernel_index].raw[z][x] == 1 &&
+                        m_GameMap[cx + x][cz + z] &&
+                        Vec3::DistanceSquared(realpos, Vec3(0.0f, 0.0f, 0.0f)) > min_dist_2 &&
+                        Vec3::DistanceSquared(realpos, endpos) > min_dist_2 &&
+                        placed_npcs.find(keypos) == placed_npcs.end()
+                    ) {
+                        placed_npcs.insert(keypos);
+                        PlaceNPC2(realpos);
+
+                        rem_npc_placement -= 1;
+                        if (rem_npc_placement <= 0) { break; }
+                    } else {
+                        continue;
+                    }
+                }
+            }
+        }
+    }
 }
 
 void CGame::InitializeGeneration() {

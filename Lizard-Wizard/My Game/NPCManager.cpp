@@ -290,6 +290,45 @@ void CGame::PlaceNPC(Vec3 startPos, Vec3 lookDirection) {
     SetNPCRender(body, body->getWorldTransform().getOrigin(), body->getWorldTransform().getBasis());
 }
 
+// Places a cached NPC.
+void CGame::PlaceNPC2(Vec3 startPos) {
+    Entity e = m_NPCsCache.RemoveTail();
+    m_NPCsActive.AddExisting(e);
+
+    btRigidBody* body = *m_RigidBodies.Get(e);
+    btCollisionShape* currentShape = body->getCollisionShape();
+    btBoxShape* boxShape = reinterpret_cast<btBoxShape*>(currentShape);
+
+    Vec3 newPos = Vec3(startPos.x, startPos.y, startPos.z);
+
+    f32 mass = 0.0f; // For now were making this static until we get a proper NPC movement system.
+    f32 friction = 0.0f;
+    btVector3 inertia;
+
+    // Set attributes.
+    body->getWorldTransform().setOrigin(Vec3(newPos.x, -1000.0f, newPos.z));
+    body->getCollisionShape()->calculateLocalInertia(mass, inertia);
+    body->setMassProps(mass, inertia);
+    body->setFriction(friction);
+
+    // Re-add regidbody to world after edit.
+    AddRigidBody(body, 2, 0b00001);
+    m_Timers.AddExisting(e, 10.0f);
+    body->activate();
+
+    m_pRenderer->lights.Get(e)->position = *(Vec4*)&body->getWorldTransform().getOrigin();
+
+    // Add model to world
+    (*m_ModelInstances.Get(e)).world = 
+        MoveRotateScaleMatrix(body->getWorldTransform().getOrigin(), 
+            *(Quat*)&body->getWorldTransform().getRotation(), 
+            boxShape->getHalfExtentsWithMargin()
+        );
+    m_ModelsActive.AddExisting(e);
+
+    SetNPCRender(body, body->getWorldTransform().getOrigin(), body->getWorldTransform().getBasis());
+}
+
 // Strips an NPC and re-adds them to the cache.
 void CGame::StripNPC() {
     Entity e = m_NPCsActive.RemoveTail();
