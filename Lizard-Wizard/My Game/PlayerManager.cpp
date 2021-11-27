@@ -148,7 +148,7 @@ void CGame::PlayerInput() {
     }
 
     // Print screenshot button thing that will do stuff
-    if (m_pKeyboard->TriggerDown('P')) {
+    if (m_pKeyboard->TriggerDown('0')) {
         m_pRenderer->m_screenShot = true;
     }
 

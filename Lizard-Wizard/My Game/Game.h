@@ -108,6 +108,7 @@ struct Panel {
     bool Hovering;
     bool Pressed = false;
     Vec3 Tint;
+    Vec2 Position;
     u32 nextState;
 
 };
@@ -143,6 +144,7 @@ private:
     Table<Panel> m_Panel;
     Table<PanelText> m_PanelText;
     Group m_MainMenu;
+    Group mm_Panel;
     Group m_SettingsMenu;
     Group m_PauseMenu;
     bool m_DrawMainMenu = false;
@@ -386,7 +388,7 @@ private:
 
     // MENU MANAGER //
     void InitializeMenu();
-    void InputMenu();
+    void MenuInput();
     void RenderMenu();
 
     // TESTING ROOM //
