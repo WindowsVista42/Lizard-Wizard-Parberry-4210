@@ -201,8 +201,7 @@ void CGame::InputHandler() {
     if (m_pKeyboard->TriggerDown(VK_F3))
         m_bDrawHelpMessage = !m_bDrawHelpMessage;
 
-    // Backspace
-    if (m_pKeyboard->TriggerDown(VK_BACK)) { // restart game 
+    if (m_pKeyboard->Down(VK_BACK)) { // restart game
         m_reset = true;
     }
 

@@ -381,6 +381,7 @@ private:
     void Search(Entity);
     void DirectNPC(Entity);
     void PlaceNPC(Vec3, Vec3);
+    void PlaceNPC2(Vec3);
     void InitializeNPCs();
     void StripNPC();
 
