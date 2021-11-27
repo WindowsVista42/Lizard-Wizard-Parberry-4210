@@ -422,6 +422,10 @@ void CGame::EcsUpdate() {
         btClamp<f32>(mana->timer, 0.0, FLT_MAX);
         mana->value = (i32)(((mana->recharge * (f32)mana->max) - mana->timer) / mana->recharge);
     }
+
+    if (m_Healths.Get(m_Player)->current <= 0) {
+        m_reset = true;
+    }
 }
 
 /// Ask the object manager to draw the game objects. The renderer is notified

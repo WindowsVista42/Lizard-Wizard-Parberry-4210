@@ -93,7 +93,6 @@ void CGame::Wander(Entity e) {
     while (max_tries > 0) {
         currentNPC->QueuedMovement = npcBody->getWorldTransform().getOrigin() + Vec3((GameRandom::Randf32() * 1000.0f) * Vec3(BiasedPointIn2DPlane(0.5f, npcBody->getWorldTransform().getOrigin(), goal)));
         Point2 p = WorldToIndex(currentNPC->QueuedMovement);
-        currentNPC->QueuedMovement.Print();
         if (CheckBounds(p.first, p.second) && m_GameMap[p.first][p.second]) { break; }
         max_tries -= 1;
     }

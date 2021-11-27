@@ -780,12 +780,13 @@ std::vector<Point2> CGame::Pathfind(Point2 start, Point2 end) {
         while(previous != start) {
             path.push_back(current);
             current = previous;
+            if (previous.first > 1000 || previous.second > 1000) { break; }
             previous = trail[previous.first][previous.second];
         }
 
-        path.push_back(current);
-        current = previous;
-        previous = trail[previous.first][previous.second];
+        if (previous.first < 40 && previous.second < 40) {
+            path.push_back(current);
+        }
     }
 
     // Sean todo: make it so we dont have to reverse
