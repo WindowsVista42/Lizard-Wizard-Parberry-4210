@@ -154,7 +154,7 @@ void CGame::Pathfind(Entity e) {
     currentNPC->State = NPCState::MOVING;
 
     f32 distance = npcBody->getWorldTransform().getOrigin().distance(playerBody->getWorldTransform().getOrigin());
-    if (distance < 7500.0f) {
+    if (distance < 10000.0f) {
         currentNPC->State = NPCState::ATTACKING;
     }
 
@@ -175,7 +175,7 @@ void CGame::Attack(Entity e) {
     SetNPCRender(npcBody, origin, newMat);
 
     f32 distance = npcBody->getWorldTransform().getOrigin().distance(playerBody->getWorldTransform().getOrigin());
-    if (distance < 7500.0f) {
+    if (distance < 10000.0f) {
         waitTimer = *m_Timers.Get(e);
         if (waitTimer < 0.0f) {
             m_Timers.Remove(e);
@@ -186,7 +186,7 @@ void CGame::Attack(Entity e) {
                 npcBody->getWorldTransform().getOrigin(),
                 -XMVector3Normalize(origin - lookAt),
                 1,
-                20000.0,
+                15000.0,
                 0.05,
                 Colors::LavenderBlush,
                 SoundIndex::FireImpact1,
@@ -215,7 +215,7 @@ void CGame::Search(Entity e) {
         currentNPC->SearchAttempts++;
     } else {
         f32 distance = npcBody->getWorldTransform().getOrigin().distance(playerBody->getWorldTransform().getOrigin());
-        if (distance < 4000.0f) {
+        if (distance < 10000.0f) {
             currentNPC->State = NPCState::ATTACKING;
             currentNPC->SearchAttempts = 0;
         } else if (distance < 15000.0f) {
@@ -322,13 +322,13 @@ void CGame::PlaceNPC2(Vec3 startPos) {
     btVector3 inertia;
 
     // Set attributes.
-    body->getWorldTransform().setOrigin(Vec3(newPos.x, -1000.0f, newPos.z));
+    body->getWorldTransform().setOrigin(Vec3(newPos.x, -500.0f, newPos.z));
     body->getCollisionShape()->calculateLocalInertia(mass, inertia);
     body->setMassProps(mass, inertia);
     body->setFriction(friction);
 
     // Re-add regidbody to world after edit.
-    AddRigidBody(body, 2, 0b00001);
+    AddRigidBody(body, NPC_PHYSICS_GROUP, NPC_PHYSICS_MASK);
     m_Timers.AddExisting(e, 10.0f);
     body->activate();
 

@@ -60,6 +60,9 @@ btRigidBody* CGame::NewRigidBody(
     m_RigidBodies.AddExisting(e, body);
     m_RigidBodyMap.insert(std::make_pair(body, e));
 
+    // Self point
+    body->setUserPointer(&body);
+
     return body;
 }
 
@@ -212,35 +215,125 @@ void CGame::CustomPhysicsStep() {
 
         // PROJECTILES //
         if (m_ProjectilesActive.Contains(hitObject)) {
-            SimProjectile* proj =  m_Projectiles.Get(hitObject);
+            SimProjectile* proj = m_Projectiles.Get(hitObject);
+            if(proj->IgnoreList.find(causeObject) ==  proj->IgnoreList.end()) {
+                player_ignore_list.insert(causeObject);
 
-            // Create Particles
-            Vec4 projColor = proj->Color;
+                // Create Particles
+                Vec4 projColor = proj->Color;
 
-            // Create Particle for Impact (Very ugly, will clean up later.)
-            ParticleInstanceDesc particle;
-            particle.count = 25;
-            particle.initial_pos = pos0;
-            particle.initial_dir = XMVector3Normalize(lVelocity1 - lVelocity0);
-            particle.light_color = Vec3(projColor.x, projColor.y, projColor.z);
-            particle.model = ModelIndex::Cube;
-            particle.texture = TextureIndex::White;
-            particle.glow = Vec3(0.5f, 0.5f, 0.5f);
-            particle.model_scale = Vec3(4.0f);
-            particle.initial_speed = 500.0f;
-            particle.dir_randomness = 0.7f;
-            particle.speed_randomness = 0.5f;
-            particle.initial_acc = Vec3(0.0f, -1000.0f, 0.0f);
-            particle.acc_randomness = 0.2f;
-            particle.min_alive_time = 0.2f;
-            particle.max_alive_time = 1.7f;
+                // Create Particle for Impact (Very ugly, will clean up later.)
+                ParticleInstanceDesc particle;
+                particle.count = 25;
+                particle.initial_pos = pos1;
+                particle.initial_dir = XMVector3Normalize(lVelocity1 - lVelocity0);
+                particle.light_color = Vec3(projColor.x, projColor.y, projColor.z);
+                particle.model = ModelIndex::Cube;
+                particle.texture = TextureIndex::White;
+                particle.glow = Vec3(0.5f, 0.5f, 0.5f);
+                particle.model_scale = Vec3(4.0f);
+                particle.initial_speed = 500.0f;
+                particle.dir_randomness = 0.7f;
+                particle.speed_randomness = 0.5f;
+                particle.initial_acc = Vec3(0.0f, -1000.0f, 0.0f);
+                particle.acc_randomness = 0.2f;
+                particle.min_alive_time = 0.2f;
+                particle.max_alive_time = 1.7f;
 
+                // rbuhrbhuiihrbuashuikbdrshikuagdr
+                if (m_Player == causeObject) {
+                    // Ignore duplicate hits, previous solution did not work well so this juryrig should fix it for final release :(
+                    if (player_ignore_list.find(hitObject) == player_ignore_list.end()) {
+                        player_ignore_list.insert(hitObject);
+                        m_Healths.Get(m_Player)->current -= 1;
+                        m_pAudio->play(SoundIndex::PlayerImpact1, staff_tip, 0.45f, 0.5);
+                    }
+                }
+
+                if (m_NPCsActive.Contains(causeObject)) {
+                    // Ignore duplicate hits, previous solution did not work well so this juryrig should fix it for final release :(
+                    NPC* npc = m_NPCs.Get(causeObject);
+                    if (npc->IgnoreList.find(hitObject) == npc->IgnoreList.end()) {
+                        npc->IgnoreList.insert(hitObject);
+                        m_pAudio->play(SoundIndex::EnemyImpactMetal1, npc->LastPosition, 0.55f, 0.5);
+                    }
+                }
+
+                // Spawn Particle
+                SpawnParticles(&particle);
+
+                // Play Audio
+                m_pAudio->play(m_Projectiles.Get(hitObject)->ProjSound, pos1, volume, 0.5);
+            }
+
+        } else if (m_ProjectilesActive.Contains(causeObject)) {
+            SimProjectile* proj = m_Projectiles.Get(causeObject);
+            if (proj->IgnoreList.find(hitObject) == proj->IgnoreList.end()) {
+                player_ignore_list.insert(hitObject);
+
+                // Create Particles
+                Vec4 projColor = proj->Color;
+
+                // Create Particle for Impact (Very ugly, will clean up later.)
+                ParticleInstanceDesc particle;
+                particle.count = 25;
+                particle.initial_pos = pos0;
+                particle.initial_dir = XMVector3Normalize(lVelocity1 - lVelocity0);
+                particle.light_color = Vec3(projColor.x, projColor.y, projColor.z);
+                particle.model = ModelIndex::Cube;
+                particle.texture = TextureIndex::White;
+                particle.glow = Vec3(0.5f, 0.5f, 0.5f);
+                particle.model_scale = Vec3(4.0f);
+                particle.initial_speed = 500.0f;
+                particle.dir_randomness = 0.7f;
+                particle.speed_randomness = 0.5f;
+                particle.initial_acc = Vec3(0.0f, -1000.0f, 0.0f);
+                particle.acc_randomness = 0.2f;
+                particle.min_alive_time = 0.2f;
+                particle.max_alive_time = 1.7f;
+
+                // rbuhrbhuiihrbuashuikbdrshikuagdr
+                if (m_Player == hitObject) {
+                    // Ignore duplicate hits, previous solution did not work well so this juryrig should fix it for final release :(
+                    if (player_ignore_list.find(causeObject) == player_ignore_list.end()) {
+                        player_ignore_list.insert(causeObject);
+                        m_Healths.Get(m_Player)->current -= 1;
+                        m_pAudio->play(SoundIndex::PlayerImpact1, staff_tip, 0.45f, 0.5);
+                    }
+                }
+
+                if (m_NPCsActive.Contains(hitObject)) {
+                    // Ignore duplicate hits, previous solution did not work well so this juryrig should fix it for final release :(
+                    NPC* npc = m_NPCs.Get(hitObject);
+                    if (npc->IgnoreList.find(causeObject) == npc->IgnoreList.end()) {
+                        npc->IgnoreList.insert(causeObject);
+                        m_pAudio->play(SoundIndex::EnemyImpactMetal1, npc->LastPosition, 0.55f, 0.5);
+                    }
+                }
+
+                // Spawn Particle
+                SpawnParticles(&particle);
+
+                // Determine Bounces
+                proj->Bounces++;
+                if (proj->MaxBounces < proj->Bounces) {
+                    *m_Timers.Get(causeObject) = 0.0f;
+                }
+
+                // Play Audio
+                m_pAudio->play(m_Projectiles.Get(causeObject)->ProjSound, pos0, volume, 0.5);
+
+            }
+        }
+
+        if (m_RaycheckActive.Contains(hitObject)) {
             // rbuhrbhuiihrbuashuikbdrshikuagdr
             if (m_Player == causeObject) {
                 // Ignore duplicate hits, previous solution did not work well so this juryrig should fix it for final release :(
                 if (player_ignore_list.find(hitObject) == player_ignore_list.end()) {
                     player_ignore_list.insert(hitObject);
                     m_Healths.Get(m_Player)->current -= 1;
+                    m_pAudio->play(SoundIndex::PlayerImpact1, staff_tip, 0.45f, 0.5);
                 }
             }
 
@@ -249,47 +342,17 @@ void CGame::CustomPhysicsStep() {
                 NPC* npc = m_NPCs.Get(causeObject);
                 if (npc->IgnoreList.find(hitObject) == npc->IgnoreList.end()) {
                     npc->IgnoreList.insert(hitObject);
-
-                    printf("NPC Hit\n");
+                    m_pAudio->play(SoundIndex::EnemyImpactMetal1, npc->LastPosition, 0.55f, 0.5);
                 }
             }
-
-            // Spawn Particle
-            SpawnParticles(&particle);
-
-            // Play Audio
-            m_pAudio->play(m_Projectiles.Get(hitObject)->ProjSound, pos0, volume, 0.5);
-
-        } else if (m_ProjectilesActive.Contains(causeObject)) {
-            SimProjectile* proj = m_Projectiles.Get(causeObject);
-
-            // Create Particles
-            Vec4 projColor = proj->Color;
-
-            // Create Particle for Impact (Very ugly, will clean up later.)
-            ParticleInstanceDesc particle;
-            particle.count = 25;
-            particle.initial_pos = pos0;
-            particle.initial_dir = XMVector3Normalize(lVelocity1 - lVelocity0);
-            particle.light_color = Vec3(projColor.x, projColor.y, projColor.z);
-            particle.model = ModelIndex::Cube;
-            particle.texture = TextureIndex::White;
-            particle.glow = Vec3(0.5f, 0.5f, 0.5f);
-            particle.model_scale = Vec3(4.0f);
-            particle.initial_speed = 500.0f;
-            particle.dir_randomness = 0.7f;
-            particle.speed_randomness = 0.5f;
-            particle.initial_acc = Vec3(0.0f, -1000.0f, 0.0f);
-            particle.acc_randomness = 0.2f;
-            particle.min_alive_time = 0.2f;
-            particle.max_alive_time = 1.7f;
-
+        } else if(m_RaycheckActive.Contains(causeObject)) {
             // rbuhrbhuiihrbuashuikbdrshikuagdr
             if (m_Player == hitObject) {
                 // Ignore duplicate hits, previous solution did not work well so this juryrig should fix it for final release :(
-                if (player_ignore_list.find(hitObject) == player_ignore_list.end()) {
-                    player_ignore_list.insert(hitObject);
-                    printf("Player Hit\n");
+                if (player_ignore_list.find(causeObject) == player_ignore_list.end()) {
+                    player_ignore_list.insert(causeObject);
+                    m_Healths.Get(m_Player)->current -= 1;
+                    m_pAudio->play(SoundIndex::PlayerImpact1, staff_tip, 0.45f, 0.5);
                 }
             }
 
@@ -298,22 +361,9 @@ void CGame::CustomPhysicsStep() {
                 NPC* npc = m_NPCs.Get(hitObject);
                 if (npc->IgnoreList.find(causeObject) == npc->IgnoreList.end()) {
                     npc->IgnoreList.insert(causeObject);
-
-                    printf("NPC Hit\n");
+                    m_pAudio->play(SoundIndex::EnemyImpactMetal1, npc->LastPosition, 0.55f, 0.5);
                 }
             }
-
-            // Spawn Particle
-            SpawnParticles(&particle);
-
-            // Determine Bounces
-            proj->Bounces++;
-            if (proj->MaxBounces < proj->Bounces) {
-                *m_Timers.Get(causeObject) = 0.0f;
-            }
-
-            // Play Audio
-            m_pAudio->play(m_Projectiles.Get(causeObject)->ProjSound, pos0, volume, 0.5);
         }
     }
 
@@ -331,6 +381,11 @@ void CGame::CustomPhysicsStep() {
         Ecs::ApplyEvery(m_NPCsActive, [=](Entity e) {
             NPC* npc = m_NPCs.Get(e);
             npc->IgnoreList.clear();
+        });
+
+        Ecs::ApplyEvery(m_ProjectilesActive, [=](Entity e) {
+            SimProjectile* projectile = m_Projectiles.Get(e);
+            projectile->IgnoreList.clear();
         });
     }
 

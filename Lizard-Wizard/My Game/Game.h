@@ -33,6 +33,7 @@ struct SimProjectile {
     u32 Bounces;
     u32 MaxBounces;
     SoundIndex::e ProjSound;
+    std::unordered_set<Entity> IgnoreList;
     Vec4 Color;
 };
 
@@ -170,6 +171,10 @@ private:
     Table<NPC> m_NPCs;
     Group m_NPCsCache;
     Group m_NPCsActive;
+
+    // Raycheck Cache (MAX 24)
+    Group m_RaycheckCache;
+    Group m_RaycheckActive;
 
     // Rendering Table
     Table<ModelInstance> m_ModelInstances;
@@ -380,6 +385,7 @@ private:
     void InitializeProjectiles();
     void StripProjectile(Entity);
     void StripRay(Entity);
+    void StripRaycheck(Entity);
 
     // NPC MANAGER //
     void Animate(Entity);

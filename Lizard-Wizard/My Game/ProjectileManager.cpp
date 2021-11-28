@@ -169,8 +169,36 @@ void CGame::CalculateRay(
         particle.min_alive_time = 0.2f;
         particle.max_alive_time = 1.7f;
 
-        // Spawn Particle
         SpawnParticles(&particle);
+
+        // Raycheck
+        if (m_RaycheckCache.Size() < 1) {
+            return;
+        }
+
+        Entity rayCheck = m_RaycheckCache.RemoveTail();
+        m_RaycheckActive.AddExisting(rayCheck);
+        m_Timers.AddExisting(rayCheck, 0.1f);
+
+        btRigidBody* body = *m_RigidBodies.Get(rayCheck); 
+        btTransform trans;
+
+        Vec3 orig = hitPosition;
+
+        // Clear forces
+        body->clearForces();
+
+        // Set static attributes.
+        RBSetMassFriction(body, 0.5f, 0.5f);
+        body->setRestitution(6.5f);
+
+        // Re-add regidbody to world after static attribute edit.
+        RBTeleport(body, orig);
+        m_pDynamicsWorld->addRigidBody(body, physicsGroup, physicsMask);
+
+        // Continuous Convex Collision (NOTE) Ethan : This is expensive, so only use it for projectiles.
+        //SetRigidBodyCcd(projectile, 10.0, 75.0f);
+        body->activate();
 
         if (rayBounces > 0) {
             GenerateRayProjectile(caster, Vec3(hitPosition), Vec3(reflectedDirection), 1, 1, rayBounces, color, true, ignoreCaster, physicsGroup, physicsMask);
@@ -254,6 +282,22 @@ void CGame::StripRay(Entity e) {
     m_ModelsActive.Remove(e);
 }
 
+void CGame::StripRaycheck(Entity e) {
+    m_Timers.Remove(e);
+    m_RaycheckCache.AddExisting(e);
+
+    btRigidBody* body = *m_RigidBodies.Get(e);
+
+    // Change Attributes
+    Vec3 orig = Vec3(FLT_MAX, FLT_MAX, FLT_MAX);
+    RBTeleport(body, orig);
+
+    // Removes rigidbody from world to edit constant attributes.
+    m_pDynamicsWorld->removeRigidBody(body);
+
+    RBSetMassFriction(body, 0.0f, 0.0f);
+}
+
 
 void CGame::InitializeProjectiles() {
     for every(index, PROJECTILE_CACHE_SIZE) {
@@ -285,7 +329,7 @@ void CGame::InitializeProjectiles() {
     }
 
     for every(index, RAY_CACHE_SIZE) {
-        // Create Rigidbody and get ECS identifier
+        // Create ECS identifier
         Entity e = Entity();
         RayProjectile newRay;
 
@@ -317,5 +361,22 @@ void CGame::InitializeProjectiles() {
         m_pRenderer->lights.AddExisting(e, newLight);
         m_Rays.AddExisting(e, newRay);
         m_RaysCache.AddExisting(e);
+    }
+
+    for every(index, RAYCHECK_CACHE_SIZE) {
+        // Create Rigidbody and get ECS identifier
+        btRigidBody* newBody = CreateSphereObject(50.f, Vec3(FLT_MAX, FLT_MAX, FLT_MAX), 0.0f, 0.0f, 3, 0b00001);
+        Entity e = m_RigidBodyMap.at(newBody);
+        RemoveRigidBody(newBody);
+
+        // Continuous Convex Collision (NOTE) Ethan : This is expensive, so only use it for projectiles.
+        RBSetCcd(newBody, 1e-7f, 0.50f);
+
+        // Prepare model
+        m_ModelInstances.AddExisting(e, GetSphereModel(*m_RigidBodies.Get(e)));
+
+        // Insert into tables / groups
+        m_RigidBodies.AddExisting(e, newBody);
+        m_RaycheckCache.AddExisting(e);
     }
 }

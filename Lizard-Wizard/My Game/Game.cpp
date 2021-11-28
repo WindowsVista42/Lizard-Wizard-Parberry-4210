@@ -394,6 +394,7 @@ void CGame::EcsUpdate() {
     Ecs::RemoveConditionally(m_ProjectilesActive, TimerLEZero, [=](Entity e) { StripProjectile(e);});
     Ecs::RemoveConditionally(m_RaysActive, TimerLEZero, [=](Entity e) { StripRay(e); });
     Ecs::RemoveConditionally(m_Particles, TimerLEZero, [&](Entity e) { StripParticle(e); });
+    Ecs::RemoveConditionally(m_RaycheckActive, TimerLEZero, [=](Entity e) { StripRaycheck(e); });
     Ecs::RemoveConditionally(m_ParticleInstancesActive, [&](Entity e) { return m_ParticleInstances.Get(e)->count <= 0; }, [&](Entity e) { StripParticleInstance(e); });
 
     f32 dt = m_pTimer->GetFrameTime();

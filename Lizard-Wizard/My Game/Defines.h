@@ -39,6 +39,7 @@ typedef std::pair<u32, u32> Point2;
 #define PROJECTILE_CACHE_SIZE 64
 #define NPC_CACHE_SIZE 24
 #define RAY_CACHE_SIZE 24
+#define RAYCHECK_CACHE_SIZE 24
 
 /// Physics Groups
 #define WORLD_PHYSICS_GROUP 0b0
