@@ -284,7 +284,7 @@ void CGame::UpdatePlayer() {
     // Check Player Location
     {
         Vec3 Pos = m_pRenderer->m_pCamera->GetPos();
-        Vec3 Direction = Pos + Vec3(0, -1.0f, 0) * 250.0f;
+        Vec3 Direction = Pos + Vec3(0, -1.0f, 0) * 400.0f;
 
         btCollisionWorld::ClosestRayResultCallback rayResults(Pos, Direction);
         m_pDynamicsWorld->rayTest(Pos, Direction, rayResults);
@@ -326,24 +326,15 @@ void CGame::UpdatePlayer() {
                     0.01,
                     Vec4(0.1f, 0.5f, 0.8f, 0.0f),
                     SoundIndex::IceImpact1,
-                    true
+                    true,
+                    PROJECTILE_PHYSICS_GROUP,
+                    PLAYER_PROJECTILE_PHYSICS_MASK
                 );
 
                 m_pAudio->play(SoundIndex::IceCast, staff_tip, 0.15f, 0.5);
 
                 break;
             case ProjectileTypes::LIGHTNING :
-                /*GenerateSimProjectile(
-                    *m_RigidBodies.Get(m_Player),
-                    staff_tip,
-                    m_pRenderer->m_pCamera->GetViewVector(),
-                    3,
-                    32000.0,
-                    0.01,
-                    Vec4(0.7f, 0.5, 0.1f, 0.0f),
-                    SoundIndex::LightningCast,
-                    true
-                );*/
                 m_pAudio->play(SoundIndex::LightningCast, staff_tip, 0.10f, 0.5);
 
                 GenerateRayProjectile(
@@ -355,7 +346,9 @@ void CGame::UpdatePlayer() {
                     0.0,
                     Colors::IndianRed,
                     false,
-                    true
+                    true,
+                    PROJECTILE_PHYSICS_GROUP,
+                    PLAYER_PROJECTILE_PHYSICS_MASK
                 );
 
                 break;
@@ -369,7 +362,9 @@ void CGame::UpdatePlayer() {
                     0.1,
                     Vec4(0.8f, 0.1f, 0.1f, 0.0f),
                     SoundIndex::FireImpact1,
-                    true
+                    true,
+                    PROJECTILE_PHYSICS_GROUP,
+                    PLAYER_PROJECTILE_PHYSICS_MASK
                 );
                 m_pAudio->play(SoundIndex::FireCast, staff_tip, 0.15f, 0.5);
 

@@ -173,15 +173,13 @@ void CGame::PhysicsCollisionCallBack(btDynamicsWorld* p, btScalar t) {
 
             if (numContacts > 0 && !Self->m_CurrentCollisions.Contains(pEntity0) && !duplicate) {
                 // Note (Ethan) : Honestly we only need one contact point, none of our objects are large enough to justify more than that.
-                btManifoldPoint& pt = pManifold->getContactPoint(0);
-
                 // Add new collisions to the table.
                 Self->m_CurrentCollisions.AddExisting(pEntity0);
                 Self->m_CurrentCollisions.AddExisting(pEntity1);
 
                 // Add collisions to ignore table to prevent spamming of collisions.
-                Self->m_CollisionPairs.AddExisting(pEntity0, pEntity0);
-                Self->m_CollisionPairs.AddExisting(pEntity1, pEntity1);
+                Self->m_CollisionPairs.AddExisting(pEntity0, pEntity1);
+                Self->m_CollisionPairs.AddExisting(pEntity1, pEntity0);
             }
         } else { // Ignore this collision because we don't want to spam collisions multiple times.
             return;
@@ -191,11 +189,13 @@ void CGame::PhysicsCollisionCallBack(btDynamicsWorld* p, btScalar t) {
 
 void CGame::CustomPhysicsStep() {
     // This plays a sound for all collisions. (NOTE) Ethan : Will be moved into CGame once I move all physics stepping into a new custom function.
-    for every(index, m_CollisionPairs.Size()) {
-        Entity e = m_CollisionPairs.Entities()[index];
 
-        btRigidBody* body0 = (*m_RigidBodies.Get(e));
-        btRigidBody* body1 = (*m_RigidBodies.Get(*m_CollisionPairs.Get(e)));
+    for every(index, m_CollisionPairs.Size()) {
+        Entity causeObject = m_CollisionPairs.Entities()[index];
+        Entity hitObject = *m_CollisionPairs.Get(causeObject);
+
+        btRigidBody* body0 = (*m_RigidBodies.Get(causeObject));
+        btRigidBody* body1 = (*m_RigidBodies.Get(hitObject));
 
         Vec3 pos0 = body0->getWorldTransform().getOrigin();
         Vec3 pos1 = body1->getWorldTransform().getOrigin();
@@ -211,23 +211,10 @@ void CGame::CustomPhysicsStep() {
         //////////////////////
 
         // PROJECTILES //
-        if (m_ProjectilesActive.Contains(e)) {
-            SimProjectile* proj =  m_Projectiles.Get(e);
+        if (m_ProjectilesActive.Contains(hitObject)) {
+            SimProjectile* proj =  m_Projectiles.Get(hitObject);
 
-            // Determine Bounces
-            proj->Bounces++;
-            if (proj->MaxBounces < proj->Bounces) {
-                *m_Timers.Get(e) = 0.0f;
-            }
-
-            // Play Audio
-            m_pAudio->play(m_Projectiles.Get(e)->ProjSound, pos0, volume, 0.5);
-        }
-
-        // OBJECT HIT BY PROJECTILES //
-        if (m_ProjectilesActive.Contains(*m_CollisionPairs.Get(e))) {
             // Create Particles
-            SimProjectile* proj = m_Projectiles.Get(*m_CollisionPairs.Get(e));
             Vec4 projColor = proj->Color;
 
             // Create Particle for Impact (Very ugly, will clean up later.)
@@ -248,24 +235,105 @@ void CGame::CustomPhysicsStep() {
             particle.min_alive_time = 0.2f;
             particle.max_alive_time = 1.7f;
 
+            // rbuhrbhuiihrbuashuikbdrshikuagdr
+            if (m_Player == causeObject) {
+                // Ignore duplicate hits, previous solution did not work well so this juryrig should fix it for final release :(
+                if (player_ignore_list.find(hitObject) == player_ignore_list.end()) {
+                    player_ignore_list.insert(hitObject);
+                    m_Healths.Get(m_Player)->current -= 1;
+                }
+            }
+
+            if (m_NPCsActive.Contains(causeObject)) {
+                // Ignore duplicate hits, previous solution did not work well so this juryrig should fix it for final release :(
+                NPC* npc = m_NPCs.Get(causeObject);
+                if (npc->IgnoreList.find(hitObject) == npc->IgnoreList.end()) {
+                    npc->IgnoreList.insert(hitObject);
+
+                    printf("NPC Hit\n");
+                }
+            }
+
             // Spawn Particle
             SpawnParticles(&particle);
-        }
 
-        // NPC HIT BY PROJECTILES //
-        if (m_NPCsActive.Contains(e)) {
-            // Stub for now, but we can implement damage stuff in here.
-        }
+            // Play Audio
+            m_pAudio->play(m_Projectiles.Get(hitObject)->ProjSound, pos0, volume, 0.5);
 
-        // PLAYER HIT BY PROJECTILES //
-        if (e == m_Player) {
-            // Stub for now, but we can implement damage stuff in here.
+        } else if (m_ProjectilesActive.Contains(causeObject)) {
+            SimProjectile* proj = m_Projectiles.Get(causeObject);
+
+            // Create Particles
+            Vec4 projColor = proj->Color;
+
+            // Create Particle for Impact (Very ugly, will clean up later.)
+            ParticleInstanceDesc particle;
+            particle.count = 25;
+            particle.initial_pos = pos0;
+            particle.initial_dir = XMVector3Normalize(lVelocity1 - lVelocity0);
+            particle.light_color = Vec3(projColor.x, projColor.y, projColor.z);
+            particle.model = ModelIndex::Cube;
+            particle.texture = TextureIndex::White;
+            particle.glow = Vec3(0.5f, 0.5f, 0.5f);
+            particle.model_scale = Vec3(4.0f);
+            particle.initial_speed = 500.0f;
+            particle.dir_randomness = 0.7f;
+            particle.speed_randomness = 0.5f;
+            particle.initial_acc = Vec3(0.0f, -1000.0f, 0.0f);
+            particle.acc_randomness = 0.2f;
+            particle.min_alive_time = 0.2f;
+            particle.max_alive_time = 1.7f;
+
+            // rbuhrbhuiihrbuashuikbdrshikuagdr
+            if (m_Player == hitObject) {
+                // Ignore duplicate hits, previous solution did not work well so this juryrig should fix it for final release :(
+                if (player_ignore_list.find(hitObject) == player_ignore_list.end()) {
+                    player_ignore_list.insert(hitObject);
+                    printf("Player Hit\n");
+                }
+            }
+
+            if (m_NPCsActive.Contains(hitObject)) {
+                // Ignore duplicate hits, previous solution did not work well so this juryrig should fix it for final release :(
+                NPC* npc = m_NPCs.Get(hitObject);
+                if (npc->IgnoreList.find(causeObject) == npc->IgnoreList.end()) {
+                    npc->IgnoreList.insert(causeObject);
+
+                    printf("NPC Hit\n");
+                }
+            }
+
+            // Spawn Particle
+            SpawnParticles(&particle);
+
+            // Determine Bounces
+            proj->Bounces++;
+            if (proj->MaxBounces < proj->Bounces) {
+                *m_Timers.Get(causeObject) = 0.0f;
+            }
+
+            // Play Audio
+            m_pAudio->play(m_Projectiles.Get(causeObject)->ProjSound, pos0, volume, 0.5);
         }
     }
 
     // Clear old collisions once were done with the current pass.
     m_CurrentCollisions.Clear();
+
+    // Check to update collision pairs every four frames.
     m_CollisionPairs.Clear();
+
+    // Check Collision Table Validity
+    m_CurrentStep++;
+    if (m_CurrentStep % 16 == 0) {
+        m_CurrentStep = 0;
+        player_ignore_list.clear();
+        Ecs::ApplyEvery(m_NPCsActive, [=](Entity e) {
+            NPC* npc = m_NPCs.Get(e);
+            npc->IgnoreList.clear();
+        });
+    }
+
 }
 
 // Helper Functions, these will be helpful when we don't want to keep passing the dynamics world to managers.
@@ -330,7 +398,7 @@ void CGame::InitializePhysics() {
 
     // m_Player Rigidbody | (Note) : Create this first, as the m_Player is currently indexed as [0] in the collision table.
     {
-        btRigidBody* rb = CreateCapsuleObject(100.0f, 250.0f, IndexToWorld(1, 1), 1.0f, 0.5f, 2, 0b00001);
+        btRigidBody* rb = CreateBoxObject(Vec3(300.f, 400.f, 300.f), IndexToWorld(1, 1), 1.0f, 0.5f, PLAYER_PHYSICS_GROUP, PLAYER_PHYSICS_MASK); //CreateCapsuleObject(250.0f, 300.0f, IndexToWorld(1, 1), 1.0f, 0.5f, PLAYER_PHYSICS_GROUP, PLAYER_PHYSICS_MASK);
         RBSetMassFriction(rb, 1.0, 0.1);
         RBSetCcd(rb, 1e-7, 200.0f);
         m_Player = m_RigidBodyMap.at(rb);

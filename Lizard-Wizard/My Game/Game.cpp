@@ -320,17 +320,18 @@ void CGame::EcsUpdate() {
     Ecs::ApplyEvery(m_NPCsActive, [=](Entity e) {
         NPC* npc = m_NPCs.Get(e);
         btRigidBody* body = *m_RigidBodies.Get(e);
-        Vec3 origin = body->getWorldTransform().getOrigin();
+        Vec3 origin = npc->LastPosition;
 
         btCollisionShape* currentShape = body->getCollisionShape();
         btBoxShape* boxShape = reinterpret_cast<btBoxShape*>(currentShape);
+        Vec3 scale = boxShape->getHalfExtentsWithMargin();
 
         m_pRenderer->lights.Get(e)->position = *(Vec4*)&origin;
 
         (*m_ModelInstances.Get(e)).world = MoveRotateScaleMatrix(
-            npc->LastPosition,
+            Vec3(origin.x, origin.y - 300.0f, origin.z),
             body->getWorldTransform().getRotation(),
-            boxShape->getHalfExtentsWithMargin()
+            Vec3(scale.x / 2.75f, scale.y / 4.0f, scale.z / 1.5f)
         );
 
         DirectNPC(e);
@@ -369,9 +370,10 @@ void CGame::EcsUpdate() {
         rotation.x = -(rotation.x);
         rotation.y = -(rotation.y);
         rotation.z = -(rotation.z);
+        // quaternion conjugate  ?? ? ? ? ?
 
         (*m_ModelInstances.Get(e)).world = MoveRotateScaleMatrix(
-            origin + (Vec3)((*m_RigidBodies.Get(m_Player))->getLinearVelocity() / 9.5f),
+            origin,
             rotation,
             bounds
         );

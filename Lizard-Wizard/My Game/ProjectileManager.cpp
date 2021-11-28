@@ -49,7 +49,9 @@ void CGame::GenerateSimProjectile(
     const f32 projectileAccuracy, 
     const Vec4 projectileColor, 
     const SoundIndex::e projectileSound,
-    const b8 ignoreCaster
+    const b8 ignoreCaster,
+    const i32 physicsGroup,
+    const i32 physicsMask
 ) {
     for (i32 i = 0; i < projectileCount; i++) {
         // Check cache for open projectiles.
@@ -81,7 +83,7 @@ void CGame::GenerateSimProjectile(
         projectile->setRestitution(6.5f);
 
         // Re-add regidbody to world after static attribute edit.
-        m_pDynamicsWorld->addRigidBody(projectile, 2, 0b00001);
+        m_pDynamicsWorld->addRigidBody(projectile, physicsGroup, physicsMask);
 
         // Set real-time attributes.
         RBTeleportLaunch(projectile, orig, Vec3(velDirection * projectileVelocity));
@@ -103,7 +105,9 @@ void CGame::CalculateRay(
     Vec3 btLookDirection,
     i32 rayBounces,
     Vec4 color,
-    b8 ignoreCaster
+    b8 ignoreCaster,
+    const i32 physicsGroup,
+    const i32 physicsMask
 ) {
     newRay.Pos1 = Pos1;
     if (m_RaysCache.Size() < 1) {
@@ -123,8 +127,8 @@ void CGame::CalculateRay(
 
     btCollisionWorld::ClosestRayResultCallback rayResults(Pos1, Vec3(Pos1 + btLookDirection * 15000.0));
     if (ignoreCaster) {
-        rayResults.m_collisionFilterGroup = 0b00100;
-		rayResults.m_collisionFilterMask = 0b00001;
+        rayResults.m_collisionFilterGroup = physicsGroup;
+		rayResults.m_collisionFilterMask = physicsMask;
 
     }
     m_pDynamicsWorld->rayTest(Pos1, Vec3(Pos1 + btLookDirection * 15000.0), rayResults);
@@ -169,7 +173,7 @@ void CGame::CalculateRay(
         SpawnParticles(&particle);
 
         if (rayBounces > 0) {
-            GenerateRayProjectile(caster, Vec3(hitPosition), Vec3(reflectedDirection), 1, 1, rayBounces, color, true, ignoreCaster);
+            GenerateRayProjectile(caster, Vec3(hitPosition), Vec3(reflectedDirection), 1, 1, rayBounces, color, true, ignoreCaster, physicsGroup, physicsMask);
         }
 
     } else {
@@ -189,7 +193,9 @@ void CGame::GenerateRayProjectile(
     const f32 rayAccuracy, 
     const Vec4 rayColor, 
     const b8 recursed, 
-    const b8 ignoreCaster
+    const b8 ignoreCaster,
+    const i32 physicsGroup,
+    const i32 physicsMask
 ) {
     RayProjectile newRay;
     newRay.Pos1 = Vec3(startPos.x, startPos.y, startPos.z) + lookDirection * 500.;
@@ -199,13 +205,13 @@ void CGame::GenerateRayProjectile(
     if (!recursed) {
         for (i32 i = 0; i < rayCount; i++) {
             Vec3 newDirection = JitterVec3(lookDirection, -rayAccuracy, rayAccuracy);
-            CalculateRay(caster, newRay, startPos, newDirection, rayBounces, Colors::Peru, ignoreCaster);
+            CalculateRay(caster, newRay, startPos + (Vec3)((*m_RigidBodies.Get(m_Player))->getLinearVelocity() / 9.5f), newDirection, rayBounces, Colors::Peru, ignoreCaster, physicsGroup, physicsMask);
             m_currentRayProjectiles.push_back(newRay);
         }
     }
     else {
         for (i32 i = 0; i < rayCount; i++) {
-            CalculateRay(caster, newRay, startPos, lookDirection, rayBounces, Colors::Peru, ignoreCaster);
+            CalculateRay(caster, newRay, startPos, lookDirection, rayBounces, Colors::Peru, ignoreCaster, physicsGroup, physicsMask);
             m_currentRayProjectiles.push_back(newRay);
         }
     }

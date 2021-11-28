@@ -48,6 +48,7 @@ struct NPC {
     u32 SearchAttempts;
     Vec3 QueuedMovement;
     Vec3 LastPosition;
+    std::unordered_set<Entity> IgnoreList;
     NPC() :
         Behavior(NPCBehavior::TURRET),
         State(NPCState::SLEEPING)
@@ -225,6 +226,9 @@ private:
     Vec3 player_pos_last_frame = Vec3(0);
     Vec3 staff_tip;
 
+    // Player Ignore List
+    std::unordered_set<Entity> player_ignore_list;
+
     Vector3 flycam_pos = { -10000.0f, 0.0f, -10000.0f };
     f32 flycam_speed = 6000.0f;
     
@@ -340,7 +344,9 @@ private:
         const f32,
         const Vec4,
         const SoundIndex::e,
-        const b8
+        const b8,
+        const i32,
+        const i32
     );
 
     void GenerateRayProjectile(
@@ -352,7 +358,9 @@ private:
         const f32,
         const Vec4,
         const b8,
-        const b8
+        const b8,
+        const i32,
+        const i32
     );
 
     void CalculateRay(
@@ -362,7 +370,9 @@ private:
         Vec3, 
         i32, 
         Vec4, 
-        b8
+        b8,
+        const i32,
+        const i32
     );
 
     void InitializeProjectiles();

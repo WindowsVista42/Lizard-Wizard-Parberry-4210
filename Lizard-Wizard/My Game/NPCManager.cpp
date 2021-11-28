@@ -24,6 +24,8 @@ ModelInstance GetNPCModel(btRigidBody* body) {
     Quat rotation = body->getWorldTransform().getRotation();
     Vec3 scale = boxShape->getHalfExtentsWithMargin();
 
+    scale = Vec3(scale.x / 1.5f, scale.y / 4.0f, scale.z / 1.5f);
+
     ModelInstance instance = {};
     instance.model = ModelIndex::Obelisk;
     instance.texture = TextureIndex::White;
@@ -84,7 +86,9 @@ void CGame::Wander(Entity e) {
         if (CheckBounds(p.first, p.second) && m_GameMap[p.first][p.second]) { break; }
         max_tries -= 1;
     }
-    SetNPCRender(npcBody, npcBody->getWorldTransform().getOrigin(), npcBody->getWorldTransform().getBasis());
+    Vec3 origin = npcBody->getWorldTransform().getOrigin();
+    origin.y = -500.0f;
+    SetNPCRender(npcBody, origin, npcBody->getWorldTransform().getBasis());
     currentNPC->State = NPCState::MOVING;
 }
 
@@ -121,15 +125,22 @@ void CGame::Pathfind(Entity e) {
     btRigidBody* npcBody = *m_RigidBodies.Get(e);
 
     std::vector<Point2> path = Pathfind(WorldToIndex(npcBody->getWorldTransform().getOrigin()), WorldToIndex(playerBody->getWorldTransform().getOrigin()));
-
     if (path.size() > 1) {
-        currentNPC->QueuedMovement = IndexToWorld(path[path.size() - 1].first, path[path.size() - 1].second) + 500.0f * Vec3(GameRandom::Randf32() - 0.5f, 0.0f, GameRandom::Randf32() - 0.5f);
+        Vec3 moveTo = IndexToWorld(path[path.size() - 1].first, path[path.size() - 1].second) + 500.0f * Vec3(GameRandom::Randf32() - 0.5f, 0.0f, GameRandom::Randf32() - 0.5f);
+        moveTo.y = -500.0f;
+        currentNPC->QueuedMovement = moveTo;
     } else {
         currentNPC->QueuedMovement = npcBody->getWorldTransform().getOrigin();
     }
 
     SetNPCRender(npcBody, npcBody->getWorldTransform().getOrigin(), npcBody->getWorldTransform().getBasis());
     currentNPC->State = NPCState::MOVING;
+
+    f32 distance = npcBody->getWorldTransform().getOrigin().distance(playerBody->getWorldTransform().getOrigin());
+    if (distance < 7500.0f) {
+        currentNPC->State = NPCState::ATTACKING;
+    }
+
 }
 
 void CGame::Attack(Entity e) {
@@ -162,7 +173,9 @@ void CGame::Attack(Entity e) {
                 0.05,
                 Colors::LavenderBlush,
                 SoundIndex::FireImpact1,
-                true
+                true,
+                PROJECTILE_PHYSICS_GROUP,
+                NPC_PROJECTILE_PHYSICS_MASK
             );
         }
     } else {
@@ -195,22 +208,6 @@ void CGame::Search(Entity e) {
     }
     SetNPCRender(npcBody, npcBody->getWorldTransform().getOrigin(), npcBody->getWorldTransform().getBasis());
 }
-
-/*
-void CGame::DetermineBehavior(Entity e) {
-    switch (m_NPCs.Get(e)->Behavior) {
-    case NPCBehavior::MELEE:
-        printf("Melee Behavior\n");
-        break;
-    case NPCBehavior::RANGED:
-        printf("Ranged Behavior\n");
-        break;
-    case NPCBehavior::TURRET:
-    default:
-        return;
-    }
-}
-*/
 
 // Contains most of the logical code for handling NPCs
 void CGame::DirectNPC(Entity e) {
@@ -267,13 +264,13 @@ void CGame::PlaceNPC(Vec3 startPos, Vec3 lookDirection) {
     btVector3 inertia;
 
     // Set attributes.
-    body->getWorldTransform().setOrigin(Vec3(newPos.x, -1000.0f, newPos.z));
+    body->getWorldTransform().setOrigin(Vec3(newPos.x, -500.0f, newPos.z));
     body->getCollisionShape()->calculateLocalInertia(mass, inertia);
     body->setMassProps(mass, inertia);
     body->setFriction(friction);
 
     // Re-add regidbody to world after edit.
-    AddRigidBody(body, 2, 0b00001);
+    AddRigidBody(body, NPC_PHYSICS_GROUP, NPC_PHYSICS_MASK);
     m_Timers.AddExisting(e, 10.0f);
     body->activate();
 
@@ -318,7 +315,7 @@ void CGame::StripNPC() {
 void CGame::InitializeNPCs() {
     for every(index, NPC_CACHE_SIZE) {
         // Create Rigidbody, get ECS identifier, and create new NPC
-        btRigidBody* newBody = CreateBoxObject(Vec3(150.f, 150.f, 150.f), Vec3(FLT_MAX, FLT_MAX, FLT_MAX), 0.0f, 0.0f, 3, 0b00001);
+        btRigidBody* newBody = CreateBoxObject(Vec3(450.f, 600.f, 300.f), Vec3(FLT_MAX, FLT_MAX, FLT_MAX), 0.0f, 0.0f, 3, 0b00001);
         Entity e = m_RigidBodyMap.at(newBody);
         NPC newNPC = NPC();
         RemoveRigidBody(newBody);
