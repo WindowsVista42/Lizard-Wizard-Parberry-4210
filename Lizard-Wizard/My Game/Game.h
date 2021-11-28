@@ -109,6 +109,7 @@ struct Panel {
     bool Hovering;
     bool Pressed = false;
     Vec3 Tint;
+    Vec2 Position;
     u32 nextState;
 
 };
@@ -144,6 +145,7 @@ private:
     Table<Panel> m_Panel;
     Table<PanelText> m_PanelText;
     Group m_MainMenu;
+    Group mm_Panel;
     Group m_SettingsMenu;
     Group m_PauseMenu;
     bool m_DrawMainMenu = false;
@@ -389,6 +391,7 @@ private:
     void Search(Entity);
     void DirectNPC(Entity);
     void PlaceNPC(Vec3, Vec3);
+    void PlaceNPC2(Vec3);
     void InitializeNPCs();
     void StripNPC();
 
@@ -396,7 +399,7 @@ private:
 
     // MENU MANAGER //
     void InitializeMenu();
-    void InputMenu();
+    void MenuInput();
     void RenderMenu();
 
     // TESTING ROOM //

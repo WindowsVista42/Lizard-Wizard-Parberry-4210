@@ -201,10 +201,11 @@ void CGame::InputHandler() {
     if (m_pKeyboard->TriggerDown(VK_F3))
         m_bDrawHelpMessage = !m_bDrawHelpMessage;
 
-    if (m_pKeyboard->TriggerDown(VK_BACK)) { // restart game
+    if (m_pKeyboard->Down(VK_BACK)) { // restart game
         m_reset = true;
     }
 
+    // Shift+Delete
     if (m_pKeyboard->Down(VK_DELETE)) { // stop game
         exit(EXIT_SUCCESS);
     }
@@ -216,8 +217,15 @@ void CGame::InputHandler() {
     // Toggles Main Menu
     if (m_pKeyboard->TriggerDown('P')) {
         m_DrawMainMenu = !m_DrawMainMenu;
+
+       // m_MouseToggled = !m_MouseToggled;
+       // m_MouseJustToggled = true;
+
         std::cout << "Menu Status: " << m_DrawMainMenu << std::endl;
     }
+  //  else {
+   //     m_MouseJustToggled = false;   
+   // }
 
     if (m_pKeyboard->TriggerDown('M')) {
         m_pAudio->mute();
@@ -254,6 +262,8 @@ void CGame::InputHandler() {
     m_rightClick.UpdateState();
 
     PlayerInput();
+
+    MenuInput();
 
     {
         static f32 intensity = 1.0f;
@@ -414,6 +424,10 @@ void CGame::EcsUpdate() {
         btClamp<f32>(mana->timer, 0.0, FLT_MAX);
         mana->value = (i32)(((mana->recharge * (f32)mana->max) - mana->timer) / mana->recharge);
     }
+
+    if (m_Healths.Get(m_Player)->current <= 0) {
+        m_reset = true;
+    }
 }
 
 /// Ask the object manager to draw the game objects. The renderer is notified
@@ -493,73 +507,7 @@ void CGame::RenderFrame() {
         m_pRenderer->EndUIDrawing();
     }
 
-    // MAIN MENU
-    {
-        m_pRenderer->BeginUIDrawing();
-
-        if (m_DrawMainMenu == true) {
-
-            Panel panel;
-            PanelText panel_text;
-
-
-            //m_pRenderer->DrawCenteredText(L"Main Menu.\n", Colors::White);
-
-            SpriteInstance sprite_instance;
-/*
-            // Background
-            sprite_instance.position = Vec2(100.0f, 100.0f);
-            sprite_instance.roll = 0.0f;
-            sprite_instance.scale = Vec2(800.0f, 800.0f);
-            sprite_instance.rgba = Vec4(1.0f, 1.0f, 1.0f, 1.0f);
-            sprite_instance.texture_index = TextureIndex::White;
-            m_pRenderer->DrawSpriteInstance(&sprite_instance);
-*/
-            // Resume Button -- Yellow
-            sprite_instance.position = Vec2(100.0f, 100.0f);
-            sprite_instance.roll = 0.0f;
-            sprite_instance.scale = Vec2(100.0f, 100.0f);
-            sprite_instance.rgba = Vec4(1.0f, 1.0f, 0.0f, 1.0f);
-            sprite_instance.texture_index = TextureIndex::White;
-            m_pRenderer->DrawSpriteInstance(&sprite_instance);
-
-            if (panel.Pressed == true) {
-                m_pRenderer->DrawCenteredText(
-
-                    L"Press 'P' to toggle Main Menu.\n"
-
-                    , Colors::White
-                );
-            }
-
-            // Settings Button -- Red
-            sprite_instance.position = Vec2(450.0f, 100.0f);
-            sprite_instance.roll = 0.0f;
-            sprite_instance.scale = Vec2(100.0f, 100.0f);
-            sprite_instance.rgba = Vec4(1.0f, 0.0f, 0.0f, 1.0f);
-            sprite_instance.texture_index = TextureIndex::White;
-            m_pRenderer->DrawSpriteInstance(&sprite_instance);
-            
-            panel_text.position = Vector2(100.0f, 100.0f);
-
-
-            // Exit Button -- Pink
-            sprite_instance.position = Vec2(800.0f, 100.0f);
-            sprite_instance.roll = 0.0f;
-            sprite_instance.scale = Vec2(100.0f, 100.0f);
-            sprite_instance.rgba = Vec4(1.0f, 0.0f, 1.0f, 1.0f);
-            sprite_instance.texture_index = TextureIndex::White;
-            m_pRenderer->DrawSpriteInstance(&sprite_instance);
-
-
-        }
-
-
-
-
-
-        m_pRenderer->EndUIDrawing();
-    }
+    RenderMenu();
 
     m_pRenderer->EndFrame();
 }
@@ -583,7 +531,7 @@ void CGame::Update() {
 
 void CGame::ProcessFrame() {
     InputHandler(); // handle keyboard input
-    InputMenu(); 
+   // MenuInput(); 
 
     m_pAudio->BeginFrame(); // notify audio player that frame has begun
 

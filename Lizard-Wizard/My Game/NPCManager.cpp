@@ -11,6 +11,12 @@
 
 */
 
+btMatrix3x3 NpcLookAt(btRigidBody* npc, btRigidBody* player) {
+    Vec3 origin = npc->getWorldTransform().getOrigin();
+    Vec3 lookAt = player->getWorldTransform().getOrigin() + player->getLinearVelocity() / 4;
+    return *(btMatrix3x3*)&XMMatrixLookAtLH(origin, lookAt, Vec3(0, 1.0f, 0));
+};
+
 void SetNPCRender(btRigidBody* npcBody, Vec3 origin, btMatrix3x3 basis) {
     npcBody->getWorldTransform().setBasis(basis);
     npcBody->getWorldTransform().setOrigin(origin);
@@ -38,9 +44,13 @@ void CGame::Animate(Entity e) {
     Animation* currentAnimation = m_Animations.Get(e);
     NPC* currentNPC = m_NPCs.Get(e);
     btRigidBody* npcBody = *m_RigidBodies.Get(e);
+    btRigidBody* playerBody = *m_RigidBodies.Get(m_Player);
     if (currentAnimation->steps == currentAnimation->maxSteps) {
         m_Animations.Remove(e);
-        SetNPCRender(npcBody, npcBody->getWorldTransform().getOrigin(), npcBody->getWorldTransform().getBasis());
+        //SetNPCRender(npcBody, npcBody->getWorldTransform().getOrigin(), npcBody->getWorldTransform().getBasis());
+
+    	btMatrix3x3 mat = NpcLookAt(npcBody, playerBody);
+    	SetNPCRender(npcBody, npcBody->getWorldTransform().getOrigin(), mat);
 
         currentNPC->State = NPCState::SEARCHING;
     } else {
@@ -48,7 +58,10 @@ void CGame::Animate(Entity e) {
         currentAnimation->steps = currentAnimation->steps + 1.0f;
 
         Vec3 origin = LinearLerp(currentAnimation->beginPos, currentAnimation->endPos, currentAnimation->percent);
-        SetNPCRender(npcBody, origin, npcBody->getWorldTransform().getBasis());
+        //SetNPCRender(npcBody, origin, npcBody->getWorldTransform().getBasis());
+
+    	btMatrix3x3 mat = NpcLookAt(npcBody, playerBody);
+    	SetNPCRender(npcBody, origin, mat);
     }
 }
 
@@ -82,7 +95,6 @@ void CGame::Wander(Entity e) {
     while (max_tries > 0) {
         currentNPC->QueuedMovement = npcBody->getWorldTransform().getOrigin() + Vec3((GameRandom::Randf32() * 1000.0f) * Vec3(BiasedPointIn2DPlane(0.5f, npcBody->getWorldTransform().getOrigin(), goal)));
         Point2 p = WorldToIndex(currentNPC->QueuedMovement);
-        currentNPC->QueuedMovement.Print();
         if (CheckBounds(p.first, p.second) && m_GameMap[p.first][p.second]) { break; }
         max_tries -= 1;
     }
@@ -96,8 +108,11 @@ void CGame::Move(Entity e, Vec3 moveTo) {
     // Ensuring object is placed correctly in world.
     //btRigidBody* playerBody = *(m_RigidBodies.Get(m_Player));
     btRigidBody* npcBody = *m_RigidBodies.Get(e);
+    btRigidBody* playerBody = *m_RigidBodies.Get(m_Player);
 
-    SetNPCRender(npcBody, npcBody->getWorldTransform().getOrigin(), npcBody->getWorldTransform().getBasis());
+    //SetNPCRender(npcBody, npcBody->getWorldTransform().getOrigin(), npcBody->getWorldTransform().getBasis());
+    btMatrix3x3 mat = NpcLookAt(npcBody, playerBody);
+    SetNPCRender(npcBody, npcBody->getWorldTransform().getOrigin(), mat);
 
     // Animation
     Animation newAnimation;
@@ -133,7 +148,9 @@ void CGame::Pathfind(Entity e) {
         currentNPC->QueuedMovement = npcBody->getWorldTransform().getOrigin();
     }
 
-    SetNPCRender(npcBody, npcBody->getWorldTransform().getOrigin(), npcBody->getWorldTransform().getBasis());
+    //SetNPCRender(npcBody, npcBody->getWorldTransform().getOrigin(), npcBody->getWorldTransform().getBasis());
+    btMatrix3x3 mat = NpcLookAt(npcBody, playerBody);
+    SetNPCRender(npcBody, npcBody->getWorldTransform().getOrigin(), mat);
     currentNPC->State = NPCState::MOVING;
 
     f32 distance = npcBody->getWorldTransform().getOrigin().distance(playerBody->getWorldTransform().getOrigin());
@@ -151,7 +168,7 @@ void CGame::Attack(Entity e) {
 
     Vec3 origin = npcBody->getWorldTransform().getOrigin();
     Vec3 lookAt = playerBody->getWorldTransform().getOrigin() + playerBody->getLinearVelocity() / 4;
-    btMatrix3x3 newMat = *(btMatrix3x3*)&XMMatrixLookAtLH(origin, lookAt, Vec3(0, 1.0f, 0));
+    btMatrix3x3 newMat = NpcLookAt(npcBody, playerBody); 
 
     f32 waitTimer;
 
@@ -206,7 +223,9 @@ void CGame::Search(Entity e) {
             currentNPC->SearchAttempts++;
         }
     }
-    SetNPCRender(npcBody, npcBody->getWorldTransform().getOrigin(), npcBody->getWorldTransform().getBasis());
+    //SetNPCRender(npcBody, npcBody->getWorldTransform().getOrigin(), npcBody->getWorldTransform().getBasis());
+    btMatrix3x3 mat = NpcLookAt(npcBody, playerBody);
+    SetNPCRender(npcBody, npcBody->getWorldTransform().getOrigin(), mat);
 }
 
 // Contains most of the logical code for handling NPCs
@@ -271,6 +290,45 @@ void CGame::PlaceNPC(Vec3 startPos, Vec3 lookDirection) {
 
     // Re-add regidbody to world after edit.
     AddRigidBody(body, NPC_PHYSICS_GROUP, NPC_PHYSICS_MASK);
+    m_Timers.AddExisting(e, 10.0f);
+    body->activate();
+
+    m_pRenderer->lights.Get(e)->position = *(Vec4*)&body->getWorldTransform().getOrigin();
+
+    // Add model to world
+    (*m_ModelInstances.Get(e)).world = 
+        MoveRotateScaleMatrix(body->getWorldTransform().getOrigin(), 
+            *(Quat*)&body->getWorldTransform().getRotation(), 
+            boxShape->getHalfExtentsWithMargin()
+        );
+    m_ModelsActive.AddExisting(e);
+
+    SetNPCRender(body, body->getWorldTransform().getOrigin(), body->getWorldTransform().getBasis());
+}
+
+// Places a cached NPC.
+void CGame::PlaceNPC2(Vec3 startPos) {
+    Entity e = m_NPCsCache.RemoveTail();
+    m_NPCsActive.AddExisting(e);
+
+    btRigidBody* body = *m_RigidBodies.Get(e);
+    btCollisionShape* currentShape = body->getCollisionShape();
+    btBoxShape* boxShape = reinterpret_cast<btBoxShape*>(currentShape);
+
+    Vec3 newPos = Vec3(startPos.x, startPos.y, startPos.z);
+
+    f32 mass = 0.0f; // For now were making this static until we get a proper NPC movement system.
+    f32 friction = 0.0f;
+    btVector3 inertia;
+
+    // Set attributes.
+    body->getWorldTransform().setOrigin(Vec3(newPos.x, -1000.0f, newPos.z));
+    body->getCollisionShape()->calculateLocalInertia(mass, inertia);
+    body->setMassProps(mass, inertia);
+    body->setFriction(friction);
+
+    // Re-add regidbody to world after edit.
+    AddRigidBody(body, 2, 0b00001);
     m_Timers.AddExisting(e, 10.0f);
     body->activate();
 

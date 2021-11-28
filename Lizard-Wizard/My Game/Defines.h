@@ -234,7 +234,7 @@ namespace ExitTag {
 
 namespace MenuState {
     enum state : u32 {
-        MAIN, SETTINGS, PAUSE
+        MAIN, SETTINGS, PAUSE, EXIT, RESUME
     };
 }
 
