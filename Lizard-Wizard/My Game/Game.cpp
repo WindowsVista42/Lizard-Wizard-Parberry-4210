@@ -260,7 +260,7 @@ void CGame::InputHandler() {
     // Spawn NPC
     if (m_pKeyboard->TriggerDown('N')) {
         if (m_NPCsCache.Size() > 0) {
-            PlaceNPC(m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), NPCType::OBELISK);
+            PlaceNPC(m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), NPCType::BOSS);
         }
     }
 

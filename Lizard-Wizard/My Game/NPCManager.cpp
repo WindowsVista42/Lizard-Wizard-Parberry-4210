@@ -23,16 +23,140 @@ void SetNPCRender(btRigidBody* npcBody, Vec3 origin, btMatrix3x3 basis) {
     npcBody->getWorldTransform().setOrigin(origin);
 }
 
-void CGame::BossAttack1(Entity e) {
+void CGame::BossAttack1(Entity e) { // Ice attack, 3 projectiles in a 15 degree spread. Each deals 2 damage.
+    NPC* currentNPC = m_NPCs.Get(e);
 
+    btRigidBody* playerBody = *(m_RigidBodies.Get(m_Player));
+    btRigidBody* npcBody = *m_RigidBodies.Get(e);
+
+    i32 numProjectiles = 3;
+
+    f32 offset = 0.225f;
+    f32 angle = -0.225f;
+    f32 rotX;
+    f32 rotZ;
+    Vec3 origin = npcBody->getWorldTransform().getOrigin() + Vec3(800.0f, 750.0f, 0.0f);
+    Vec3 lookAt = playerBody->getWorldTransform().getOrigin() + playerBody->getLinearVelocity() / 3.5;
+    Vec3 face = -XMVector3Normalize(origin - lookAt);
+    Vec2 rotVec;
+    face.Print();
+
+    for every(index, numProjectiles) {
+        rotVec = Vec2(face.x, face.z);
+        rotX = (rotVec.x * cos(angle)) - (rotVec.y * sin(angle));
+        rotZ = (rotVec.x * sin(angle)) + (rotVec.y * cos(angle));
+        face.x = rotX; face.z = rotZ;
+        angle += offset;
+
+        face.Print();
+        GenerateSimProjectile(
+            npcBody,
+            origin,
+            face,
+            1,
+            14000.0,
+            0.0,
+            Vec4(20.0f, 150.0f, 500.0f, 0) / 105.0f,
+            SoundIndex::IceImpact1,
+            true,
+            PROJECTILE_PHYSICS_GROUP,
+            NPC_PROJECTILE_PHYSICS_MASK,
+            0
+        );
+        face.Print();
+        face = -XMVector3Normalize(origin - lookAt);
+        m_pAudio->play(SoundIndex::IceCast, staff_tip, 0.35f, 0.5);
+    }
 }
 
-void CGame::BossAttack2(Entity e) {
+void CGame::BossAttack2(Entity e) { // Fire attack, 5 projectiles in a 5 degree spread. Each deals 1 damage.
+    i32 numProjectiles = 5;
+    NPC* currentNPC = m_NPCs.Get(e);
 
+    btRigidBody* playerBody = *(m_RigidBodies.Get(m_Player));
+    btRigidBody* npcBody = *m_RigidBodies.Get(e);
+
+    f32 offset = 0.15f;
+    f32 angle = -0.15f;
+    f32 rotX;
+    f32 rotZ;
+    Vec3 origin = npcBody->getWorldTransform().getOrigin() + Vec3(-800.0f, 750.0f, 0.0f);
+    Vec3 lookAt = playerBody->getWorldTransform().getOrigin() + playerBody->getLinearVelocity() / 3.5;
+    Vec3 face = -XMVector3Normalize(origin - lookAt);
+    Vec2 rotVec;
+    face.Print();
+
+    for every(index, numProjectiles) {
+        rotVec = Vec2(face.x, face.z);
+        rotX = (rotVec.x * cos(angle)) - (rotVec.y * sin(angle));
+        rotZ = (rotVec.x * sin(angle)) + (rotVec.y * cos(angle));
+        face.x = rotX; face.z = rotZ;
+        angle += offset;
+
+        face.Print();
+        GenerateSimProjectile(
+            npcBody,
+            origin,
+            face,
+            1,
+            14000.0,
+            0.0,
+            Vec4(500.0f, 40.0f, 100.0f, 0) / 105.0f,
+            SoundIndex::FireImpact1,
+            true,
+            PROJECTILE_PHYSICS_GROUP,
+            NPC_PROJECTILE_PHYSICS_MASK,
+            0
+        );
+        face.Print();
+        face = -XMVector3Normalize(origin - lookAt);
+        m_pAudio->play(SoundIndex::FireCast, staff_tip, 0.65f, 0.5);
+    }
 }
 
-void CGame::BossAttack3(Entity e) {
+void CGame::BossAttack3(Entity e) { // Lightning attack, 3 bolts of lightning in a random assortment. Each deals 1 damage. Bounces twice.
+    i32 numProjectiles = 3;
+    NPC* currentNPC = m_NPCs.Get(e);
 
+    btRigidBody* playerBody = *(m_RigidBodies.Get(m_Player));
+    btRigidBody* npcBody = *m_RigidBodies.Get(e);
+
+    f32 offset = 0.4f;
+    f32 angle = -0.4f;
+    f32 rotX;
+    f32 rotZ;
+    Vec3 origin = npcBody->getWorldTransform().getOrigin() + Vec3(0.0f, 750.0f, 0.0f);
+    Vec3 lookAt = playerBody->getWorldTransform().getOrigin();
+    Vec3 face = -XMVector3Normalize(origin - lookAt);
+    Vec2 rotVec;
+    face.Print();
+
+    for every(index, numProjectiles) {
+        rotVec = Vec2(face.x, face.z);
+        rotX = (rotVec.x * cos(angle)) - (rotVec.y * sin(angle));
+        rotZ = (rotVec.x * sin(angle)) + (rotVec.y * cos(angle));
+        face.x = rotX; face.z = rotZ;
+        angle += offset;
+
+        face.Print();
+        GenerateRayProjectile(
+            *m_RigidBodies.Get(m_Player),
+            origin,
+            face,
+            1,
+            2,
+            0.05,
+            Colors::IndianRed,
+            false,
+            true,
+            PROJECTILE_PHYSICS_GROUP,
+            PLAYER_PROJECTILE_PHYSICS_MASK,
+            1
+        );
+        m_pAudio->play(SoundIndex::LightningCast, staff_tip, 0.05f, 0.5);
+        face.Print();
+        face = -XMVector3Normalize(origin - lookAt);
+    }
 }
 
 b8 CGame::PlayerInView(btRigidBody* body) {
@@ -205,30 +329,63 @@ void CGame::Attack(Entity e) {
     SetNPCRender(npcBody, origin, newMat);
 
     f32 distance = npcBody->getWorldTransform().getOrigin().distance(playerBody->getWorldTransform().getOrigin());
-    if (distance < NPC_ATTACK_RADIUS && PlayerInView(npcBody)) {
-        waitTimer = *m_Timers.Get(e);
-        if (waitTimer < 0.0f) {
-            m_Timers.Remove(e);
-            m_Timers.AddExisting(e, 3.0);
 
-            GenerateSimProjectile(
-                npcBody,
-                npcBody->getWorldTransform().getOrigin(),
-                -XMVector3Normalize(origin - lookAt),
-                1,
-                15000.0,
-                0.05,
-                currentNPC->LightColor / 105.0f,
-                currentNPC->ProjectileSound,
-                true,
-                PROJECTILE_PHYSICS_GROUP,
-                NPC_PROJECTILE_PHYSICS_MASK,
-                1
-            );
-            m_pAudio->play(currentNPC->CastSound, origin, 1.85f, 0.5);
+    // Normal Enemies
+    if (currentNPC->Type == NPCType::BOSS) {
+        if (distance < NPC_ATTACK_RADIUS && PlayerInView(npcBody)) {
+            waitTimer = *m_Timers.Get(e);
+            if (waitTimer < 0.0f) {
+                m_Timers.Remove(e);
+                m_Timers.AddExisting(e, 4.0);
+
+                switch (currentNPC->WeaponCycle)
+                {
+                    case 1:
+                        BossAttack2(e);
+                        currentNPC->WeaponCycle += 1;
+                        break;
+
+                    case 2:
+                        BossAttack3(e);
+                        currentNPC->WeaponCycle = 0;
+                        break;
+                    default:
+                        BossAttack1(e);
+                        currentNPC->WeaponCycle += 1;
+                        break;
+                }
+            }
+            currentNPC->State = NPCState::SEARCHING;
+        } else {
+            currentNPC->State = NPCState::SEARCHING;
         }
     } else {
-        currentNPC->State = NPCState::SEARCHING;
+        if (distance < NPC_ATTACK_RADIUS && PlayerInView(npcBody)) {
+            waitTimer = *m_Timers.Get(e);
+            if (waitTimer < 0.0f) {
+                m_Timers.Remove(e);
+                m_Timers.AddExisting(e, 3.0);
+
+                GenerateSimProjectile(
+                    npcBody,
+                    npcBody->getWorldTransform().getOrigin(),
+                    -XMVector3Normalize(origin - lookAt),
+                    1,
+                    15000.0,
+                    0.05,
+                    currentNPC->LightColor / 105.0f,
+                    currentNPC->ProjectileSound,
+                    true,
+                    PROJECTILE_PHYSICS_GROUP,
+                    NPC_PROJECTILE_PHYSICS_MASK,
+                    1
+                );
+                m_pAudio->play(currentNPC->CastSound, origin, 1.85f, 0.5);
+            }
+        }
+        else {
+            currentNPC->State = NPCState::SEARCHING;
+        }
     }
 }
 
@@ -329,6 +486,7 @@ void CGame::PlaceNPC(Vec3 startPos, Vec3 lookDirection, NPCType::e npcType) {
     currNPC->ProjectileSound = baseNPC->ProjectileSound;
     currNPC->SpawnOffset = baseNPC->SpawnOffset;
     currNPC->LightColor = baseNPC->LightColor;
+    currNPC->Type = baseNPC->Type;
 
     // Set attributes.
     body->getWorldTransform().setOrigin(Vec3(newPos.x, currNPC->SpawnOffset.y, newPos.z));
@@ -385,6 +543,7 @@ void CGame::PlaceNPC2(Vec3 startPos, NPCType::e npcType) {
     currNPC->ProjectileSound = baseNPC->ProjectileSound;
     currNPC->SpawnOffset = baseNPC->SpawnOffset;
     currNPC->LightColor = baseNPC->LightColor;
+    currNPC->Type = baseNPC->Type;
 
     // Set attributes.
     body->getWorldTransform().setOrigin(Vec3(newPos.x, currNPC->SpawnOffset.y, newPos.z));
@@ -470,6 +629,7 @@ void CGame::InitializeNPCs() {
     NPC npc;
 
     // Obelisk (FIRE) (Default Configuration of NPC)
+    npc.Type = NPCType::OBELISK;
     npc.BaseHealth = 4;
     npc.LightColor = Vec4(500.0f, 40.0f, 100.0f, 0);
     npc.CastSound = SoundIndex::EnemyCast1;
@@ -481,6 +641,7 @@ void CGame::InitializeNPCs() {
     m_NPCStatsMap.insert(std::make_pair(NPCType::OBELISK, npc));
 
     // Crystal (ICE)
+    npc.Type = NPCType::CRYSTAL;
     npc.BaseHealth = 8;
     npc.LightColor = Vec4(20.0f, 150.0f, 500.0f, 0);
     npc.CastSound = SoundIndex::EnemyCast2;
@@ -492,6 +653,7 @@ void CGame::InitializeNPCs() {
     m_NPCStatsMap.insert(std::make_pair(NPCType::CRYSTAL, npc));
 
     // Boss (Variation of ICE and FIRE attacks)
+    npc.Type = NPCType::BOSS;
     npc.BaseHealth = 32;
     npc.LightColor = Vec4(1000.0f, 30.0f, 1000.0f, 0);
     npc.CastSound = SoundIndex::EnemyCast2;

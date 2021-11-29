@@ -55,6 +55,7 @@ struct NPC {
     SoundIndex::e DeathSound;
     u32 BaseHealth;
     u32 SearchAttempts;
+    i32 WeaponCycle = 0;
     Vec3 QueuedMovement;
     Vec3 SpawnOffset;
     Vec3 LastPosition;
