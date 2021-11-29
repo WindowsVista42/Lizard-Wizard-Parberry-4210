@@ -228,6 +228,10 @@ void CGame::Sleep(Entity e) {
         currentNPC->State = NPCState::ATTACKING;
     }
 
+    if (PlayerInView(npcBody)) {
+        currentNPC->State = NPCState::WANDER;
+    }
+
     SetNPCRender(npcBody, npcBody->getWorldTransform().getOrigin(), npcBody->getWorldTransform().getBasis());
 } 
 
