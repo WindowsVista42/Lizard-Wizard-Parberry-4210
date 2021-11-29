@@ -145,7 +145,7 @@ void CGame::BossAttack3(Entity e) { // Lightning attack, 3 bolts of lightning in
             PLAYER_PROJECTILE_PHYSICS_MASK,
             1
         );
-        m_pAudio->play(SoundIndex::LightningCast, staff_tip, 0.05f, 0.5);
+        m_pAudio->play(SoundIndex::LightningCast, staff_tip, 0.025f, 0.5);
         face = -XMVector3Normalize(origin - lookAt);
     }
 }
@@ -350,7 +350,7 @@ void CGame::Attack(Entity e) {
                         break;
                 }
             }
-            currentNPC->State = NPCState::SEARCHING;
+            currentNPC->State = NPCState::WANDER;
         } else {
             currentNPC->State = NPCState::SEARCHING;
         }
@@ -648,7 +648,7 @@ void CGame::InitializeNPCs() {
 
     // Boss (Variation of ICE and FIRE attacks)
     npc.Type = NPCType::BOSS;
-    npc.BaseHealth = 64;
+    npc.BaseHealth = 50;
     npc.LightColor = Vec4(1000.0f, 30.0f, 1000.0f, 0);
     npc.CastSound = SoundIndex::EnemyCast2;
     npc.DeathSound = SoundIndex::ObeliskDeath;

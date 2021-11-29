@@ -204,7 +204,7 @@ void CGame::PlayerInput() {
 
         if (Ecs::ActivateAction(m_Timers, m_DashAction, e)) {
             // play sound
-            m_pAudio->play(SoundIndex::Dash3, m_pRenderer->m_pCamera->GetPos(), 0.15f, 0.7);
+            m_pAudio->play(SoundIndex::Dash4, m_pRenderer->m_pCamera->GetPos(), 0.15f, 0.5);
 
             // update entity to use
             mana_index += 1;
@@ -215,7 +215,7 @@ void CGame::PlayerInput() {
     if (m_pKeyboard->TriggerDown(VK_SPACE)) {
         if (Ecs::ActivateAction(m_Timers, m_JumpAction)) {
             // play sound
-            m_pAudio->play(SoundIndex::Dash2, m_pRenderer->m_pCamera->GetPos(), 0.15f, 0.7);
+            m_pAudio->play(SoundIndex::Dash1, m_pRenderer->m_pCamera->GetPos(), 0.05f, 0.15);
         }
     }
 
