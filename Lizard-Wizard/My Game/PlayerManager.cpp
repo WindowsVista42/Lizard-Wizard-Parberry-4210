@@ -314,63 +314,68 @@ void CGame::UpdatePlayer() {
     player_body->activate();
 
     // Projectiles
-    if (m_leftClick.pressed && player_mana->value > 0) {
-        switch (m_WeaponSelection) {
-            case ProjectileTypes::ICE :
-                GenerateSimProjectile(
-                    *m_RigidBodies.Get(m_Player),
-                    staff_tip,
-                    m_pRenderer->m_pCamera->GetViewVector(),
-                    1,
-                    24000.0f,
-                    0.01,
-                    Vec4(0.1f, 0.5f, 0.8f, 0.0f),
-                    SoundIndex::IceImpact1,
-                    true,
-                    PROJECTILE_PHYSICS_GROUP,
-                    PLAYER_PROJECTILE_PHYSICS_MASK
-                );
+    switch (m_WeaponSelection) {
+    case ProjectileTypes::ICE: {
+        if (m_leftClick.pressed && player_mana->value >= 1) {
+            GenerateSimProjectile(
+                *m_RigidBodies.Get(m_Player),
+                staff_tip,
+                m_pRenderer->m_pCamera->GetViewVector(),
+                1,
+                24000.0f,
+                0.01,
+                Vec4(0.1f, 0.5f, 0.8f, 0.0f),
+                SoundIndex::IceImpact1,
+                true,
+                PROJECTILE_PHYSICS_GROUP,
+                PLAYER_PROJECTILE_PHYSICS_MASK
+            );
 
-                m_pAudio->play(SoundIndex::IceCast, staff_tip, 0.15f, 0.5);
-
-                break;
-            case ProjectileTypes::LIGHTNING :
-                m_pAudio->play(SoundIndex::LightningCast, staff_tip, 0.10f, 0.5);
-
-                GenerateRayProjectile(
-                    *m_RigidBodies.Get(m_Player),
-                    staff_tip,
-                    m_pRenderer->m_pCamera->GetViewVector(),
-                    2,
-                    4,
-                    0.025,
-                    Colors::IndianRed,
-                    false,
-                    true,
-                    PROJECTILE_PHYSICS_GROUP,
-                    PLAYER_PROJECTILE_PHYSICS_MASK
-                );
-
-                break;
-            default:
-                GenerateSimProjectile(
-                    *m_RigidBodies.Get(m_Player),
-                    staff_tip,
-                    m_pRenderer->m_pCamera->GetViewVector(),
-                    4,
-                    12000.0,
-                    0.1,
-                    Vec4(0.8f, 0.1f, 0.1f, 0.0f),
-                    SoundIndex::FireImpact1,
-                    true,
-                    PROJECTILE_PHYSICS_GROUP,
-                    PLAYER_PROJECTILE_PHYSICS_MASK
-                );
-                m_pAudio->play(SoundIndex::FireCast, staff_tip, 0.15f, 0.5);
-
-                break;
+            *mana_timer = player_mana->Decrement(1);
+            m_pAudio->play(SoundIndex::IceCast, staff_tip, 0.15f, 0.5);
         }
-        *mana_timer = player_mana->Decrement(1);
+    } break;
+    case ProjectileTypes::LIGHTNING: {
+        if (m_leftClick.pressed && player_mana->value >= 2) {
+
+            GenerateRayProjectile(
+                *m_RigidBodies.Get(m_Player),
+                staff_tip,
+                m_pRenderer->m_pCamera->GetViewVector(),
+                2,
+                4,
+                0.025,
+                Colors::IndianRed,
+                false,
+                true,
+                PROJECTILE_PHYSICS_GROUP,
+                PLAYER_PROJECTILE_PHYSICS_MASK
+            );
+
+            *mana_timer = player_mana->Decrement(2);
+            m_pAudio->play(SoundIndex::LightningCast, staff_tip, 0.10f, 0.5);
+        }
+    } break;
+    default: {
+        if (m_leftClick.pressed && player_mana->value >= 3) {
+            GenerateSimProjectile(
+                *m_RigidBodies.Get(m_Player),
+                staff_tip,
+                m_pRenderer->m_pCamera->GetViewVector(),
+                4,
+                12000.0,
+                0.1,
+                Vec4(0.8f, 0.1f, 0.1f, 0.0f),
+                SoundIndex::FireImpact1,
+                true,
+                PROJECTILE_PHYSICS_GROUP,
+                PLAYER_PROJECTILE_PHYSICS_MASK
+            );
+
+            *mana_timer = player_mana->Decrement(3);
+            m_pAudio->play(SoundIndex::FireCast, staff_tip, 0.15f, 0.5);
+        }
+    } break;
     }
 
     if (flycam_enabled) {

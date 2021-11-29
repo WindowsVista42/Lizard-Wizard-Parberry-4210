@@ -56,7 +56,7 @@ typedef std::pair<u32, u32> Point2;
 
 /// NPC Configuration
 #define NPC_ATTACK_RADIUS 15000.0f
-#define NPC_DETECTION_RADIUS 20000.0f
+#define NPC_DETECTION_RADIUS 100000.0f
 
 /// Math
 #define PI 3.14159265359f
