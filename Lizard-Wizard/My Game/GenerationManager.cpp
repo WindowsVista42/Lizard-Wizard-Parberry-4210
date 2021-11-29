@@ -505,7 +505,7 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
         }
 
         // Place boss in boss room.
-        PlaceNPC2(IndexToWorld(X_ROOMS - 2, Z_ROOMS - 2), NPCType::BOSS);
+        m_BossEntity = PlaceNPC2(IndexToWorld(X_ROOMS - 2, Z_ROOMS - 2), NPCType::BOSS);
     }
 }
 

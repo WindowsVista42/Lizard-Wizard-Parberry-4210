@@ -12,6 +12,11 @@
 #include <vector>
 #include <iostream>
 
+static bool god_mode_enabled = false;
+static bool god_mode_just_enabled = false;
+static bool muted = false;
+static f32 restart_timer_on_win = 10.0f;
+
 CGame::~CGame() {
     // The OS will clean up allocations much faster than I could ever imagine.
 }
@@ -176,6 +181,9 @@ void CGame::ResetGame() {
     m_reset = false;
 
     flycam_enabled = false;
+    god_mode_enabled = false;
+    m_PlayerWon = false;
+    restart_timer_on_win = 10.0f;
 
     for every(z, Z_ROOMS) {
         for every(x, X_ROOMS) {
@@ -221,7 +229,7 @@ void CGame::InputHandler() {
     if (m_pKeyboard->TriggerDown(VK_F3))
         m_bDrawHelpMessage = !m_bDrawHelpMessage;
 
-    if (m_pKeyboard->Down(VK_BACK)) { // restart game
+    if (m_pKeyboard->TriggerDown(VK_BACK)) { // restart game
         m_reset = true;
     }
 
@@ -230,18 +238,14 @@ void CGame::InputHandler() {
         exit(EXIT_SUCCESS);
     }
 
-    if (m_pKeyboard->TriggerDown('U')) {
-        m_Healths.Get(m_Player)->current -= 1;
-    }
-
     // Toggles Main Menu
-    if (m_pKeyboard->TriggerDown('P')) {
+    if (m_pKeyboard->TriggerDown(VK_ESCAPE)) {
         m_DrawMainMenu = !m_DrawMainMenu;
 
        // m_MouseToggled = !m_MouseToggled;
        // m_MouseJustToggled = true;
 
-        std::cout << "Menu Status: " << m_DrawMainMenu << std::endl;
+        //std::cout << "Menu Status: " << m_DrawMainMenu << std::endl;
     }
   //  else {
    //     m_MouseJustToggled = false;   
@@ -249,33 +253,20 @@ void CGame::InputHandler() {
 
     if (m_pKeyboard->TriggerDown('M')) {
         m_pAudio->mute();
+        muted = !muted;
+    }
+
+    god_mode_just_enabled = false;
+    if (m_pKeyboard->TriggerDown('G')) {
+        god_mode_enabled = !god_mode_enabled;
+        god_mode_just_enabled = true;
     }
 
     // Render mode toggle
-    if (m_pKeyboard->TriggerDown('G')) {
-        render_mode %= 3;
-        render_mode += 1;
-    }
-
-    // Spawn NPC
-    if (m_pKeyboard->TriggerDown('N')) {
-        if (m_NPCsCache.Size() > 0) {
-            PlaceNPC(m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), NPCType::BOSS);
-        }
-    }
-
-    // Destroy last NPC
-    if (m_pKeyboard->TriggerDown('Z')) {
-        if (m_NPCsActive.Size() > 0) {
-            StripNPC();
-        }
-    }
-
-    if (m_pKeyboard->TriggerDown('H')) {
-        btRigidBody* player_body = *m_RigidBodies.Get(m_Player);
-        RBTeleportLaunch(player_body, Vec3(flycam_pos), Vec3(0));
-        RBSetCcd(player_body, 0.0, 500.0);
-    }
+    //if (m_pKeyboard->TriggerDown('G')) {
+    //    render_mode %= 3;
+    //    render_mode += 1;
+    //}
 
     // Mouse Click Testing
     m_leftClick.UpdateState();
@@ -284,59 +275,6 @@ void CGame::InputHandler() {
     PlayerInput();
 
     MenuInput();
-
-    {
-        static f32 intensity = 1.0f;
-        bool toggled = false;
-
-        if (m_pKeyboard->Down('J')) {
-            toggled = true;
-            intensity -= 0.02;
-        }
-
-        if (m_pKeyboard->Down('K')) {
-            toggled = true;
-            intensity += 0.02;
-        }
-
-        if (toggled) {
-            btClamp<f32>(intensity, 0.0, 1.0);
-            Vec4 color = Colors::LightYellow * intensity;
-
-            for every(index, m_TestingLights.Size()) {
-                Entity e = m_TestingLights.Entities()[index];
-                m_pRenderer->lights.Get(e)->color = color * 200.0f;
-            }
-        }
-    }
-
-    if (m_pKeyboard->TriggerDown('O')) {
-        ParticleInstanceDesc desc = {};
-        desc.count = 500;
-
-        desc.light_color = Vec3(100.0f, 20.0f, 20.0f);
-
-        desc.model = ModelIndex::Cube;
-        desc.texture = TextureIndex::White;
-
-        desc.glow = Vec3(1.2f, 1.0f, 0.8f);
-        desc.model_scale = Vec3(5.0f);
-
-        desc.initial_pos = m_pRenderer->m_pCamera->GetPos() + m_pRenderer->m_pCamera->GetViewVector() * 500.0f;
-
-        desc.initial_speed = 800.0f;
-        desc.initial_dir = Vec3(0.0f, 1.0f, 0.0f);
-        desc.dir_randomness = 0.1f;
-        desc.speed_randomness = 0.5f;
-
-        desc.initial_acc = Vec3(0.0f, -1000.0f, 0.0f);
-        desc.acc_randomness = 0.0f;
-
-        desc.min_alive_time = 0.5f;
-        desc.max_alive_time = 1.5f;
-
-        SpawnParticles(&desc);
-    }
 }
 
 void CGame::EcsPreUpdate() {
@@ -468,6 +406,27 @@ void CGame::EcsUpdate() {
             }
         }
     });
+
+    // reset player pos if something breaks
+    if ((*m_RigidBodies.Get(m_Player))->getWorldTransform().getOrigin().y() < -2000.0f) {
+        Vec3 tpos = IndexToWorld(1, 1);
+        tpos.y = -500.0f;
+        RBTeleportLaunch(*m_RigidBodies.Get(m_Player), tpos, Vec3(0));
+    }
+
+    if (god_mode_just_enabled) {
+        if (god_mode_enabled) {
+            m_Healths.Get(m_Player)->current = 20000000;
+            m_Healths.Get(m_Player)->max = 20000000;
+        } else {
+            m_Healths.Get(m_Player)->current = 4;
+            m_Healths.Get(m_Player)->max = 4;
+        }
+    }
+
+    if (god_mode_enabled) {
+        m_Mana.Get(m_Player)->value = 4;
+    }
 }
 
 /// Ask the object manager to draw the game objects. The renderer is notified
@@ -526,21 +485,44 @@ void CGame::RenderFrame() {
             m_pRenderer->DrawModelInstance(&mi);
 
             Ecs::ApplyEvery(m_NPCsActive, [&](Entity e) {
-                switch (m_NPCs.Get(e)->Type) {
-                case NPCType::OBELISK: {
-                    mi.glow = Vec3(-1.0f, -1.0f, 10.0f);
-                } break;
-                case NPCType::CRYSTAL: {
-                    mi.glow = Vec3(-1.0f, -1.0f, 10.0f);
-                } break;
-                case NPCType::BOSS: {
-                    mi.glow = Vec3(-1.0f, 10.0f, 10.0f);
-                } break;
-                }
+                mi.glow = *(Vec3*)&(m_NPCs.Get(e)->LightColor / 40.0f);
+
                 Vec3 npc_pos = (*m_RigidBodies.Get(e))->getWorldTransform().getOrigin();
                 npc_pos.y = 4000.0f;
                 mi.world = MoveScaleMatrix(npc_pos, Vec3(200.0f));
                 m_pRenderer->DrawModelInstance(&mi);
+            });
+        } else {
+            LBaseCamera* cam = m_pRenderer->m_pCamera;
+    
+            f32 offset = 0.0f;
+            f32 yoffset = 0.0f;
+            ModelInstance mi;
+            mi.model = ModelIndex::Cube;
+            mi.texture = TextureIndex::White;
+            Ecs::ApplyEvery(m_NPCsActive, [&](Entity e) {
+                NPC* npc = m_NPCs.Get(e);
+                mi.glow = *(Vec3*)&(npc->LightColor / 200.0f);
+    
+                Vec3 pos = RotatePointAroundOrigin(
+                    staff_pos, 
+                    Vec3(offset - 15.0f, 10.0f + yoffset, 10.0f), 
+                    staff_rot
+                );
+        
+                Quat rot = Quat::Identity;
+        
+                Vec3 scl = Vec3(0.75f);
+        
+                mi.world = MoveRotateScaleMatrix(pos, rot, scl);
+
+                m_pRenderer->DrawModelInstance(&mi);
+    
+                offset += 2.5f;
+                if (offset > 15.0f) {
+                    offset = 0.0f;
+                    yoffset += 2.5f;
+                }
             });
         }
 
@@ -563,9 +545,14 @@ void CGame::RenderFrame() {
 
         if (m_bDrawHelpMessage) {
             m_pRenderer->DrawCenteredText(
-                L"Press 'Escape' to toggle mouse cursor.\n"
+                //L"Press 'Escape' to toggle mouse cursor.\n"
+                L"Press 'Escape' to toggle escape main menu.\n"
+                L"Press 'F' to toggle the map.\n"
+                L"Press 'G' to toggle god mode.\n"
                 L"Press 'M' to toggle audio.\n"
-                L"Press 'P' to toggle Main Menu.\n"
+                L"Press 'Backspace' to quickly restart a level.\n"
+                L"Press 'Delete' to quickly close the game.\n"
+                L"Press 'F2' to toggle the fps display.\n"
                 L"Toggle this message with 'F3'."
                 , Colors::White
             );
@@ -574,7 +561,25 @@ void CGame::RenderFrame() {
         if (m_bDrawFrameRate) {
             char buffer[64];
             sprintf(buffer, "%.2f", m_frameRate);
-            m_pRenderer->DrawScreenText(buffer, Vector2(m_nWinWidth - 200.0, 50.0), Colors::White);
+            m_pRenderer->DrawScreenText(buffer, Vector2(m_nWinWidth - 200.0, 100.0), Colors::White);
+        }
+
+        if (muted) {
+            m_pRenderer->DrawScreenText("Muted\n", Vector2(m_nWinWidth - 200.0, 150.0), Colors::White);
+        }
+
+        if (god_mode_enabled) {
+            m_pRenderer->DrawScreenText(L"God Mode\n", Vec2(m_nWinWidth - 200.0f, 200.0f), Colors::White);
+        }
+
+        if (!m_NPCsActive.Contains(m_BossEntity)) {
+            char buffer[64];
+            sprintf(buffer, "You Won!\nRestarting game in %.f seconds.\n", restart_timer_on_win);
+            m_pRenderer->DrawCenteredText(buffer, Colors::White);
+            restart_timer_on_win -= m_pTimer->GetFrameTime();
+            if (restart_timer_on_win <= 0.0f) {
+                m_reset = true;
+            }
         }
 
         m_pRenderer->EndUIDrawing();

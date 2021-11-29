@@ -428,9 +428,6 @@ void CGame::DirectNPC(Entity e) {
     m_pRenderer->lights.Get(e)->position = *(Vec4*)&m_NPCs.Get(e)->LastPosition;
 
     Health* health = m_Healths.Get(e);
-    if (health->current > health->max) {
-        printf("corrupt current : %d, max : %d\n", health->current, health->max);
-    }
     m_pRenderer->lights.Get(e)->color = m_NPCs.Get(e)->LightColor * ((f32)health->current / (f32)health->max);
 
     switch (m_NPCs.Get(e)->State)
@@ -520,7 +517,7 @@ void CGame::PlaceNPC(Vec3 startPos, Vec3 lookDirection, NPCType::e npcType) {
 }
 
 // Places a cached NPC.
-void CGame::PlaceNPC2(Vec3 startPos, NPCType::e npcType) {
+Entity CGame::PlaceNPC2(Vec3 startPos, NPCType::e npcType) {
     Entity e = m_NPCsCache.RemoveTail();
     NPC* currNPC = m_NPCs.Get(e);
     NPC* baseNPC = &m_NPCStatsMap.at(npcType);
@@ -573,6 +570,8 @@ void CGame::PlaceNPC2(Vec3 startPos, NPCType::e npcType) {
     m_ModelsActive.AddExisting(e);
 
     SetNPCRender(body, body->getWorldTransform().getOrigin(), body->getWorldTransform().getBasis());
+
+    return e;
 }
 
 // Manually strips an NPC
@@ -653,8 +652,7 @@ void CGame::InitializeNPCs() {
     m_NPCStatsMap.insert(std::make_pair(NPCType::CRYSTAL, npc));
 
     // Boss (Variation of ICE and FIRE attacks)
-    npc.Type = NPCType::BOSS;
-    npc.BaseHealth = 32;
+    npc.BaseHealth = 96;
     npc.LightColor = Vec4(1000.0f, 30.0f, 1000.0f, 0);
     npc.CastSound = SoundIndex::EnemyCast2;
     npc.DeathSound = SoundIndex::ObeliskDeath;

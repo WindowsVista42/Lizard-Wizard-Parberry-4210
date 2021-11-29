@@ -269,6 +269,12 @@ private:
     Group m_PlayerHealthOrbs;
     f32 m_PlayerRejuvinationTimer = 0.0f;
     f32 m_PlayerHitTimer = 0.0f;
+
+    bool m_PlayerWon = false;
+    Entity m_BossEntity;
+
+    Vec3 staff_pos;
+    Quat staff_rot;
     
     ////////////////////////
     // Internal Functions //
@@ -422,7 +428,7 @@ private:
     void Search(Entity);
     void DirectNPC(Entity);
     void PlaceNPC(Vec3, Vec3, NPCType::e);
-    void PlaceNPC2(Vec3, NPCType::e);
+    Entity PlaceNPC2(Vec3, NPCType::e);
     void InitializeNPCs();
     void StripNPC();
     void ForceStripNPC(Entity e);
