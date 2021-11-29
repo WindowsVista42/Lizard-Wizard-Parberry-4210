@@ -51,6 +51,7 @@ struct NPC {
     u32 SearchAttempts;
     Vec3 QueuedMovement;
     Vec3 LastPosition;
+    Vec4 LightColor;
     std::unordered_set<Entity> IgnoreList;
     NPC() :
         Behavior(NPCBehavior::TURRET),

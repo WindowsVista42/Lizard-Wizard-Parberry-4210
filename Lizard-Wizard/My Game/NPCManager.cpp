@@ -255,6 +255,9 @@ void CGame::DirectNPC(Entity e) {
     m_NPCs.Get(e)->LastPosition = body->getWorldTransform().getOrigin();
     m_pRenderer->lights.Get(e)->position = *(Vec4*)&m_NPCs.Get(e)->LastPosition;
 
+    Health* health = m_Healths.Get(e);
+    m_pRenderer->lights.Get(e)->color = m_NPCs.Get(e)->LightColor * ((f32)health->current / (f32)health->max);
+
     switch (m_NPCs.Get(e)->State)
     {
         case NPCState::SLEEPING :
@@ -434,7 +437,8 @@ void CGame::InitializeNPCs() {
         newNPC.BaseHealth = 4;
 
         // Prepare light
-        Light newLight = { Vec4(99999.f,99999.f,99999.f,0), Vec4{10.0f, 30.0f, 500.0f, 0} };
+        newNPC.LightColor = Vec4(10.0f, 30.0f, 500.0f, 0);
+        Light newLight = { Vec4(99999.f,99999.f,99999.f,0), newNPC.LightColor };
 
         // Health
         Health npcHealth = Health::New(newNPC.BaseHealth, newNPC.BaseHealth);
