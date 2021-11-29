@@ -67,7 +67,7 @@ void CGame::BossAttack1(Entity e) { // Ice attack, 3 projectiles in a 15 degree 
 }
 
 void CGame::BossAttack2(Entity e) { // Fire attack, 5 projectiles in a 5 degree spread. Each deals 1 damage.
-    i32 numProjectiles = 5;
+    i32 numProjectiles = 6;
     NPC* currentNPC = m_NPCs.Get(e);
 
     btRigidBody* playerBody = *(m_RigidBodies.Get(m_Player));
