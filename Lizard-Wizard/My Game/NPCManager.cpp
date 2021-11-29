@@ -67,14 +67,14 @@ void CGame::BossAttack1(Entity e) { // Ice attack, 3 projectiles in a 15 degree 
 }
 
 void CGame::BossAttack2(Entity e) { // Fire attack, 5 projectiles in a 5 degree spread. Each deals 1 damage.
-    i32 numProjectiles = 5;
+    i32 numProjectiles = 6;
     NPC* currentNPC = m_NPCs.Get(e);
 
     btRigidBody* playerBody = *(m_RigidBodies.Get(m_Player));
     btRigidBody* npcBody = *m_RigidBodies.Get(e);
 
     f32 offset = 0.15f;
-    f32 angle = -0.15f;
+    f32 angle = -0.30f;
     f32 rotX;
     f32 rotZ;
     Vec3 origin = npcBody->getWorldTransform().getOrigin() + Vec3(-800.0f, 750.0f, 0.0f);
