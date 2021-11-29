@@ -39,7 +39,6 @@ void CGame::BossAttack1(Entity e) { // Ice attack, 3 projectiles in a 15 degree 
     Vec3 lookAt = playerBody->getWorldTransform().getOrigin() + playerBody->getLinearVelocity() / 3.5;
     Vec3 face = -XMVector3Normalize(origin - lookAt);
     Vec2 rotVec;
-    face.Print();
 
     for every(index, numProjectiles) {
         rotVec = Vec2(face.x, face.z);
@@ -48,7 +47,6 @@ void CGame::BossAttack1(Entity e) { // Ice attack, 3 projectiles in a 15 degree 
         face.x = rotX; face.z = rotZ;
         angle += offset;
 
-        face.Print();
         GenerateSimProjectile(
             npcBody,
             origin,
@@ -652,7 +650,8 @@ void CGame::InitializeNPCs() {
     m_NPCStatsMap.insert(std::make_pair(NPCType::CRYSTAL, npc));
 
     // Boss (Variation of ICE and FIRE attacks)
-    npc.BaseHealth = 96;
+    npc.Type = NPCType::BOSS;
+    npc.BaseHealth = 64;
     npc.LightColor = Vec4(1000.0f, 30.0f, 1000.0f, 0);
     npc.CastSound = SoundIndex::EnemyCast2;
     npc.DeathSound = SoundIndex::ObeliskDeath;

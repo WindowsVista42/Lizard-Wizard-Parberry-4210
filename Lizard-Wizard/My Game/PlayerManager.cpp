@@ -346,7 +346,7 @@ void CGame::UpdatePlayer() {
                 m_pRenderer->m_pCamera->GetViewVector(),
                 2,
                 4,
-                0.04,
+                0.005,
                 Colors::IndianRed,
                 false,
                 true,
