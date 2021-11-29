@@ -360,7 +360,7 @@ void CGame::UpdatePlayer() {
         }
     } break;
     default: {
-        if (m_leftClick.pressed && player_mana->value >= 3) {
+        if (m_leftClick.pressed && player_mana->value >= 2) {
             GenerateSimProjectile(
                 *m_RigidBodies.Get(m_Player),
                 staff_tip,
@@ -376,7 +376,7 @@ void CGame::UpdatePlayer() {
                 1
             );
 
-            *mana_timer = player_mana->Decrement(3);
+            *mana_timer = player_mana->Decrement(2);
             m_pAudio->play(SoundIndex::FireCast, staff_tip, 0.15f, 0.5);
         }
     } break;
