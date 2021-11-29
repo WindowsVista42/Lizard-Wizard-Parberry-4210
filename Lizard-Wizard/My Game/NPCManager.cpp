@@ -74,7 +74,7 @@ void CGame::BossAttack2(Entity e) { // Fire attack, 5 projectiles in a 5 degree 
     btRigidBody* npcBody = *m_RigidBodies.Get(e);
 
     f32 offset = 0.15f;
-    f32 angle = -0.15f;
+    f32 angle = -0.30f;
     f32 rotX;
     f32 rotZ;
     Vec3 origin = npcBody->getWorldTransform().getOrigin() + Vec3(-800.0f, 750.0f, 0.0f);
