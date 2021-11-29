@@ -439,6 +439,7 @@ void CGame::EcsUpdate() {
 
             if (m_Healths.Get(m_Player)->current > 0 && m_Healths.Get(m_Player)->current < 4) {
                 m_Healths.Get(m_Player)->current += 1;
+                m_PlayerRejuvinationTimer = 0.5f;
             }
         }
     });

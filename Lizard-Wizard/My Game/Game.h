@@ -253,6 +253,7 @@ private:
     // some player shit i dont care where this gets put
     Group m_PlayerManaOrbs;
     Group m_PlayerHealthOrbs;
+    f32 m_PlayerRejuvinationTimer = 0.0f;
     
     ////////////////////////
     // Internal Functions //

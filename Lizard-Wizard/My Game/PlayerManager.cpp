@@ -621,15 +621,22 @@ void CGame::UpdatePlayer() {
         btClamp<f32>(factor, 0.0f, 1.0f);
         factor = 1.0f - factor;
 
+        //f32 rejuv_fac = (m_PlayerRejuvinationTimer / 1.0f);
+
         // this is using the bottom curvy part of sin, i don't want the S shape here.
         auto CustomLerp = [](f32 from, f32 to, f32 t) {
             t = sinf((M_PI * (t - 1.0f)) / 2.0f) + 1.0f;
             return LinearLerp<f32>(from, to, t);
         };
 
-        m_pRenderer->tint_color = Vec3Lerp(Vec3(1.0f, 1.0f, 1.0f), Vec3(1.0f, 0.7f, 0.7f), factor);
+        Vec3 tint_a = Vec3Lerp(Vec3(1.0f, 1.0f, 1.0f), Vec3(1.0f, 0.7f, 0.7f), factor);
+        Vec3 tint_b = Vec3(0.0f, 4.0f, 0.0f) * (2.0f * m_PlayerRejuvinationTimer);
+        m_pRenderer->tint_color = tint_a + tint_b;
         m_pRenderer->blur_amount = CustomLerp(0.0f, 0.005f, factor);
         m_pRenderer->saturation_amount = CustomLerp(1.0f, 0.5f, factor);
+
+        m_PlayerRejuvinationTimer -= m_pTimer->GetFrameTime();
+        if (m_PlayerRejuvinationTimer < 0.0f) { m_PlayerRejuvinationTimer = 0.0f; }
     }
 
     // dash action timers connection to cubes that spin
