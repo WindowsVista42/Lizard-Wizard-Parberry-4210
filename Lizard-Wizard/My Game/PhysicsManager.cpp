@@ -246,6 +246,7 @@ void CGame::CustomPhysicsStep() {
                     if (player_ignore_list.find(hitObject) == player_ignore_list.end()) {
                         player_ignore_list.insert(hitObject);
                         m_Healths.Get(m_Player)->current -= 1;
+                        m_PlayerHitTimer = 0.5f;
                         m_pAudio->play(SoundIndex::PlayerImpact1, staff_tip, 0.45f, 0.5);
                     }
                 }
@@ -299,6 +300,7 @@ void CGame::CustomPhysicsStep() {
                     if (player_ignore_list.find(causeObject) == player_ignore_list.end()) {
                         player_ignore_list.insert(causeObject);
                         m_Healths.Get(m_Player)->current -= 1;
+                        m_PlayerHitTimer = 0.5f;
                         m_pAudio->play(SoundIndex::PlayerImpact1, staff_tip, 0.45f, 0.5);
                     }
                 }
@@ -335,6 +337,7 @@ void CGame::CustomPhysicsStep() {
                 if (player_ignore_list.find(hitObject) == player_ignore_list.end()) {
                     player_ignore_list.insert(hitObject);
                     m_Healths.Get(m_Player)->current -= 1;
+                    m_PlayerHitTimer = 0.5f;
                     m_pAudio->play(SoundIndex::PlayerImpact1, staff_tip, 0.45f, 0.5);
                 }
             }
@@ -355,6 +358,7 @@ void CGame::CustomPhysicsStep() {
                 if (player_ignore_list.find(causeObject) == player_ignore_list.end()) {
                     player_ignore_list.insert(causeObject);
                     m_Healths.Get(m_Player)->current -= 1;
+                    m_PlayerHitTimer = 0.5f;
                     m_pAudio->play(SoundIndex::PlayerImpact1, staff_tip, 0.45f, 0.5);
                 }
             }

@@ -254,6 +254,7 @@ private:
     Group m_PlayerManaOrbs;
     Group m_PlayerHealthOrbs;
     f32 m_PlayerRejuvinationTimer = 0.0f;
+    f32 m_PlayerHitTimer = 0.0f;
     
     ////////////////////////
     // Internal Functions //

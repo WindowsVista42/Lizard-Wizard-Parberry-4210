@@ -631,12 +631,15 @@ void CGame::UpdatePlayer() {
 
         Vec3 tint_a = Vec3Lerp(Vec3(1.0f, 1.0f, 1.0f), Vec3(1.0f, 0.7f, 0.7f), factor);
         Vec3 tint_b = Vec3(0.0f, 4.0f, 0.0f) * (2.0f * m_PlayerRejuvinationTimer);
-        m_pRenderer->tint_color = tint_a + tint_b;
+        Vec3 tint_c = Vec3(4.0f, 0.0f, 0.0f) * (2.0f * m_PlayerHitTimer);
+        m_pRenderer->tint_color = tint_a + tint_b + tint_c;
         m_pRenderer->blur_amount = CustomLerp(0.0f, 0.005f, factor);
         m_pRenderer->saturation_amount = CustomLerp(1.0f, 0.5f, factor);
 
         m_PlayerRejuvinationTimer -= m_pTimer->GetFrameTime();
+        m_PlayerHitTimer -= m_pTimer->GetFrameTime();
         if (m_PlayerRejuvinationTimer < 0.0f) { m_PlayerRejuvinationTimer = 0.0f; }
+        if (m_PlayerHitTimer < 0.0f) { m_PlayerHitTimer = 0.0f; }
     }
 
     // dash action timers connection to cubes that spin
