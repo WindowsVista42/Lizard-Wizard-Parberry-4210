@@ -357,6 +357,7 @@ void CGame::EcsUpdate() {
         Vec3 scale = boxShape->getHalfExtentsWithMargin();
 
         m_pRenderer->lights.Get(e)->position = *(Vec4*)&origin;
+        m_pRenderer->lights.Get(e)->position = *(Vec4*)&npc->LightColor;
 
         (*m_ModelInstances.Get(e)).world = MoveRotateScaleMatrix(
             Vec3(origin.x, origin.y - 300.0f, origin.z),

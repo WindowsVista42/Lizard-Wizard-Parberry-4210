@@ -50,6 +50,7 @@ struct NPC {
     NPCType::e Type;
     ModelIndex::e Model;
     SoundIndex::e CastSound;
+    SoundIndex::e ProjectileSound;
     SoundIndex::e ImpactSound;
     SoundIndex::e DeathSound;
     u32 BaseHealth;
@@ -408,6 +409,9 @@ private:
 
     // NPC MANAGER //
     b8 PlayerInView(btRigidBody*);
+    void BossAttack1(Entity);
+    void BossAttack2(Entity);
+    void BossAttack3(Entity);
     void Animate(Entity);
     void Sleep(Entity);
     void Wander(Entity);

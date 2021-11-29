@@ -284,7 +284,7 @@ void CGame::UpdatePlayer() {
     // Check Player Location
     {
         Vec3 Pos = m_pRenderer->m_pCamera->GetPos();
-        Vec3 Direction = Pos + Vec3(0, -1.0f, 0) * 400.0f;
+        Vec3 Direction = Pos + Vec3(0, -1.0f, 0) * 425.0f;
 
         btCollisionWorld::ClosestRayResultCallback rayResults(Pos, Direction);
         m_pDynamicsWorld->rayTest(Pos, Direction, rayResults);

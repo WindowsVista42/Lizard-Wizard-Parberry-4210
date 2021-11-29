@@ -23,6 +23,18 @@ void SetNPCRender(btRigidBody* npcBody, Vec3 origin, btMatrix3x3 basis) {
     npcBody->getWorldTransform().setOrigin(origin);
 }
 
+void CGame::BossAttack1(Entity e) {
+
+}
+
+void CGame::BossAttack2(Entity e) {
+
+}
+
+void CGame::BossAttack3(Entity e) {
+
+}
+
 b8 CGame::PlayerInView(btRigidBody* body) {
     Vec3 from = body->getWorldTransform().getOrigin();
     Vec3 to = (*m_RigidBodies.Get(m_Player))->getWorldTransform().getOrigin();
@@ -117,7 +129,7 @@ void CGame::Wander(Entity e) {
         max_tries -= 1;
     }
     Vec3 origin = npcBody->getWorldTransform().getOrigin();
-    origin.y = 0.0f;
+    origin.y = currentNPC->SpawnOffset.y;
     SetNPCRender(npcBody, origin, npcBody->getWorldTransform().getBasis());
     currentNPC->State = NPCState::MOVING;
 }
@@ -185,7 +197,7 @@ void CGame::Attack(Entity e) {
     btRigidBody* npcBody = *m_RigidBodies.Get(e);
 
     Vec3 origin = npcBody->getWorldTransform().getOrigin();
-    Vec3 lookAt = playerBody->getWorldTransform().getOrigin() + playerBody->getLinearVelocity() / 4;
+    Vec3 lookAt = playerBody->getWorldTransform().getOrigin() + playerBody->getLinearVelocity() / 4.5;
     btMatrix3x3 newMat = NpcLookAt(npcBody, playerBody); 
 
     f32 waitTimer;
@@ -206,14 +218,14 @@ void CGame::Attack(Entity e) {
                 1,
                 15000.0,
                 0.05,
-                Colors::LavenderBlush,
-                SoundIndex::FireImpact1,
+                currentNPC->LightColor / 105.0f,
+                currentNPC->ProjectileSound,
                 true,
                 PROJECTILE_PHYSICS_GROUP,
                 NPC_PROJECTILE_PHYSICS_MASK,
                 1
             );
-            m_pAudio->play(currentNPC->CastSound, origin, 0.85f, 0.5);
+            m_pAudio->play(currentNPC->CastSound, origin, 1.85f, 0.5);
         }
     } else {
         currentNPC->State = NPCState::SEARCHING;
@@ -313,7 +325,10 @@ void CGame::PlaceNPC(Vec3 startPos, Vec3 lookDirection, NPCType::e npcType) {
     // Set NPC Stuff
     currNPC->CastSound = baseNPC->CastSound;
     currNPC->DeathSound = baseNPC->DeathSound;
+    currNPC->ImpactSound = baseNPC->ImpactSound;
+    currNPC->ProjectileSound = baseNPC->ProjectileSound;
     currNPC->SpawnOffset = baseNPC->SpawnOffset;
+    currNPC->LightColor = baseNPC->LightColor;
 
     // Set attributes.
     body->getWorldTransform().setOrigin(Vec3(newPos.x, currNPC->SpawnOffset.y, newPos.z));
@@ -366,7 +381,10 @@ void CGame::PlaceNPC2(Vec3 startPos, NPCType::e npcType) {
     // Set NPC Stuff
     currNPC->CastSound = baseNPC->CastSound;
     currNPC->DeathSound = baseNPC->DeathSound;
+    currNPC->ImpactSound = baseNPC->ImpactSound;
+    currNPC->ProjectileSound = baseNPC->ProjectileSound;
     currNPC->SpawnOffset = baseNPC->SpawnOffset;
+    currNPC->LightColor = baseNPC->LightColor;
 
     // Set attributes.
     body->getWorldTransform().setOrigin(Vec3(newPos.x, currNPC->SpawnOffset.y, newPos.z));
@@ -453,18 +471,22 @@ void CGame::InitializeNPCs() {
 
     // Obelisk (FIRE) (Default Configuration of NPC)
     npc.BaseHealth = 4;
-    npc.LightColor = Vec4(10.0f, 30.0f, 500.0f, 0);
+    npc.LightColor = Vec4(500.0f, 40.0f, 100.0f, 0);
     npc.CastSound = SoundIndex::EnemyCast1;
     npc.DeathSound = SoundIndex::ObeliskDeath;
+    npc.ProjectileSound = SoundIndex::FireImpact1;
+    npc.ImpactSound = SoundIndex::EnemyImpactMetal1;
     npc.Model = ModelIndex::Obelisk;
     npc.SpawnOffset = Vec3(0.0f, -500.0f, 0.0f);
     m_NPCStatsMap.insert(std::make_pair(NPCType::OBELISK, npc));
 
     // Crystal (ICE)
     npc.BaseHealth = 8;
-    npc.LightColor = Vec4(10.0f, 30.0f, 500.0f, 0);
+    npc.LightColor = Vec4(20.0f, 150.0f, 500.0f, 0);
     npc.CastSound = SoundIndex::EnemyCast2;
     npc.DeathSound = SoundIndex::CrystalDeath;
+    npc.ProjectileSound = SoundIndex::IceImpact1;
+    npc.ImpactSound = SoundIndex::EnemyImpactCrystal1;
     npc.Model = ModelIndex::Crystal;
     npc.SpawnOffset = Vec3(0.0f, 0.0f, 0.0f);
     m_NPCStatsMap.insert(std::make_pair(NPCType::CRYSTAL, npc));
@@ -473,7 +495,9 @@ void CGame::InitializeNPCs() {
     npc.BaseHealth = 32;
     npc.LightColor = Vec4(1000.0f, 30.0f, 1000.0f, 0);
     npc.CastSound = SoundIndex::EnemyCast2;
-    npc.DeathSound = SoundIndex::CrystalDeath;
+    npc.DeathSound = SoundIndex::ObeliskDeath;
+    npc.ProjectileSound = SoundIndex::LightningCast;
+    npc.ImpactSound = SoundIndex::EnemyImpactMetal2;
     npc.Model = ModelIndex::Boss;
     npc.SpawnOffset = Vec3(0.0f, -500.0f, 0.0f);
     m_NPCStatsMap.insert(std::make_pair(NPCType::BOSS, npc));

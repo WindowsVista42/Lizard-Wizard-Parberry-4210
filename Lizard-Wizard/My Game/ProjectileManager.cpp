@@ -203,6 +203,7 @@ void CGame::CalculateRay(
         body->activate();
 
         if (rayBounces > 0) {
+            damage += 1;
             GenerateRayProjectile(caster, Vec3(hitPosition), Vec3(reflectedDirection), 1, rayBounces, 0.0f, color, true, ignoreCaster, physicsGroup, physicsMask, damage);
         }
 
