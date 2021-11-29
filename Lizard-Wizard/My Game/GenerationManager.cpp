@@ -444,6 +444,7 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
         i32 rem_npc_placement = 20;
         i32 sanity = 0;
         while (rem_npc_placement > 0) {
+            u32 npc_placement_type = GameRandom::Randu32(0, 1);
             u32 kernel_index = GameRandom::Randu32(0, _countof(NPC_PLACEMENT_KERNELS));
 
             // Sean: 0 to 4 because the kernel goes from 0 to 3
@@ -491,7 +492,7 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
                         placed_npcs.find(keypos) == placed_npcs.end()
                     ) {
                         placed_npcs.insert(keypos);
-                        PlaceNPC2(realpos, NPCType::CRYSTAL);
+                        PlaceNPC2(realpos, (NPCType::e)npc_placement_type);
 
                         rem_npc_placement -= 1;
                         if (rem_npc_placement <= 0) { break; }
