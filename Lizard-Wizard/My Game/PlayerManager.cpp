@@ -408,7 +408,7 @@ void CGame::UpdatePlayer() {
     } else {
         //m_pRenderer->m_pCamera->MoveTo(Vec3(player_body->getWorldTransform().getOrigin()));
         m_pRenderer->m_pCamera->MoveTo(flycam_pos);
-        m_pRenderer->m_pCamera->SetYaw(0.0f);
+        m_pRenderer->m_pCamera->SetYaw(player_yaw);
         //m_pRenderer->m_pCamera->SetRoll(0.0f);
         m_pRenderer->m_pCamera->SetPitch(M_PI);
     }
