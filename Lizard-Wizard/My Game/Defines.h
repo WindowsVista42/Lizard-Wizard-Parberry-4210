@@ -217,6 +217,10 @@ namespace NPCState { enum e : u32 {
     SLEEPING, WANDER, MOVING, PATHFINDING, ATTACKING, SEARCHING, ANIMATING
 };}
 
+namespace NPCType { enum e : u32 {
+    OBELISK, CRYSTAL, BOSS
+};}
+
 namespace ProjectileTypes { enum e : u32 {
     FIRE, ICE, LIGHTNING
 };}

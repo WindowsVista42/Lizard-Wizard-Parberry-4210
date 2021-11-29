@@ -429,6 +429,19 @@ void CGame::EcsUpdate() {
     if (m_Healths.Get(m_Player)->current <= 0) {
         m_reset = true;
     }
+
+    // Manage NPC Healths, strip if lessthen/equal to 0.
+    Ecs::ApplyEvery(m_NPCsActive, [&](Entity e) {
+        if (m_Healths.Get(e)->current <= 0) {
+            if (m_NPCsActive.Size() > 0) {
+                ForceStripNPC(e);
+            }
+
+            if (m_Healths.Get(m_Player)->current > 0 && m_Healths.Get(m_Player)->current < 4) {
+                m_Healths.Get(m_Player)->current += 1;
+            }
+        }
+    });
 }
 
 /// Ask the object manager to draw the game objects. The renderer is notified

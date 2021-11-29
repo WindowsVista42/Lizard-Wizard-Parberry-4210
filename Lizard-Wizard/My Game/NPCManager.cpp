@@ -22,6 +22,23 @@ void SetNPCRender(btRigidBody* npcBody, Vec3 origin, btMatrix3x3 basis) {
     npcBody->getWorldTransform().setOrigin(origin);
 }
 
+b8 CGame::PlayerInView(btRigidBody* body) {
+    Vec3 from = body->getWorldTransform().getOrigin();
+    Vec3 to = (*m_RigidBodies.Get(m_Player))->getWorldTransform().getOrigin();
+    btCollisionWorld::ClosestRayResultCallback rayResults(from, to);
+    rayResults.m_collisionFilterGroup = PROJECTILE_PHYSICS_GROUP;
+    rayResults.m_collisionFilterMask = PLAYER_PROJECTILE_PHYSICS_MASK;
+    m_pDynamicsWorld->rayTest(from, to, rayResults);
+
+    if (rayResults.hasHit()) {
+        // Warning (Ethan) : DO NOT EDIT at this pointer.
+        btCollisionObject* hitObject = const_cast<btCollisionObject*>(rayResults.m_collisionObject);
+        return false;
+    }
+
+    return true;
+}
+
 ModelInstance GetNPCModel(btRigidBody* body) {
     btCollisionShape* currentShape = body->getCollisionShape();
     btBoxShape* boxShape = reinterpret_cast<btBoxShape*>(currentShape);
@@ -72,7 +89,7 @@ void CGame::Sleep(Entity e) {
     btRigidBody* npcBody = *m_RigidBodies.Get(e);
 
     f32 distance = npcBody->getWorldTransform().getOrigin().distance(playerBody->getWorldTransform().getOrigin());
-    if (distance < 7500.0f) {
+    if (distance < 10000.0f && PlayerInView(npcBody)) {
         currentNPC->State = NPCState::ATTACKING;
     }
 
@@ -154,7 +171,7 @@ void CGame::Pathfind(Entity e) {
     currentNPC->State = NPCState::MOVING;
 
     f32 distance = npcBody->getWorldTransform().getOrigin().distance(playerBody->getWorldTransform().getOrigin());
-    if (distance < 10000.0f) {
+    if (distance < 10000.0f && PlayerInView(npcBody)) {
         currentNPC->State = NPCState::ATTACKING;
     }
 
@@ -175,7 +192,7 @@ void CGame::Attack(Entity e) {
     SetNPCRender(npcBody, origin, newMat);
 
     f32 distance = npcBody->getWorldTransform().getOrigin().distance(playerBody->getWorldTransform().getOrigin());
-    if (distance < 10000.0f) {
+    if (distance < 10000.0f && PlayerInView(npcBody)) {
         waitTimer = *m_Timers.Get(e);
         if (waitTimer < 0.0f) {
             m_Timers.Remove(e);
@@ -215,7 +232,7 @@ void CGame::Search(Entity e) {
         currentNPC->SearchAttempts++;
     } else {
         f32 distance = npcBody->getWorldTransform().getOrigin().distance(playerBody->getWorldTransform().getOrigin());
-        if (distance < 10000.0f) {
+        if (distance < 10000.0f && PlayerInView(npcBody)) {
             currentNPC->State = NPCState::ATTACKING;
             currentNPC->SearchAttempts = 0;
         } else if (distance < 15000.0f) {
@@ -270,6 +287,7 @@ void CGame::DirectNPC(Entity e) {
 // Places a cached NPC.
 void CGame::PlaceNPC(Vec3 startPos, Vec3 lookDirection) {
     Entity e = m_NPCsCache.RemoveTail();
+    NPC* currNPC = m_NPCs.Get(e);
     m_NPCsActive.AddExisting(e);
 
     btRigidBody* body = *m_RigidBodies.Get(e);
@@ -295,6 +313,9 @@ void CGame::PlaceNPC(Vec3 startPos, Vec3 lookDirection) {
 
     m_pRenderer->lights.Get(e)->position = *(Vec4*)&body->getWorldTransform().getOrigin();
 
+    // Set stats / health
+    m_Healths.Get(e)->current = currNPC->BaseHealth;
+
     // Add model to world
     (*m_ModelInstances.Get(e)).world = 
         MoveRotateScaleMatrix(body->getWorldTransform().getOrigin(), 
@@ -309,6 +330,7 @@ void CGame::PlaceNPC(Vec3 startPos, Vec3 lookDirection) {
 // Places a cached NPC.
 void CGame::PlaceNPC2(Vec3 startPos) {
     Entity e = m_NPCsCache.RemoveTail();
+    NPC* currNPC = m_NPCs.Get(e);
     m_NPCsActive.AddExisting(e);
 
     btRigidBody* body = *m_RigidBodies.Get(e);
@@ -334,6 +356,10 @@ void CGame::PlaceNPC2(Vec3 startPos) {
 
     m_pRenderer->lights.Get(e)->position = *(Vec4*)&body->getWorldTransform().getOrigin();
 
+    // Set stats / health
+    m_Healths.Get(e)->current = currNPC->BaseHealth;
+
+
     // Add model to world
     (*m_ModelInstances.Get(e)).world = 
         MoveRotateScaleMatrix(body->getWorldTransform().getOrigin(), 
@@ -344,6 +370,31 @@ void CGame::PlaceNPC2(Vec3 startPos) {
 
     SetNPCRender(body, body->getWorldTransform().getOrigin(), body->getWorldTransform().getBasis());
 }
+
+// Manually strips an NPC
+void CGame::ForceStripNPC(Entity e) {
+    m_NPCsActive.Remove(e);
+    m_NPCsCache.AddExisting(e);
+    btRigidBody* body = *m_RigidBodies.Get(e);
+    btCollisionShape* currentShape = body->getCollisionShape();
+    btBoxShape* boxShape = reinterpret_cast<btBoxShape*>(currentShape);
+
+    // Set attributes.
+    Vec3 orig = Vec3(FLT_MAX, FLT_MAX, FLT_MAX);
+    RBTeleport(body, orig);
+
+    // Move lights
+    m_pRenderer->lights.Get(e)->position = *(Vec4*)&orig;
+
+    // Disable rendering
+    m_ModelsActive.Remove(e);
+
+    // Removes rigidbody
+    RemoveRigidBody(body);
+
+    RBSetMassFriction(body, 0.0f, 0.0f);
+}
+
 
 // Strips an NPC and re-adds them to the cache.
 void CGame::StripNPC() {
@@ -380,9 +431,13 @@ void CGame::InitializeNPCs() {
 
         // Prepare NPC
         newNPC.SearchAttempts = 0;
+        newNPC.BaseHealth = 4;
 
         // Prepare light
         Light newLight = { Vec4(99999.f,99999.f,99999.f,0), Vec4{10.0f, 30.0f, 500.0f, 0} };
+
+        // Health
+        Health npcHealth = Health::New(newNPC.BaseHealth, newNPC.BaseHealth);
 
         // Prepare model
         m_ModelInstances.AddExisting(e, GetNPCModel(*m_RigidBodies.Get(e)));
@@ -391,5 +446,6 @@ void CGame::InitializeNPCs() {
         m_pRenderer->lights.AddExisting(e, newLight);
         m_NPCs.AddExisting(e, newNPC);
         m_NPCsCache.AddExisting(e);
+        m_Healths.AddExisting(e, npcHealth);
     }
 }

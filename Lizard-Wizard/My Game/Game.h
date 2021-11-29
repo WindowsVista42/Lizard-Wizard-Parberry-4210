@@ -46,6 +46,8 @@ struct Transform {
 struct NPC {
     NPCBehavior::e Behavior;
     NPCState::e State;
+    NPCType::e Type;
+    u32 BaseHealth;
     u32 SearchAttempts;
     Vec3 QueuedMovement;
     Vec3 LastPosition;
@@ -388,6 +390,7 @@ private:
     void StripRaycheck(Entity);
 
     // NPC MANAGER //
+    b8 PlayerInView(btRigidBody*);
     void Animate(Entity);
     void Sleep(Entity);
     void Wander(Entity);
@@ -400,6 +403,7 @@ private:
     void PlaceNPC2(Vec3);
     void InitializeNPCs();
     void StripNPC();
+    void ForceStripNPC(Entity e);
 
     // ANIMATION MANAGER //
 
