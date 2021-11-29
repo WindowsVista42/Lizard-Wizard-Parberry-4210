@@ -328,7 +328,8 @@ void CGame::UpdatePlayer() {
                 SoundIndex::IceImpact1,
                 true,
                 PROJECTILE_PHYSICS_GROUP,
-                PLAYER_PROJECTILE_PHYSICS_MASK
+                PLAYER_PROJECTILE_PHYSICS_MASK,
+                2
             );
 
             *mana_timer = player_mana->Decrement(1);
@@ -344,12 +345,13 @@ void CGame::UpdatePlayer() {
                 m_pRenderer->m_pCamera->GetViewVector(),
                 2,
                 4,
-                0.025,
+                0.04,
                 Colors::IndianRed,
                 false,
                 true,
                 PROJECTILE_PHYSICS_GROUP,
-                PLAYER_PROJECTILE_PHYSICS_MASK
+                PLAYER_PROJECTILE_PHYSICS_MASK,
+                1
             );
 
             *mana_timer = player_mana->Decrement(2);
@@ -369,7 +371,8 @@ void CGame::UpdatePlayer() {
                 SoundIndex::FireImpact1,
                 true,
                 PROJECTILE_PHYSICS_GROUP,
-                PLAYER_PROJECTILE_PHYSICS_MASK
+                PLAYER_PROJECTILE_PHYSICS_MASK,
+                1
             );
 
             *mana_timer = player_mana->Decrement(3);

@@ -245,7 +245,7 @@ void CGame::CustomPhysicsStep() {
                     // Ignore duplicate hits, previous solution did not work well so this juryrig should fix it for final release :(
                     if (player_ignore_list.find(hitObject) == player_ignore_list.end()) {
                         player_ignore_list.insert(hitObject);
-                        m_Healths.Get(m_Player)->current -= 1;
+                        m_Healths.Get(m_Player)->current -= proj->Damage;
                         m_PlayerHitTimer = 0.5f;
                         m_pAudio->play(SoundIndex::PlayerImpact1, staff_tip, 0.45f, 0.5);
                     }
@@ -256,7 +256,7 @@ void CGame::CustomPhysicsStep() {
                     NPC* npc = m_NPCs.Get(causeObject);
                     if (npc->IgnoreList.find(hitObject) == npc->IgnoreList.end()) {
                         npc->IgnoreList.insert(hitObject);
-                        m_Healths.Get(causeObject)->current -= 1;
+                        m_Healths.Get(causeObject)->current -= proj->Damage;
                         m_pAudio->play(SoundIndex::EnemyImpactMetal1, npc->LastPosition, 0.55f, 0.5);
                     }
                 }
@@ -299,7 +299,7 @@ void CGame::CustomPhysicsStep() {
                     // Ignore duplicate hits, previous solution did not work well so this juryrig should fix it for final release :(
                     if (player_ignore_list.find(causeObject) == player_ignore_list.end()) {
                         player_ignore_list.insert(causeObject);
-                        m_Healths.Get(m_Player)->current -= 1;
+                        m_Healths.Get(m_Player)->current -= proj->Damage;
                         m_PlayerHitTimer = 0.5f;
                         m_pAudio->play(SoundIndex::PlayerImpact1, staff_tip, 0.45f, 0.5);
                     }
@@ -310,7 +310,7 @@ void CGame::CustomPhysicsStep() {
                     NPC* npc = m_NPCs.Get(hitObject);
                     if (npc->IgnoreList.find(causeObject) == npc->IgnoreList.end()) {
                         npc->IgnoreList.insert(causeObject);
-                        m_Healths.Get(hitObject)->current -= 1;
+                        m_Healths.Get(hitObject)->current -= proj->Damage;
                         m_pAudio->play(SoundIndex::EnemyImpactMetal1, npc->LastPosition, 0.55f, 0.5);
                     }
                 }
@@ -336,7 +336,7 @@ void CGame::CustomPhysicsStep() {
                 // Ignore duplicate hits, previous solution did not work well so this juryrig should fix it for final release :(
                 if (player_ignore_list.find(hitObject) == player_ignore_list.end()) {
                     player_ignore_list.insert(hitObject);
-                    m_Healths.Get(m_Player)->current -= 1;
+                    m_Healths.Get(m_Player)->current -= 2;
                     m_PlayerHitTimer = 0.5f;
                     m_pAudio->play(SoundIndex::PlayerImpact1, staff_tip, 0.45f, 0.5);
                 }
@@ -347,7 +347,7 @@ void CGame::CustomPhysicsStep() {
                 NPC* npc = m_NPCs.Get(causeObject);
                 if (npc->IgnoreList.find(hitObject) == npc->IgnoreList.end()) {
                     npc->IgnoreList.insert(hitObject);
-                    m_Healths.Get(causeObject)->current -= 1;
+                    m_Healths.Get(causeObject)->current -= 2;
                     m_pAudio->play(SoundIndex::EnemyImpactMetal1, npc->LastPosition, 0.55f, 0.5);
                 }
             }
@@ -357,7 +357,7 @@ void CGame::CustomPhysicsStep() {
                 // Ignore duplicate hits, previous solution did not work well so this juryrig should fix it for final release :(
                 if (player_ignore_list.find(causeObject) == player_ignore_list.end()) {
                     player_ignore_list.insert(causeObject);
-                    m_Healths.Get(m_Player)->current -= 1;
+                    m_Healths.Get(m_Player)->current -= 2;
                     m_PlayerHitTimer = 0.5f;
                     m_pAudio->play(SoundIndex::PlayerImpact1, staff_tip, 0.45f, 0.5);
                 }
@@ -368,7 +368,7 @@ void CGame::CustomPhysicsStep() {
                 NPC* npc = m_NPCs.Get(hitObject);
                 if (npc->IgnoreList.find(causeObject) == npc->IgnoreList.end()) {
                     npc->IgnoreList.insert(causeObject);
-                    m_Healths.Get(hitObject)->current -= 1;
+                    m_Healths.Get(hitObject)->current -= 2;
                     m_pAudio->play(SoundIndex::EnemyImpactMetal1, npc->LastPosition, 0.55f, 0.5);
                 }
             }

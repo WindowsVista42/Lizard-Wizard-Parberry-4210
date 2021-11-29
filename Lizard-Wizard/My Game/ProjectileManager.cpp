@@ -51,7 +51,8 @@ void CGame::GenerateSimProjectile(
     const SoundIndex::e projectileSound,
     const b8 ignoreCaster,
     const i32 physicsGroup,
-    const i32 physicsMask
+    const i32 physicsMask,
+    const i32 damage
 ) {
     for (i32 i = 0; i < projectileCount; i++) {
         // Check cache for open projectiles.
@@ -67,6 +68,7 @@ void CGame::GenerateSimProjectile(
 
         m_Projectiles.Get(e)->ProjSound = projectileSound;
         m_Projectiles.Get(e)->Color = projectileColor * 10.0f;
+        m_Projectiles.Get(e)->Damage = damage;
 
         btRigidBody* projectile = *m_RigidBodies.Get(e);
         btTransform trans;
@@ -107,7 +109,8 @@ void CGame::CalculateRay(
     Vec4 color,
     b8 ignoreCaster,
     const i32 physicsGroup,
-    const i32 physicsMask
+    const i32 physicsMask,
+    i32 damage
 ) {
     newRay.Pos1 = Pos1;
     if (m_RaysCache.Size() < 1) {
@@ -200,7 +203,7 @@ void CGame::CalculateRay(
         body->activate();
 
         if (rayBounces > 0) {
-            GenerateRayProjectile(caster, Vec3(hitPosition), Vec3(reflectedDirection), 1, rayBounces, 0.0f, color, true, ignoreCaster, physicsGroup, physicsMask);
+            GenerateRayProjectile(caster, Vec3(hitPosition), Vec3(reflectedDirection), 1, rayBounces, 0.0f, color, true, ignoreCaster, physicsGroup, physicsMask, damage);
         }
 
     } else {
@@ -222,7 +225,8 @@ void CGame::GenerateRayProjectile(
     const b8 recursed, 
     const b8 ignoreCaster,
     const i32 physicsGroup,
-    const i32 physicsMask
+    const i32 physicsMask,
+    const i32 damage
 ) {
     RayProjectile newRay;
     newRay.Pos1 = Vec3(startPos.x, startPos.y, startPos.z) + lookDirection * 500.;
@@ -232,13 +236,13 @@ void CGame::GenerateRayProjectile(
     if (!recursed) {
         for (i32 i = 0; i < rayCount; i++) {
             Vec3 newDirection = JitterVec3(lookDirection, -rayAccuracy, rayAccuracy);
-            CalculateRay(caster, newRay, startPos + (Vec3)((*m_RigidBodies.Get(m_Player))->getLinearVelocity() / 9.5f), newDirection, rayBounces, Colors::Peru, ignoreCaster, physicsGroup, physicsMask);
+            CalculateRay(caster, newRay, startPos + (Vec3)((*m_RigidBodies.Get(m_Player))->getLinearVelocity() / 9.5f), newDirection, rayBounces, Colors::Peru, ignoreCaster, physicsGroup, physicsMask, damage);
             m_currentRayProjectiles.push_back(newRay);
         }
     }
     else {
         for (i32 i = 0; i < rayCount; i++) {
-            CalculateRay(caster, newRay, startPos, lookDirection, rayBounces, Colors::Peru, ignoreCaster, physicsGroup, physicsMask);
+            CalculateRay(caster, newRay, startPos, lookDirection, rayBounces, Colors::Peru, ignoreCaster, physicsGroup, physicsMask, damage);
             m_currentRayProjectiles.push_back(newRay);
         }
     }

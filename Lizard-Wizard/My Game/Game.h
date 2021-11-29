@@ -30,6 +30,7 @@ struct RayProjectile {
 };
 
 struct SimProjectile {
+    i32 Damage;
     u32 Bounces;
     u32 MaxBounces;
     SoundIndex::e ProjSound;
@@ -49,10 +50,12 @@ struct NPC {
     NPCType::e Type;
     ModelIndex::e Model;
     SoundIndex::e CastSound;
+    SoundIndex::e ImpactSound;
     SoundIndex::e DeathSound;
     u32 BaseHealth;
     u32 SearchAttempts;
     Vec3 QueuedMovement;
+    Vec3 SpawnOffset;
     Vec3 LastPosition;
     Vec4 LightColor;
     std::unordered_set<Entity> IgnoreList;
@@ -365,6 +368,7 @@ private:
         const SoundIndex::e,
         const b8,
         const i32,
+        const i32,
         const i32
     );
 
@@ -373,11 +377,12 @@ private:
         const Vec3,
         const Vec3,
         const i32,
-        i32,
+        const i32,
         const f32,
         const Vec4,
         const b8,
         const b8,
+        const i32,
         const i32,
         const i32
     );
@@ -391,7 +396,8 @@ private:
         Vec4, 
         b8,
         const i32,
-        const i32
+        const i32,
+        i32
     );
 
     void InitializeProjectiles();
