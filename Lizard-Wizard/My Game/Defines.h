@@ -54,6 +54,10 @@ typedef std::pair<u32, u32> Point2;
 #define PLAYER_PHYSICS_MASK 0b01111
 #define PLAYER_PROJECTILE_PHYSICS_MASK 0b00101
 
+/// NPC Configuration
+#define NPC_ATTACK_RADIUS 10000.0f
+#define NPC_DETECTION_RADIUS 15000.0f
+
 /// Math
 #define PI 3.14159265359f
 

@@ -90,7 +90,7 @@ void CGame::Sleep(Entity e) {
     btRigidBody* npcBody = *m_RigidBodies.Get(e);
 
     f32 distance = npcBody->getWorldTransform().getOrigin().distance(playerBody->getWorldTransform().getOrigin());
-    if (distance < 10000.0f && PlayerInView(npcBody)) {
+    if (distance < NPC_ATTACK_RADIUS && PlayerInView(npcBody)) {
         currentNPC->State = NPCState::ATTACKING;
     }
 
@@ -172,7 +172,7 @@ void CGame::Pathfind(Entity e) {
     currentNPC->State = NPCState::MOVING;
 
     f32 distance = npcBody->getWorldTransform().getOrigin().distance(playerBody->getWorldTransform().getOrigin());
-    if (distance < 10000.0f && PlayerInView(npcBody)) {
+    if (distance < NPC_ATTACK_RADIUS && PlayerInView(npcBody)) {
         currentNPC->State = NPCState::ATTACKING;
     }
 
@@ -193,7 +193,7 @@ void CGame::Attack(Entity e) {
     SetNPCRender(npcBody, origin, newMat);
 
     f32 distance = npcBody->getWorldTransform().getOrigin().distance(playerBody->getWorldTransform().getOrigin());
-    if (distance < 10000.0f && PlayerInView(npcBody)) {
+    if (distance < NPC_ATTACK_RADIUS && PlayerInView(npcBody)) {
         waitTimer = *m_Timers.Get(e);
         if (waitTimer < 0.0f) {
             m_Timers.Remove(e);
@@ -234,10 +234,10 @@ void CGame::Search(Entity e) {
         currentNPC->SearchAttempts++;
     } else {
         f32 distance = npcBody->getWorldTransform().getOrigin().distance(playerBody->getWorldTransform().getOrigin());
-        if (distance < 10000.0f && PlayerInView(npcBody)) {
+        if (distance < NPC_ATTACK_RADIUS && PlayerInView(npcBody)) {
             currentNPC->State = NPCState::ATTACKING;
             currentNPC->SearchAttempts = 0;
-        } else if (distance < 15000.0f) {
+        } else if (distance < NPC_DETECTION_RADIUS) {
             currentNPC->State = NPCState::WANDER;
             currentNPC->SearchAttempts++;
         }
