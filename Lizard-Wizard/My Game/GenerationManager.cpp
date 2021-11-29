@@ -441,7 +441,7 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
         const Vec3 endpos = IndexToWorld(X_ROOMS - 1, Z_ROOMS - 1);
         std::unordered_set<u64> placed_npcs;
         std::vector<Point2> placed_pos;
-        i32 rem_npc_placement = 20;
+        i32 rem_npc_placement = NPC_CACHE_SIZE - 4;
         i32 sanity = 0;
         while (rem_npc_placement > 0) {
             u32 npc_placement_type = GameRandom::Randu32(0, 1);
@@ -503,6 +503,9 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
                 if (rem_npc_placement <= 0) { break; }
             }
         }
+
+        // Place boss in boss room.
+        PlaceNPC2(IndexToWorld(X_ROOMS - 2, Z_ROOMS - 2), NPCType::BOSS);
     }
 }
 

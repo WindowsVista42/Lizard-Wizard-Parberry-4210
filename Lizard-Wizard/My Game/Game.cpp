@@ -49,6 +49,7 @@ void CGame::LoadModels() {
     m_pRenderer->LoadModel("quad", ModelIndex::Quad);
     m_pRenderer->LoadModel("cool_cube", ModelIndex::CoolCube);
     m_pRenderer->LoadModel("crystal", ModelIndex::Crystal);
+    m_pRenderer->LoadModel("boss", ModelIndex::Boss);
 }
 
 void CGame::LoadImages() {
@@ -170,7 +171,17 @@ void CGame::ResetGame() {
     //delete m_pDynamicsWorld;
     m_currentRayProjectiles.clear();
 
+    m_NPCStatsMap.clear();
+
     m_reset = false;
+
+    flycam_enabled = false;
+
+    for every(z, Z_ROOMS) {
+        for every(x, X_ROOMS) {
+            m_PlayerVisibilityMap[x][z] = false;
+        }
+    }
 
     BeginGame();
 }
@@ -485,6 +496,53 @@ void CGame::RenderFrame() {
             m_pRenderer->DrawModelInstance(mi);
         }
 
+        if(flycam_enabled) {
+            //ModelInstance mi;
+            //mi.model = ModelIndex::Cube;
+            //mi.texture = TextureIndex::White;
+            //mi.glow = Vec3(-1.0f);
+            //mi.world = MoveScaleMatrix(Vec3(0.0f), Vec3(1000.0f));
+            //m_pRenderer->DrawModelInstance(&mi);
+            ModelInstance mi;
+            mi.model = ModelIndex::Cube;
+            mi.texture = TextureIndex::White;
+            mi.glow = Vec3(-1.0f);
+            for every(z, Z_ROOMS) {
+                for every(x, X_ROOMS) {
+                    if(!(m_GameMap[x][z] && m_PlayerVisibilityMap[x][z])){
+                        Vec3 pos = IndexToWorld(x, z);
+                        pos.y = 2100.0f;
+                        mi.world = MoveScaleMatrix(pos, Vec3(1000.0f));
+                        m_pRenderer->DrawModelInstance(&mi);
+                    }
+                }
+            }
+
+            mi.glow = Vec3(10.0f, -1.0f, -1.0f);
+            Vec3 player_pos = (*m_RigidBodies.Get(m_Player))->getWorldTransform().getOrigin();
+            player_pos.y = 4000.0f;
+            mi.world = MoveScaleMatrix(player_pos, Vec3(200.0f));
+            m_pRenderer->DrawModelInstance(&mi);
+
+            Ecs::ApplyEvery(m_NPCsActive, [&](Entity e) {
+                switch (m_NPCs.Get(e)->Type) {
+                case NPCType::OBELISK: {
+                    mi.glow = Vec3(-1.0f, -1.0f, 10.0f);
+                } break;
+                case NPCType::CRYSTAL: {
+                    mi.glow = Vec3(-1.0f, -1.0f, 10.0f);
+                } break;
+                case NPCType::BOSS: {
+                    mi.glow = Vec3(-1.0f, 10.0f, 10.0f);
+                } break;
+                }
+                Vec3 npc_pos = (*m_RigidBodies.Get(e))->getWorldTransform().getOrigin();
+                npc_pos.y = 4000.0f;
+                mi.world = MoveScaleMatrix(npc_pos, Vec3(200.0f));
+                m_pRenderer->DrawModelInstance(&mi);
+            });
+        }
+
         m_pRenderer->EndDrawing();
     } else {
         m_pRenderer->BeginDrawing();
@@ -517,21 +575,7 @@ void CGame::RenderFrame() {
             sprintf(buffer, "%.2f", m_frameRate);
             m_pRenderer->DrawScreenText(buffer, Vector2(m_nWinWidth - 200.0, 50.0), Colors::White);
         }
-        /*
-        SpriteInstance sprite_instance;
-        sprite_instance.position = Vec2(100.0f, 100.0f);
-        sprite_instance.roll = 0.0f;
-        sprite_instance.scale = Vec2(100.0f, 100.0f);
-        sprite_instance.rgba = Vec4(1.0f, 1.0f, 1.0f, 1.0f);
-        sprite_instance.texture_index = TextureIndex::White;
 
-        m_pRenderer->DrawSpriteInstance(&sprite_instance);
-
-        sprite_instance.scale = Vec2(10.0f, 10.0f);
-        sprite_instance.rgba = Vec4(1.0f, 1.0f, 0.0f, 1.0f);
-
-        m_pRenderer->DrawSpriteInstance(&sprite_instance);
-        */
         m_pRenderer->EndUIDrawing();
     }
 

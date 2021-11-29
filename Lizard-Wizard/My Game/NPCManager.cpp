@@ -297,7 +297,7 @@ void CGame::DirectNPC(Entity e) {
 void CGame::PlaceNPC(Vec3 startPos, Vec3 lookDirection, NPCType::e npcType) {
     Entity e = m_NPCsCache.RemoveTail();
     NPC* currNPC = m_NPCs.Get(e);
-    NPC* baseNPC = m_NPCStatsMap.at(npcType);
+    NPC* baseNPC = &m_NPCStatsMap.at(npcType);
     m_NPCsActive.AddExisting(e);
 
     btRigidBody* body = *m_RigidBodies.Get(e);
@@ -350,7 +350,7 @@ void CGame::PlaceNPC(Vec3 startPos, Vec3 lookDirection, NPCType::e npcType) {
 void CGame::PlaceNPC2(Vec3 startPos, NPCType::e npcType) {
     Entity e = m_NPCsCache.RemoveTail();
     NPC* currNPC = m_NPCs.Get(e);
-    NPC* baseNPC = m_NPCStatsMap.at(npcType);
+    NPC* baseNPC = &m_NPCStatsMap.at(npcType);
     m_NPCsActive.AddExisting(e);
 
     btRigidBody* body = *m_RigidBodies.Get(e);
@@ -449,30 +449,34 @@ void CGame::StripNPC() {
 
 
 void CGame::InitializeNPCs() {
-    NPC* Obelisk = new NPC();
-    NPC* Crystal = new NPC();
-    NPC* Boss = new NPC();
-
+    NPC npc;
 
     // Obelisk (FIRE) (Default Configuration of NPC)
-    Obelisk->BaseHealth = 4;
-    Obelisk->LightColor = Vec4(10.0f, 30.0f, 500.0f, 0);
-    Obelisk->CastSound = SoundIndex::EnemyCast1;
-    Obelisk->DeathSound = SoundIndex::ObeliskDeath;
-    Obelisk->Model = ModelIndex::Obelisk;
-    Obelisk->SpawnOffset = Vec3(0.0f, -500.0f, 0.0f);
-    m_NPCStatsMap.insert(std::make_pair(NPCType::OBELISK, Obelisk));
+    npc.BaseHealth = 4;
+    npc.LightColor = Vec4(10.0f, 30.0f, 500.0f, 0);
+    npc.CastSound = SoundIndex::EnemyCast1;
+    npc.DeathSound = SoundIndex::ObeliskDeath;
+    npc.Model = ModelIndex::Obelisk;
+    npc.SpawnOffset = Vec3(0.0f, -500.0f, 0.0f);
+    m_NPCStatsMap.insert(std::make_pair(NPCType::OBELISK, npc));
 
     // Crystal (ICE)
-    Crystal->BaseHealth = 8;
-    Crystal->LightColor = Vec4(10.0f, 30.0f, 500.0f, 0);
-    Crystal->CastSound = SoundIndex::EnemyCast2;
-    Crystal->DeathSound = SoundIndex::CrystalDeath;
-    Crystal->Model = ModelIndex::Crystal;
-    Crystal->SpawnOffset = Vec3(0.0f, 0.0f, 0.0f);
-    m_NPCStatsMap.insert(std::make_pair(NPCType::CRYSTAL, Crystal));
+    npc.BaseHealth = 8;
+    npc.LightColor = Vec4(10.0f, 30.0f, 500.0f, 0);
+    npc.CastSound = SoundIndex::EnemyCast2;
+    npc.DeathSound = SoundIndex::CrystalDeath;
+    npc.Model = ModelIndex::Crystal;
+    npc.SpawnOffset = Vec3(0.0f, 0.0f, 0.0f);
+    m_NPCStatsMap.insert(std::make_pair(NPCType::CRYSTAL, npc));
 
     // Boss (Variation of ICE and FIRE attacks)
+    npc.BaseHealth = 32;
+    npc.LightColor = Vec4(1000.0f, 30.0f, 1000.0f, 0);
+    npc.CastSound = SoundIndex::EnemyCast2;
+    npc.DeathSound = SoundIndex::CrystalDeath;
+    npc.Model = ModelIndex::Boss;
+    npc.SpawnOffset = Vec3(0.0f, -500.0f, 0.0f);
+    m_NPCStatsMap.insert(std::make_pair(NPCType::BOSS, npc));
 
     // Create all NPCs
     for every(index, NPC_CACHE_SIZE) {

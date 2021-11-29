@@ -298,7 +298,8 @@ void CGame::UpdatePlayer() {
         if (rayResults.hasHit() && m_InAir.Contains(m_Player)) {
             m_pAudio->play(SoundIndex::PlayerLand1, m_pRenderer->m_pCamera->GetPos() - Vec3(0, 200.0f, 0), 0.05f, 0.01);
             m_InAir.Remove(m_Player);
-        } else if(!rayResults.hasHit() && !m_InAir.Contains(m_Player)) {
+        }
+        else if (!rayResults.hasHit() && !m_InAir.Contains(m_Player)) {
             m_InAir.AddExisting(m_Player);
         }
 
@@ -382,19 +383,39 @@ void CGame::UpdatePlayer() {
     }
 
     if (flycam_enabled) {
-        flycam_pos += movedir * flycam_speed * m_pTimer->GetFrameTime();
+        //flycam_pos += movedir * flycam_speed * m_pTimer->GetFrameTime();
+        f32 y_pos = 60000.0f;
+        flycam_pos = Vec3(player_body->getWorldTransform().getOrigin());
+        flycam_pos.y = y_pos;
+    }
+
+    static f32 last_yaw = 0.0f;
+    static f32 last_pitch = 0.0f;
+
+    if (!flycam_enabled) {
+        last_yaw = player_yaw;
+        last_pitch = player_pitch;
+    } else {
+        player_yaw = last_yaw;
+        player_pitch = last_pitch;
     }
 
     m_pRenderer->m_pCamera->SetYaw(player_yaw);
     m_pRenderer->m_pCamera->SetPitch(player_pitch);
 
     if (!flycam_enabled) {
-        Light* light = m_pRenderer->lights.Get(m_Player);
-
         m_pRenderer->m_pCamera->MoveTo(Vec3(player_body->getWorldTransform().getOrigin()));
-        light->position = *(Vec4*)&m_pRenderer->m_pCamera->GetPos();
     } else {
+        //m_pRenderer->m_pCamera->MoveTo(Vec3(player_body->getWorldTransform().getOrigin()));
         m_pRenderer->m_pCamera->MoveTo(flycam_pos);
+        m_pRenderer->m_pCamera->SetYaw(0.0f);
+        //m_pRenderer->m_pCamera->SetRoll(0.0f);
+        m_pRenderer->m_pCamera->SetPitch(M_PI);
+    }
+
+    {
+        Light* light = m_pRenderer->lights.Get(m_Player);
+        light->position = *(Vec4*)&Vec3(player_body->getWorldTransform().getOrigin());
     }
 
     {
@@ -402,7 +423,7 @@ void CGame::UpdatePlayer() {
         Vec3 lookdir = m_pRenderer->m_pCamera->GetViewVector();
         lookdir = { lookdir.x, 0.0f, lookdir.z };
         Vec3 normal = { lookdir.z, 0.0f, -lookdir.x };
-
+    
         {
             f32* time = m_Timers.Get(De);
             f32 factor = WindupWinddown(*time, 0.02f, 0.02f, move_timer);
@@ -410,7 +431,7 @@ void CGame::UpdatePlayer() {
             //if (*time > 0.0f) { factor = 1.0f; }
             movedir += normal * factor;
         }
-
+    
         {
             f32* time = m_Timers.Get(Ae);
             f32 factor = WindupWinddown(*time, 0.02f, 0.02f, move_timer);
@@ -418,7 +439,7 @@ void CGame::UpdatePlayer() {
             //if (*time > 0.0f) { factor = 1.0f; }
             movedir -= normal * factor;
         }
-
+    
         {
             f32* time = m_Timers.Get(We);
             f32 factor = WindupWinddown(*time, 0.02f, 0.02f, move_timer);
@@ -426,7 +447,7 @@ void CGame::UpdatePlayer() {
             //if (*time > 0.0f) { factor = 1.0f; }
             movedir += lookdir * factor;
         }
-
+    
         {
             f32* time = m_Timers.Get(Se);
             f32 factor = WindupWinddown(*time, 0.02f, 0.02f, move_timer);
@@ -436,6 +457,7 @@ void CGame::UpdatePlayer() {
         }
     }
 
+    if (flycam_enabled) { movedir = -movedir; }
     if (movedir != Vec3(0)) { movedir.Normalize(); }
 
     static const f32 move_speed = 3000.0f;
@@ -443,7 +465,6 @@ void CGame::UpdatePlayer() {
     Vec3 newvel = Vec3(Vec3(0, player_body->getLinearVelocity().y(), 0) + Vec3(movedir * move_speed));
     player_body->setLinearVelocity(newvel);
 
-    // Not sure about this syntax, might change because it might explode compile times
     Ecs::ApplyEvery(m_DashAction.active, [=](Entity e) {
         f32* time = m_Timers.Get(e);
         if (*time < 0.0f) { return; }
@@ -469,7 +490,7 @@ void CGame::UpdatePlayer() {
     Vec3 staff_pos;
     Quat staff_rot;
 
-    {
+    if(!flycam_enabled) {
         ModelInstance* mi = m_ModelInstances.Get(Staffe);
         LBaseCamera* cam = m_pRenderer->m_pCamera;
 
@@ -486,7 +507,7 @@ void CGame::UpdatePlayer() {
     }
 
     // cube on top of staff
-    {
+    if(!flycam_enabled) {
         ModelInstance* mi = m_ModelInstances.Get(Cubee);
 
         Vec3 particle_pos = RotatePointAroundOrigin(
@@ -528,7 +549,7 @@ void CGame::UpdatePlayer() {
     };
 
     // cubes that spin around staff
-    {
+    if(!flycam_enabled) {
         f32 index = 1.0f;
         Ecs::ApplyEvery(m_PlayerManaOrbs, [&](Entity e) {
             ModelInstance* mi = m_ModelInstances.Get(e);
@@ -576,7 +597,7 @@ void CGame::UpdatePlayer() {
     //);
 
     // Hand
-    {
+    if(!flycam_enabled) {
         Vec3 hand_pos;
         Quat hand_rot;
 
@@ -623,7 +644,7 @@ void CGame::UpdatePlayer() {
     }
 
     // Health visual effect stuff
-    {
+    if(!flycam_enabled) {
         Health* player_health = m_Healths.Get(m_Player);
         f32 factor = ((f32)player_health->current / (f32)player_health->max);
         btClamp<f32>(factor, 0.0f, 1.0f);
@@ -691,6 +712,19 @@ void CGame::UpdatePlayer() {
             player_step = 0;
         } else {
             player_step = player_step + player_change_in_pos.Length() / 18.0f;
+        }
+    }
+
+    // update player stencil thing or something idk at this point
+    {
+        Point2 point = WorldToIndex(player_body->getWorldTransform().getOrigin());
+
+        for (i32 x = -3; x <= 3; x += 1) {
+            for (i32 z = -3; z <= 3; z += 1) {
+                if (CheckBounds(x + point.first, z + point.second)) {
+                    m_PlayerVisibilityMap[x + point.first][z + point.second] = true;
+                }
+            }
         }
     }
 }

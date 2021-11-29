@@ -187,7 +187,7 @@ private:
 
     // AI Type / Variance
     // Note (Ethan) : Sorry if this is ugly, were out of time and this probably the easiest way to do this in a fast way.
-    std::unordered_map<NPCType::e, NPC*> m_NPCStatsMap;
+    std::unordered_map<NPCType::e, NPC> m_NPCStatsMap;
 
     // Rendering Table
     Table<ModelInstance> m_ModelInstances;
@@ -207,6 +207,7 @@ private:
 
     // Rooms / Generation Tables
     std::array<std::array<bool, Z_ROOMS>, X_ROOMS> m_GameMap; // empty or not empty, could be optimized with a bitfield
+    std::array<std::array<bool, Z_ROOMS>, X_ROOMS> m_PlayerVisibilityMap; // player visibility mapped to true or false for a tile.
 
     // Collision Table (Simply put, we store all currently colliding objects here.)
     Table<Entity> m_CollisionPairs;
@@ -249,8 +250,8 @@ private:
     // Player Ignore List
     std::unordered_set<Entity> player_ignore_list;
 
-    Vector3 flycam_pos = { -10000.0f, 0.0f, -10000.0f };
-    f32 flycam_speed = 6000.0f;
+    Vector3 flycam_pos = { 40000.0f, 60000.0f, 40000.0f };
+    f32 flycam_speed = 10000.0f;
     
     bool flycam_enabled = false;
     u32 render_mode = 1;
