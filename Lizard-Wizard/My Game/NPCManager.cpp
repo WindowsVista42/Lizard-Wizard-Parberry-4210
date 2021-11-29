@@ -159,8 +159,8 @@ void CGame::Pathfind(Entity e) {
 
     std::vector<Point2> path = Pathfind(WorldToIndex(npcBody->getWorldTransform().getOrigin()), WorldToIndex(playerBody->getWorldTransform().getOrigin()));
     if (path.size() > 1) {
-        Vec3 moveTo = IndexToWorld(path[path.size() - 1].first, path[path.size() - 1].second) + 500.0f * Vec3(GameRandom::Randf32() - 0.5f, 0.0f, GameRandom::Randf32() - 0.5f);
-        moveTo.y = 0.0f;
+        Vec3 moveTo = IndexToWorld(path[path.size() - 1].first, path[path.size() - 1].second) + 500.0f * Vec3(GameRandom::Randf32() - 0.5f, currentNPC->SpawnOffset.y, GameRandom::Randf32() - 0.5f);
+        moveTo.y = currentNPC->SpawnOffset.y;
         currentNPC->QueuedMovement = moveTo;
     } else {
         currentNPC->QueuedMovement = npcBody->getWorldTransform().getOrigin();
@@ -210,7 +210,8 @@ void CGame::Attack(Entity e) {
                 SoundIndex::FireImpact1,
                 true,
                 PROJECTILE_PHYSICS_GROUP,
-                NPC_PROJECTILE_PHYSICS_MASK
+                NPC_PROJECTILE_PHYSICS_MASK,
+                1
             );
             m_pAudio->play(currentNPC->CastSound, origin, 0.85f, 0.5);
         }
@@ -258,6 +259,9 @@ void CGame::DirectNPC(Entity e) {
     m_pRenderer->lights.Get(e)->position = *(Vec4*)&m_NPCs.Get(e)->LastPosition;
 
     Health* health = m_Healths.Get(e);
+    if (health->current > health->max) {
+        printf("corrupt current : %d, max : %d\n", health->current, health->max);
+    }
     m_pRenderer->lights.Get(e)->color = m_NPCs.Get(e)->LightColor * ((f32)health->current / (f32)health->max);
 
     switch (m_NPCs.Get(e)->State)
@@ -306,8 +310,13 @@ void CGame::PlaceNPC(Vec3 startPos, Vec3 lookDirection, NPCType::e npcType) {
     f32 friction = 0.0f;
     btVector3 inertia;
 
+    // Set NPC Stuff
+    currNPC->CastSound = baseNPC->CastSound;
+    currNPC->DeathSound = baseNPC->DeathSound;
+    currNPC->SpawnOffset = baseNPC->SpawnOffset;
+
     // Set attributes.
-    body->getWorldTransform().setOrigin(Vec3(newPos.x, 0.0f, newPos.z));
+    body->getWorldTransform().setOrigin(Vec3(newPos.x, currNPC->SpawnOffset.y, newPos.z));
     body->getCollisionShape()->calculateLocalInertia(mass, inertia);
     body->setMassProps(mass, inertia);
     body->setFriction(friction);
@@ -321,10 +330,8 @@ void CGame::PlaceNPC(Vec3 startPos, Vec3 lookDirection, NPCType::e npcType) {
 
     // Set stats / health
     m_Healths.Get(e)->current = baseNPC->BaseHealth;
+    m_Healths.Get(e)->max = baseNPC->BaseHealth;
 
-    // Set Sounds
-    currNPC->CastSound = baseNPC->CastSound;
-    currNPC->DeathSound = baseNPC->DeathSound;
 
     // Add model to world
     (*m_ModelInstances.Get(e)).world = 
@@ -356,8 +363,13 @@ void CGame::PlaceNPC2(Vec3 startPos, NPCType::e npcType) {
     f32 friction = 0.0f;
     btVector3 inertia;
 
+    // Set NPC Stuff
+    currNPC->CastSound = baseNPC->CastSound;
+    currNPC->DeathSound = baseNPC->DeathSound;
+    currNPC->SpawnOffset = baseNPC->SpawnOffset;
+
     // Set attributes.
-    body->getWorldTransform().setOrigin(Vec3(newPos.x, 0.0f, newPos.z));
+    body->getWorldTransform().setOrigin(Vec3(newPos.x, currNPC->SpawnOffset.y, newPos.z));
     body->getCollisionShape()->calculateLocalInertia(mass, inertia);
     body->setMassProps(mass, inertia);
     body->setFriction(friction);
@@ -371,11 +383,7 @@ void CGame::PlaceNPC2(Vec3 startPos, NPCType::e npcType) {
 
     // Set stats / health
     m_Healths.Get(e)->current = baseNPC->BaseHealth;
-
-    // Set Sounds
-    currNPC->CastSound = baseNPC->CastSound;
-    currNPC->DeathSound = baseNPC->DeathSound;
-
+    m_Healths.Get(e)->max = baseNPC->BaseHealth;
 
     // Add model to world
     (*m_ModelInstances.Get(e)).world = 
@@ -452,6 +460,7 @@ void CGame::InitializeNPCs() {
     Obelisk->CastSound = SoundIndex::EnemyCast1;
     Obelisk->DeathSound = SoundIndex::ObeliskDeath;
     Obelisk->Model = ModelIndex::Obelisk;
+    Obelisk->SpawnOffset = Vec3(0.0f, -500.0f, 0.0f);
     m_NPCStatsMap.insert(std::make_pair(NPCType::OBELISK, Obelisk));
 
     // Crystal (ICE)
@@ -460,6 +469,7 @@ void CGame::InitializeNPCs() {
     Crystal->CastSound = SoundIndex::EnemyCast2;
     Crystal->DeathSound = SoundIndex::CrystalDeath;
     Crystal->Model = ModelIndex::Crystal;
+    Crystal->SpawnOffset = Vec3(0.0f, 0.0f, 0.0f);
     m_NPCStatsMap.insert(std::make_pair(NPCType::CRYSTAL, Crystal));
 
     // Boss (Variation of ICE and FIRE attacks)
@@ -477,6 +487,7 @@ void CGame::InitializeNPCs() {
         newNPC.BaseHealth = 4;
         newNPC.CastSound = SoundIndex::EnemyCast1;
         newNPC.DeathSound = SoundIndex::ObeliskDeath;
+        newNPC.SpawnOffset = Vec3(0.0f, 0.0f, 0.0f);
 
         // Prepare light
         newNPC.LightColor = Vec4(10.0f, 30.0f, 500.0f, 0);
