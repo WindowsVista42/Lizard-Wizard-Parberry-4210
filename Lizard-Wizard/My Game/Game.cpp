@@ -545,6 +545,21 @@ void CGame::RenderFrame() {
                     yoffset += 2.5f;
                 }
             });
+
+            Vec3 p = RotatePointAroundOrigin(
+                cam->GetPos(), 
+                Vec3(0.0f, 0.0f, 80.0f), 
+                Quat::CreateFromYawPitchRoll(cam->GetYaw(), cam->GetPitch(), cam->GetRoll())
+            );
+        
+            Quat r = Quat::CreateFromYawPitchRoll(cam->GetYaw(), cam->GetPitch(), cam->GetRoll());
+        
+            Vec3 s = Vec3(0.25f);
+
+            mi.world = MoveRotateScaleMatrix(p, r, s);
+            mi.glow = Vec3(1.0f);
+
+            m_pRenderer->DrawModelInstance(&mi);
         }
 
         m_pRenderer->EndDrawing();
