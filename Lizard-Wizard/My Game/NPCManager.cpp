@@ -1,5 +1,6 @@
 /// Inclusions
 #include "Game.h"
+#include <ComponentIncludes.h>
 #include "Interpolation.h"
 
 /* Note(Ethan) : This is a prototype test for the NPC system, I will reduce comments once we get to making the release version.
@@ -211,6 +212,7 @@ void CGame::Attack(Entity e) {
                 PROJECTILE_PHYSICS_GROUP,
                 NPC_PROJECTILE_PHYSICS_MASK
             );
+            m_pAudio->play(currentNPC->CastSound, origin, 0.85f, 0.5);
         }
     } else {
         currentNPC->State = NPCState::SEARCHING;
@@ -288,9 +290,10 @@ void CGame::DirectNPC(Entity e) {
 }
 
 // Places a cached NPC.
-void CGame::PlaceNPC(Vec3 startPos, Vec3 lookDirection) {
+void CGame::PlaceNPC(Vec3 startPos, Vec3 lookDirection, NPCType::e npcType) {
     Entity e = m_NPCsCache.RemoveTail();
     NPC* currNPC = m_NPCs.Get(e);
+    NPC* baseNPC = m_NPCStatsMap.at(npcType);
     m_NPCsActive.AddExisting(e);
 
     btRigidBody* body = *m_RigidBodies.Get(e);
@@ -317,7 +320,11 @@ void CGame::PlaceNPC(Vec3 startPos, Vec3 lookDirection) {
     m_pRenderer->lights.Get(e)->position = *(Vec4*)&body->getWorldTransform().getOrigin();
 
     // Set stats / health
-    m_Healths.Get(e)->current = currNPC->BaseHealth;
+    m_Healths.Get(e)->current = baseNPC->BaseHealth;
+
+    // Set Sounds
+    currNPC->CastSound = baseNPC->CastSound;
+    currNPC->DeathSound = baseNPC->DeathSound;
 
     // Add model to world
     (*m_ModelInstances.Get(e)).world = 
@@ -325,15 +332,18 @@ void CGame::PlaceNPC(Vec3 startPos, Vec3 lookDirection) {
             *(Quat*)&body->getWorldTransform().getRotation(), 
             boxShape->getHalfExtentsWithMargin()
         );
+
+    (*m_ModelInstances.Get(e)).model = baseNPC->Model;
     m_ModelsActive.AddExisting(e);
 
     SetNPCRender(body, body->getWorldTransform().getOrigin(), body->getWorldTransform().getBasis());
 }
 
 // Places a cached NPC.
-void CGame::PlaceNPC2(Vec3 startPos) {
+void CGame::PlaceNPC2(Vec3 startPos, NPCType::e npcType) {
     Entity e = m_NPCsCache.RemoveTail();
     NPC* currNPC = m_NPCs.Get(e);
+    NPC* baseNPC = m_NPCStatsMap.at(npcType);
     m_NPCsActive.AddExisting(e);
 
     btRigidBody* body = *m_RigidBodies.Get(e);
@@ -360,7 +370,11 @@ void CGame::PlaceNPC2(Vec3 startPos) {
     m_pRenderer->lights.Get(e)->position = *(Vec4*)&body->getWorldTransform().getOrigin();
 
     // Set stats / health
-    m_Healths.Get(e)->current = currNPC->BaseHealth;
+    m_Healths.Get(e)->current = baseNPC->BaseHealth;
+
+    // Set Sounds
+    currNPC->CastSound = baseNPC->CastSound;
+    currNPC->DeathSound = baseNPC->DeathSound;
 
 
     // Add model to world
@@ -425,6 +439,30 @@ void CGame::StripNPC() {
 
 
 void CGame::InitializeNPCs() {
+    NPC* Obelisk = new NPC();
+    NPC* Crystal = new NPC();
+    NPC* Boss = new NPC();
+
+
+    // Obelisk (FIRE) (Default Configuration of NPC)
+    Obelisk->BaseHealth = 4;
+    Obelisk->LightColor = Vec4(10.0f, 30.0f, 500.0f, 0);
+    Obelisk->CastSound = SoundIndex::EnemyCast1;
+    Obelisk->DeathSound = SoundIndex::ObeliskDeath;
+    Obelisk->Model = ModelIndex::Obelisk;
+    m_NPCStatsMap.insert(std::make_pair(NPCType::OBELISK, Obelisk));
+
+    // Crystal (ICE)
+    Crystal->BaseHealth = 8;
+    Crystal->LightColor = Vec4(10.0f, 30.0f, 500.0f, 0);
+    Crystal->CastSound = SoundIndex::EnemyCast2;
+    Crystal->DeathSound = SoundIndex::CrystalDeath;
+    Crystal->Model = ModelIndex::Crystal;
+    m_NPCStatsMap.insert(std::make_pair(NPCType::CRYSTAL, Crystal));
+
+    // Boss (Variation of ICE and FIRE attacks)
+
+    // Create all NPCs
     for every(index, NPC_CACHE_SIZE) {
         // Create Rigidbody, get ECS identifier, and create new NPC
         btRigidBody* newBody = CreateBoxObject(Vec3(450.f, 600.f, 300.f), Vec3(FLT_MAX, FLT_MAX, FLT_MAX), 0.0f, 0.0f, 3, 0b00001);
@@ -435,6 +473,8 @@ void CGame::InitializeNPCs() {
         // Prepare NPC
         newNPC.SearchAttempts = 0;
         newNPC.BaseHealth = 4;
+        newNPC.CastSound = SoundIndex::EnemyCast1;
+        newNPC.DeathSound = SoundIndex::ObeliskDeath;
 
         // Prepare light
         newNPC.LightColor = Vec4(10.0f, 30.0f, 500.0f, 0);

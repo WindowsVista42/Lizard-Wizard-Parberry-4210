@@ -491,7 +491,7 @@ void CGame::GenerateRooms(Vec3 roomCenter, const i32 roomCount, const i32 random
                         placed_npcs.find(keypos) == placed_npcs.end()
                     ) {
                         placed_npcs.insert(keypos);
-                        PlaceNPC2(realpos);
+                        PlaceNPC2(realpos, NPCType::OBELISK);
 
                         rem_npc_placement -= 1;
                         if (rem_npc_placement <= 0) { break; }

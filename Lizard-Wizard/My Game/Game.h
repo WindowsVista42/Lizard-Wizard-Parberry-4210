@@ -47,6 +47,9 @@ struct NPC {
     NPCBehavior::e Behavior;
     NPCState::e State;
     NPCType::e Type;
+    ModelIndex::e Model;
+    SoundIndex::e CastSound;
+    SoundIndex::e DeathSound;
     u32 BaseHealth;
     u32 SearchAttempts;
     Vec3 QueuedMovement;
@@ -178,6 +181,10 @@ private:
     // Raycheck Cache (MAX 24)
     Group m_RaycheckCache;
     Group m_RaycheckActive;
+
+    // AI Type / Variance
+    // Note (Ethan) : Sorry if this is ugly, were out of time and this probably the easiest way to do this in a fast way.
+    std::unordered_map<NPCType::e, NPC*> m_NPCStatsMap;
 
     // Rendering Table
     Table<ModelInstance> m_ModelInstances;
@@ -402,8 +409,8 @@ private:
     void Attack(Entity);
     void Search(Entity);
     void DirectNPC(Entity);
-    void PlaceNPC(Vec3, Vec3);
-    void PlaceNPC2(Vec3);
+    void PlaceNPC(Vec3, Vec3, NPCType::e);
+    void PlaceNPC2(Vec3, NPCType::e);
     void InitializeNPCs();
     void StripNPC();
     void ForceStripNPC(Entity e);

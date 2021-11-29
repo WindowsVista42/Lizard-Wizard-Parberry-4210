@@ -48,6 +48,7 @@ void CGame::LoadModels() {
     m_pRenderer->LoadModel("hand", ModelIndex::Hand);
     m_pRenderer->LoadModel("quad", ModelIndex::Quad);
     m_pRenderer->LoadModel("cool_cube", ModelIndex::CoolCube);
+    m_pRenderer->LoadModel("crystal", ModelIndex::Crystal);
 }
 
 void CGame::LoadImages() {
@@ -70,6 +71,9 @@ void CGame::LoadSounds(){
     m_pAudio->Load(SoundIndex::FireCast, "FireCast");
     m_pAudio->Load(SoundIndex::IceCast, "IceCast");
     m_pAudio->Load(SoundIndex::LightningCast, "LightningCast");
+    m_pAudio->Load(SoundIndex::EnemyCast1, "EnemyCast1");
+    m_pAudio->Load(SoundIndex::EnemyCast2, "EnemyCast2");
+
 
     // Impact Noises
     m_pAudio->Load(SoundIndex::FireImpact1, "FireImpact1");
@@ -77,6 +81,7 @@ void CGame::LoadSounds(){
     m_pAudio->Load(SoundIndex::PlayerImpact1, "PlayerImpact1");
     m_pAudio->Load(SoundIndex::EnemyImpactMetal1, "EnemyImpactMetal1");
     m_pAudio->Load(SoundIndex::EnemyImpactMetal2, "EnemyImpactMetal2");
+    m_pAudio->Load(SoundIndex::EnemyImpactCrystal1, "EnemyImpactCrystal1");
 
     // Player Noises
     m_pAudio->Load(SoundIndex::Dash1, "Dash1");
@@ -86,6 +91,10 @@ void CGame::LoadSounds(){
     m_pAudio->Load(SoundIndex::PlayerWalk1, "PlayerWalk1");
     m_pAudio->Load(SoundIndex::PlayerWalk2, "PlayerWalk2");
     m_pAudio->Load(SoundIndex::PlayerLand1, "PlayerLand1");
+
+    // Death Noises
+    m_pAudio->Load(SoundIndex::CrystalDeath, "CrystalDeath");
+    m_pAudio->Load(SoundIndex::ObeliskDeath, "ObeliskDeath");
 }
 
 void CGame::Release() {
@@ -240,7 +249,7 @@ void CGame::InputHandler() {
     // Spawn NPC
     if (m_pKeyboard->TriggerDown('N')) {
         if (m_NPCsCache.Size() > 0) {
-            PlaceNPC(m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector());
+            PlaceNPC(m_pRenderer->m_pCamera->GetPos(), m_pRenderer->m_pCamera->GetViewVector(), NPCType::OBELISK);
         }
     }
 
@@ -434,6 +443,10 @@ void CGame::EcsUpdate() {
     Ecs::ApplyEvery(m_NPCsActive, [&](Entity e) {
         if (m_Healths.Get(e)->current <= 0) {
             if (m_NPCsActive.Size() > 0) {
+                NPC* currNPC = m_NPCs.Get(e);
+                SoundIndex::e DeathSound = currNPC->DeathSound;
+                Vec3 origin = (*m_RigidBodies.Get(e))->getWorldTransform().getOrigin();
+                m_pAudio->play(DeathSound, origin, 2.0f, 0.5);
                 ForceStripNPC(e);
             }
 
