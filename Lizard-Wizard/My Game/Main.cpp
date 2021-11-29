@@ -6,9 +6,9 @@
 
 
 #ifdef _DEBUG
+    #define USE_DEBUG_CONSOLE ///< Define to use a console window for debug messages.
     // #include <vld.h> //Visual Leak Detector from http://vld.codeplex.com/
 #endif
-    #define USE_DEBUG_CONSOLE ///< Define to use a console window for debug messages.
 
 static LWindow g_cWindow; ///< The window class.
 static CGame g_cGame; ///< The game class.
