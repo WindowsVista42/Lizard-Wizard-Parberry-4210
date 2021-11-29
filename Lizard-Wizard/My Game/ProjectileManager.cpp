@@ -132,7 +132,6 @@ void CGame::CalculateRay(
 
     }
     m_pDynamicsWorld->rayTest(Pos1, Vec3(Pos1 + btLookDirection * 15000.0), rayResults);
-
     if (rayResults.hasHit()) {
         // Warning (Ethan) : DO NOT EDIT at this pointer.
         btCollisionObject* hitObject = const_cast<btCollisionObject*>(rayResults.m_collisionObject);
@@ -146,7 +145,7 @@ void CGame::CalculateRay(
         currentRay->Pos2 = Vec3(hitPosition);
         newRay.Pos2 = Vec3(hitPosition);
 
-        rayBounces = rayBounces - 1;
+        rayBounces -= 1;
         Vec3 origin = (hitPosition + Pos1) / 2;
 
         m_pAudio->play(SoundIndex::LightningCast, hitPosition, 0.75f, 0.5);
@@ -201,7 +200,7 @@ void CGame::CalculateRay(
         body->activate();
 
         if (rayBounces > 0) {
-            GenerateRayProjectile(caster, Vec3(hitPosition), Vec3(reflectedDirection), 1, 1, rayBounces, color, true, ignoreCaster, physicsGroup, physicsMask);
+            GenerateRayProjectile(caster, Vec3(hitPosition), Vec3(reflectedDirection), 1, rayBounces, 0.0f, color, true, ignoreCaster, physicsGroup, physicsMask);
         }
 
     } else {
