@@ -487,9 +487,6 @@ void CGame::UpdatePlayer() {
     });
 
     // staff
-    Vec3 staff_pos;
-    Quat staff_rot;
-
     if(!flycam_enabled) {
         ModelInstance* mi = m_ModelInstances.Get(Staffe);
         LBaseCamera* cam = m_pRenderer->m_pCamera;
@@ -727,6 +724,7 @@ void CGame::UpdatePlayer() {
             }
         }
     }
+
 }
 
 void CGame::RenderPlayer() {

@@ -37,7 +37,7 @@ typedef std::pair<u32, u32> Point2;
 /// These are for Cache size configurations
 #define LIGHTS_CACHE_SIZE 254
 #define PROJECTILE_CACHE_SIZE 64
-#define NPC_CACHE_SIZE 40
+#define NPC_CACHE_SIZE 39
 #define RAY_CACHE_SIZE 24
 #define RAYCHECK_CACHE_SIZE 24
 
