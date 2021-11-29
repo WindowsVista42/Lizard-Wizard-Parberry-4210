@@ -580,17 +580,21 @@ void CGame::RenderFrame() {
         m_pRenderer->BeginUIDrawing();
 
         if (m_bDrawHelpMessage) {
-            m_pRenderer->DrawCenteredText(
-                //L"Press 'Escape' to toggle mouse cursor.\n"
-                L"Press 'Escape' to toggle escape main menu.\n"
+            m_pRenderer->DrawScreenText(
+                L"Press 'WASD' and 'Space' and 'Left Shift' for movement.\n"
+                L"Press 'Left Click' for primary attack.\n"
+                L"Press '1' or '2' or '3' for spell type.\n"
                 L"Press 'F' to toggle the map.\n"
                 L"Press 'G' to toggle god mode.\n"
                 L"Press 'M' to toggle audio.\n"
+                L"Press 'Escape' to toggle escape main menu.\n"
                 L"Press 'Backspace' to quickly restart a level.\n"
                 L"Press 'Delete' to quickly close the game.\n"
                 L"Press 'F2' to toggle the fps display.\n"
-                L"Toggle this message with 'F3'."
-                , Colors::White
+                L"Press '0' to take a screenshot.\n"
+                L"Toggle this message with 'F3'.",
+                Vec2(50.0f, 50.0f),
+                Colors::White
             );
         }
 
