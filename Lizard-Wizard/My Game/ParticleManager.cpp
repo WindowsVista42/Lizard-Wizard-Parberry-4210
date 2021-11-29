@@ -2,7 +2,7 @@
 #include "Renderer.h"
 
 void CGame::InitializeParticles() {
-    for every(index, 40) {
+    for every(index, 80) {
         ParticleInstance instance;
         Entity e = m_ParticleInstances.Add(instance);
         m_ParticleInstancesCache.AddExisting(e);

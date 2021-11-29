@@ -59,9 +59,8 @@ void CGame::BossAttack1(Entity e) { // Ice attack, 3 projectiles in a 15 degree 
             true,
             PROJECTILE_PHYSICS_GROUP,
             NPC_PROJECTILE_PHYSICS_MASK,
-            0
+            1
         );
-        face.Print();
         face = -XMVector3Normalize(origin - lookAt);
         m_pAudio->play(SoundIndex::IceCast, staff_tip, 0.35f, 0.5);
     }
@@ -82,7 +81,6 @@ void CGame::BossAttack2(Entity e) { // Fire attack, 5 projectiles in a 5 degree 
     Vec3 lookAt = playerBody->getWorldTransform().getOrigin() + playerBody->getLinearVelocity() / 3.5;
     Vec3 face = -XMVector3Normalize(origin - lookAt);
     Vec2 rotVec;
-    face.Print();
 
     for every(index, numProjectiles) {
         rotVec = Vec2(face.x, face.z);
@@ -91,7 +89,6 @@ void CGame::BossAttack2(Entity e) { // Fire attack, 5 projectiles in a 5 degree 
         face.x = rotX; face.z = rotZ;
         angle += offset;
 
-        face.Print();
         GenerateSimProjectile(
             npcBody,
             origin,
@@ -104,9 +101,8 @@ void CGame::BossAttack2(Entity e) { // Fire attack, 5 projectiles in a 5 degree 
             true,
             PROJECTILE_PHYSICS_GROUP,
             NPC_PROJECTILE_PHYSICS_MASK,
-            0
+            1
         );
-        face.Print();
         face = -XMVector3Normalize(origin - lookAt);
         m_pAudio->play(SoundIndex::FireCast, staff_tip, 0.65f, 0.5);
     }
@@ -127,7 +123,6 @@ void CGame::BossAttack3(Entity e) { // Lightning attack, 3 bolts of lightning in
     Vec3 lookAt = playerBody->getWorldTransform().getOrigin();
     Vec3 face = -XMVector3Normalize(origin - lookAt);
     Vec2 rotVec;
-    face.Print();
 
     for every(index, numProjectiles) {
         rotVec = Vec2(face.x, face.z);
@@ -136,7 +131,6 @@ void CGame::BossAttack3(Entity e) { // Lightning attack, 3 bolts of lightning in
         face.x = rotX; face.z = rotZ;
         angle += offset;
 
-        face.Print();
         GenerateRayProjectile(
             *m_RigidBodies.Get(m_Player),
             origin,
@@ -152,7 +146,6 @@ void CGame::BossAttack3(Entity e) { // Lightning attack, 3 bolts of lightning in
             1
         );
         m_pAudio->play(SoundIndex::LightningCast, staff_tip, 0.05f, 0.5);
-        face.Print();
         face = -XMVector3Normalize(origin - lookAt);
     }
 }

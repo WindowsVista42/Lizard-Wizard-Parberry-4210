@@ -334,7 +334,7 @@ void CGame::UpdatePlayer() {
             );
 
             *mana_timer = player_mana->Decrement(1);
-            m_pAudio->play(SoundIndex::IceCast, staff_tip, 0.15f, 0.5);
+            m_pAudio->play(SoundIndex::IceCast, staff_tip, 0.125f, 0.5);
         }
     } break;
     case ProjectileTypes::LIGHTNING: {
@@ -356,7 +356,7 @@ void CGame::UpdatePlayer() {
             );
 
             *mana_timer = player_mana->Decrement(2);
-            m_pAudio->play(SoundIndex::LightningCast, staff_tip, 0.10f, 0.5);
+            m_pAudio->play(SoundIndex::LightningCast, staff_tip, 0.05f, 0.5);
         }
     } break;
     default: {
@@ -377,7 +377,7 @@ void CGame::UpdatePlayer() {
             );
 
             *mana_timer = player_mana->Decrement(2);
-            m_pAudio->play(SoundIndex::FireCast, staff_tip, 0.15f, 0.5);
+            m_pAudio->play(SoundIndex::FireCast, staff_tip, 0.125f, 0.5);
         }
     } break;
     }

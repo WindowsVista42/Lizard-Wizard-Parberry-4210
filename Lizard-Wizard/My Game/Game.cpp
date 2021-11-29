@@ -397,6 +397,27 @@ void CGame::EcsUpdate() {
                 SoundIndex::e DeathSound = currNPC->DeathSound;
                 Vec3 origin = (*m_RigidBodies.Get(e))->getWorldTransform().getOrigin();
                 m_pAudio->play(DeathSound, origin, 2.0f, 0.5);
+
+                // Create Particle for Impact (Very ugly, will clean up later.)
+                ParticleInstanceDesc particle;
+                particle.count = 200;
+                particle.initial_pos = currNPC->LastPosition - Vec3(0.0f, 300.0f, 0.0f);
+                particle.initial_dir = Vec3::Up;
+                particle.light_color = Vec3(0.7f, 0.5, 0.1f) * 30.0f;
+                particle.model = ModelIndex::Cube;
+                particle.texture = TextureIndex::White;
+                particle.glow = *(Vec3*)&currNPC->LightColor / 50.0f;
+                particle.model_scale = Vec3(18.0f);
+                particle.initial_speed = 1600.0f;
+                particle.dir_randomness = 0.8f;
+                particle.speed_randomness = 0.95f;
+                particle.initial_acc = Vec3(0.0f, -1000.0f, 0.0f);
+                particle.acc_randomness = 0.7f;
+                particle.min_alive_time = 0.5f;
+                particle.max_alive_time = 1.1f;
+
+                SpawnParticles(&particle);
+
                 ForceStripNPC(e);
             }
 
