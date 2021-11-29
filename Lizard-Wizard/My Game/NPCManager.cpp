@@ -117,7 +117,7 @@ void CGame::Wander(Entity e) {
         max_tries -= 1;
     }
     Vec3 origin = npcBody->getWorldTransform().getOrigin();
-    origin.y = -500.0f;
+    origin.y = 0.0f;
     SetNPCRender(npcBody, origin, npcBody->getWorldTransform().getBasis());
     currentNPC->State = NPCState::MOVING;
 }
@@ -160,7 +160,7 @@ void CGame::Pathfind(Entity e) {
     std::vector<Point2> path = Pathfind(WorldToIndex(npcBody->getWorldTransform().getOrigin()), WorldToIndex(playerBody->getWorldTransform().getOrigin()));
     if (path.size() > 1) {
         Vec3 moveTo = IndexToWorld(path[path.size() - 1].first, path[path.size() - 1].second) + 500.0f * Vec3(GameRandom::Randf32() - 0.5f, 0.0f, GameRandom::Randf32() - 0.5f);
-        moveTo.y = -500.0f;
+        moveTo.y = 0.0f;
         currentNPC->QueuedMovement = moveTo;
     } else {
         currentNPC->QueuedMovement = npcBody->getWorldTransform().getOrigin();
@@ -307,7 +307,7 @@ void CGame::PlaceNPC(Vec3 startPos, Vec3 lookDirection, NPCType::e npcType) {
     btVector3 inertia;
 
     // Set attributes.
-    body->getWorldTransform().setOrigin(Vec3(newPos.x, -500.0f, newPos.z));
+    body->getWorldTransform().setOrigin(Vec3(newPos.x, 0.0f, newPos.z));
     body->getCollisionShape()->calculateLocalInertia(mass, inertia);
     body->setMassProps(mass, inertia);
     body->setFriction(friction);
@@ -357,7 +357,7 @@ void CGame::PlaceNPC2(Vec3 startPos, NPCType::e npcType) {
     btVector3 inertia;
 
     // Set attributes.
-    body->getWorldTransform().setOrigin(Vec3(newPos.x, -500.0f, newPos.z));
+    body->getWorldTransform().setOrigin(Vec3(newPos.x, 0.0f, newPos.z));
     body->getCollisionShape()->calculateLocalInertia(mass, inertia);
     body->setMassProps(mass, inertia);
     body->setFriction(friction);
@@ -382,7 +382,9 @@ void CGame::PlaceNPC2(Vec3 startPos, NPCType::e npcType) {
         MoveRotateScaleMatrix(body->getWorldTransform().getOrigin(), 
             *(Quat*)&body->getWorldTransform().getRotation(), 
             boxShape->getHalfExtentsWithMargin()
-        );
+     );
+
+    (*m_ModelInstances.Get(e)).model = baseNPC->Model;
     m_ModelsActive.AddExisting(e);
 
     SetNPCRender(body, body->getWorldTransform().getOrigin(), body->getWorldTransform().getBasis());
