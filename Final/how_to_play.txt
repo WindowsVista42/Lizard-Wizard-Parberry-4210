@@ -1,0 +1,23 @@
+The objective of the game is to kill the boss at the end of the level.
+You spawn at the bottom left corner, the boss spawns at the top right corner.
+Enemies will try to kill you on your way to the top right corner, do your best to not die.
+
+WASD for basic movement.
+Space for jump.
+Shift for dash.
+Left click for your primary attack.
+1-3 will cycle spell types.
+
+F will toggle the map. This shows where you have been, where you currently are, and where enemies are.
+
+Red enemies are obelisk enemies, they will shoot fireballs at you.
+Blue enemies are crystal enemies, they will shoot icicles at you.
+The purple enemy is the boss enemy, it will shoot a combination of fireballs, icicles, and lightning at you.
+
+Backspace will reset the game.
+Delete will close the game.
+Escape toggles the menu and mouse.
+
+0 will take a screenshot.
+F2 will display the fps.
+F3 will toggle the help menu.
