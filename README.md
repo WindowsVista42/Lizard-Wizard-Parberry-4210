@@ -15,7 +15,7 @@ The premise is that you are a Lizard... who is a Wizard...
 - Acceleration Structures (Binary Heap, Fast Linear Allocator)
 - General Engine Architecture
 
-Check out my [detailed breakdown](https://windowsvista42.github.io/projects/lizard-wizard/) of all the stuff that went into this project!
+Check out my [detailed breakdown](https://windowsvista42.github.io/projects/lizard-wizard/)!
 
 **Ethan:**
 - NPC AI
