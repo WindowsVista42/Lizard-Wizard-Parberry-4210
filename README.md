@@ -1,7 +1,7 @@
 # Lizard-Wizard-Parberry-4210
 A game made for CSCE 4210 at UNT.
 
-The general premise is that you are a Lizard... who is a Wizard...
+The premise is that you are a Lizard... who is a Wizard...
 
 ## Project Overview
 **Sean:**
