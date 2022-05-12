@@ -3,6 +3,8 @@ A game made for CSCE 4210 at UNT.
 
 The premise is that you are a Lizard... who is a Wizard...
 
+A build of the game can be found in [Final/](Final) and code can be found in [Lizard-Wizard/](Lizard-Wizard).
+
 ## Project Overview
 **Sean:**
 - DX12 Deferred Renderer
@@ -14,6 +16,7 @@ The premise is that you are a Lizard... who is a Wizard...
 - A* Pathfinding
 - Acceleration Structures (Binary Heap, Fast Linear Allocator)
 - General Engine Architecture
+- Tooling
 
 Check out my [detailed breakdown](https://windowsvista42.github.io/projects/lizard-wizard/)!
 
