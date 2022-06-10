@@ -18,7 +18,7 @@ A build of the game can be found in [Final/](Final) and code can be found in [Li
 - General Engine Architecture
 - Tooling
 
-Check out my [detailed breakdown](https://windowsvista42.github.io/projects/lizard-wizard/)!
+<!--- Check out my [detailed breakdown](https://windowsvista42.github.io/projects/lizard-wizard/)! --->
 
 **Ethan:**
 - NPC AI
