@@ -3,7 +3,7 @@ A game made for CSCE 4210 at UNT.
 
 The premise is that you are a Lizard... who is a Wizard...
 
-A build of the game can be found in [Final/](Final) and code can be found in [Lizard-Wizard/My Game/](Lizard-Wizard).
+A build of the game can be found in [Final/](Final) and code can be found in [Lizard-Wizard/](Lizard-Wizard).
 
 ## Project Overview
 **Sean:**
