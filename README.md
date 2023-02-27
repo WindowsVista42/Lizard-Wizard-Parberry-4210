@@ -1,5 +1,5 @@
 # Lizard-Wizard-Parberry-4210
-A game made for CSCE 4210 at UNT.
+A game created by Sean Moulton, Ethan Flute, and Solomon Weatherby for Parberry's 4210 Introduction to Game Programming I.
 
 The premise is that you are a Lizard... who is a Wizard...
 
